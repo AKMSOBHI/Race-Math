@@ -1,0 +1,194 @@
+import { useEffect, useState } from 'react';
+import { useRoute, useLocation } from 'wouter';
+import { useWebSocket } from '@/lib/websocket';
+import { useGameStore } from '@/lib/game/gameState';
+import NavigationBar from '@/components/Layout/NavigationBar';
+import Octopus from '@/components/GameUI/Octopus';
+import Bubble from '@/components/GameUI/Bubble';
+import Timer from '@/components/GameUI/Timer';
+import PlayerScoreboard from '@/components/GameUI/PlayerScoreboard';
+import CorrectAnswerModal from '@/components/Modals/CorrectAnswerModal';
+import IncorrectAnswerModal from '@/components/Modals/IncorrectAnswerModal';
+import StageCompleteModal from '@/components/Modals/StageCompleteModal';
+import { formatStageName, generateWrongAnswers, getRandomBubblePosition } from '@/lib/game/questions';
+import { useToast } from '@/hooks/use-toast';
+
+export default function Game() {
+  const [_, navigate] = useLocation();
+  const [match] = useRoute<{ gameId: string }>('/game/:gameId');
+  const gameId = match?.params.gameId || '';
+  const { toast } = useToast();
+  
+  const { 
+    currentGame, 
+    currentUser,
+    currentQuestion,
+    joinGame,
+    submitAnswer,
+    handleServerMessage,
+    showCorrectModal,
+    showIncorrectModal,
+    showStageCompleteModal
+  } = useGameStore();
+  
+  const { addMessageListener } = useWebSocket();
+  
+  // State for bubble positions
+  const [bubblePositions, setBubblePositions] = useState<{ top: string; left: string }[]>([]);
+  
+  // State for octopus face
+  const [octopusMood, setOctopusMood] = useState<'neutral' | 'happy' | 'sad'>('neutral');
+  
+  // Join the game when component mounts
+  useEffect(() => {
+    if (!currentGame && gameId && currentUser) {
+      joinGame(gameId);
+    }
+  }, [gameId, currentUser, currentGame, joinGame]);
+  
+  // Listen to WebSocket messages
+  useEffect(() => {
+    const removeListener = addMessageListener((message) => {
+      handleServerMessage(message);
+      
+      if (message.type === 'answer_result') {
+        if (currentUser && message.payload.playerId === currentUser.id) {
+          setOctopusMood(message.payload.correct ? 'happy' : 'sad');
+          
+          // Reset octopus face after 2 seconds
+          setTimeout(() => {
+            setOctopusMood('neutral');
+          }, 2000);
+        }
+      }
+    });
+    
+    return () => {
+      removeListener();
+    };
+  }, [addMessageListener, handleServerMessage, currentUser]);
+  
+  // Navigate back to home if no game
+  useEffect(() => {
+    if (!gameId) {
+      navigate('/');
+    }
+  }, [gameId, navigate]);
+  
+  // Generate bubble positions when question changes
+  useEffect(() => {
+    if (currentQuestion) {
+      // Generate 4 unique positions for the bubbles
+      const positions = [];
+      for (let i = 0; i < 4; i++) {
+        positions.push(getRandomBubblePosition());
+      }
+      setBubblePositions(positions);
+    }
+  }, [currentQuestion]);
+  
+  // Handle bubble click / answer submission
+  const handleAnswerSubmit = (answer: number) => {
+    if (!currentGame) return;
+    
+    submitAnswer(currentGame.id, answer);
+  };
+  
+  // Get current player from game state
+  const currentPlayer = currentGame?.players.find(
+    p => currentUser && p.id === currentUser.id
+  );
+  
+  // Get wrong answers
+  let answers: number[] = [];
+  if (currentQuestion) {
+    const wrongAnswers = generateWrongAnswers(currentQuestion.answer);
+    answers = [...wrongAnswers, currentQuestion.answer].sort(() => Math.random() - 0.5);
+  }
+  
+  if (!currentGame || !currentQuestion || !currentPlayer) {
+    return (
+      <div className="min-h-screen w-full font-nunito text-white bg-gradient-to-b from-deep-blue to-ocean-blue flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-xl">Loading game...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="min-h-screen w-full overflow-hidden font-nunito text-white relative bg-gradient-to-b from-deep-blue to-ocean-blue">
+      {/* Ocean background */}
+      <div className="ocean-bg"></div>
+      
+      {/* Navigation */}
+      <NavigationBar />
+      
+      {/* Main game container */}
+      <div className="container mx-auto px-4 py-6 relative h-screen">
+        {/* Game Header */}
+        <div className="flex flex-wrap justify-between items-center mb-6 px-3">
+          <div className="w-full md:w-auto mb-4 md:mb-0">
+            <div className="bg-deep-blue bg-opacity-70 rounded-lg p-3 shadow-lg">
+              <p className="text-lg font-semibold">
+                Stage: <span className="text-coral">{formatStageName(currentGame.stage)}</span>
+              </p>
+              <p className="text-sm">
+                Question <span>{currentGame.currentQuestionIndex + 1}</span> of {currentGame.questions.length}
+              </p>
+            </div>
+          </div>
+          
+          <div className="w-full md:w-2/3">
+            <div className="bg-deep-blue bg-opacity-70 rounded-lg p-2 shadow-lg">
+              <p className="text-center mb-1 text-sm">Time Remaining</p>
+              <Timer />
+            </div>
+          </div>
+          
+          <div className="w-full md:w-auto mt-4 md:mt-0">
+            <div className="bg-deep-blue bg-opacity-70 rounded-lg p-3 shadow-lg">
+              <p className="text-lg font-semibold">
+                Your Score: <span className="text-seaweed">{currentPlayer.score}</span>
+              </p>
+              <p className="text-sm">
+                Attempts left: <span>{currentPlayer.attemptsLeft}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Game Area */}
+        <div className="relative h-3/4 w-full overflow-hidden rounded-2xl border-4 border-ocean-blue bg-deep-blue bg-opacity-40 shadow-2xl">
+          {/* Octopus */}
+          <Octopus mood={octopusMood} />
+          
+          {/* Question Bubbles */}
+          {answers.map((answer, index) => (
+            <Bubble
+              key={index}
+              text={index === 0 ? currentQuestion.text : answer.toString()}
+              isQuestion={index === 0}
+              position={bubblePositions[index]}
+              onClick={() => index === 0 ? null : handleAnswerSubmit(answer)}
+            />
+          ))}
+        </div>
+        
+        {/* Player Scoreboard */}
+        {currentGame.isMultiplayer && (
+          <PlayerScoreboard 
+            players={currentGame.players} 
+            currentPlayerId={currentUser?.id} 
+          />
+        )}
+      </div>
+      
+      {/* Modals */}
+      {showCorrectModal && <CorrectAnswerModal />}
+      {showIncorrectModal && <IncorrectAnswerModal />}
+      {showStageCompleteModal && <StageCompleteModal />}
+    </div>
+  );
+}

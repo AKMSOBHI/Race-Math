@@ -1,0 +1,277 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { storage } from "./storage";
+import { GameManager } from "./game/gameManager";
+import { z } from "zod";
+import { insertUserSchema, type ServerMessage, type ClientMessage } from "@shared/schema";
+import { log } from "./vite";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  const httpServer = createServer(app);
+  
+  // Initialize WebSocket server
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Initialize game manager
+  const gameManager = new GameManager(storage);
+  
+  // Store active connections with user IDs
+  const connections = new Map<number, WebSocket>();
+  
+  // User API Routes
+  app.post("/api/users/register", async (req, res) => {
+    try {
+      const validatedUser = insertUserSchema.parse(req.body);
+      
+      // Check if username is already taken
+      const existingUser = await storage.getUserByUsername(validatedUser.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+      
+      const user = await storage.createUser(validatedUser);
+      // Don't return password in response
+      const { password, ...userWithoutPassword } = user;
+      
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+  
+  app.post("/api/users/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+      
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      // Don't return password in response
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+  
+  app.post("/api/users/guest", async (req, res) => {
+    try {
+      const guestName = `Guest-${Math.floor(Math.random() * 10000)}`;
+      
+      const guestUser = await storage.createUser({
+        username: guestName,
+        password: "guest-password", // Not used for authentication
+        isGuest: true
+      });
+      
+      // Don't return password in response
+      const { password, ...userWithoutPassword } = guestUser;
+      
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create guest user" });
+    }
+  });
+  
+  app.get("/api/games", async (req, res) => {
+    try {
+      const sessions = await storage.getAllActiveSessions();
+      res.status(200).json(sessions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get game sessions" });
+    }
+  });
+
+  // WebSocket Connection Handling
+  wss.on('connection', (ws) => {
+    let userId: number | null = null;
+    
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message.toString()) as ClientMessage;
+        
+        switch (data.type) {
+          case 'join_game': {
+            userId = data.payload.playerId;
+            connections.set(userId, ws);
+            
+            const result = await gameManager.joinGame(
+              data.payload.gameId,
+              data.payload.playerId
+            );
+            
+            // Notify all players in the game
+            if (result.game) {
+              notifyGamePlayers(result.game);
+            }
+            break;
+          }
+          
+          case 'create_game': {
+            userId = data.payload.playerId;
+            connections.set(userId, ws);
+            
+            const game = await gameManager.createGame(
+              data.payload.playerId,
+              data.payload.isMultiplayer,
+              data.payload.maxPlayers
+            );
+            
+            sendToClient(ws, {
+              type: 'game_state_update',
+              payload: game
+            });
+            break;
+          }
+          
+          case 'start_game': {
+            const game = await gameManager.startGame(
+              data.payload.gameId,
+              data.payload.difficulty || 'easy'
+            );
+            
+            if (game) {
+              // Notify all players the game has started
+              notifyGamePlayers(game, {
+                type: 'game_started',
+                payload: game
+              });
+            }
+            break;
+          }
+          
+          case 'submit_answer': {
+            if (!userId) break;
+            
+            const result = await gameManager.submitAnswer(
+              data.payload.gameId,
+              data.payload.playerId,
+              data.payload.answer
+            );
+            
+            if (result) {
+              // Notify the player who submitted the answer
+              sendToClient(ws, {
+                type: 'answer_result',
+                payload: {
+                  correct: result.correct,
+                  playerId: data.payload.playerId,
+                  points: result.points,
+                  gameId: data.payload.gameId
+                }
+              });
+              
+              // Update all players with new game state
+              if (result.game) {
+                notifyGamePlayers(result.game);
+              }
+              
+              // Check if all players completed current question
+              const allCompleted = await gameManager.checkAllPlayersCompleted(data.payload.gameId);
+              if (allCompleted) {
+                const game = await storage.getGameSession(data.payload.gameId);
+                if (game) {
+                  notifyGamePlayers(game);
+                }
+              }
+            }
+            break;
+          }
+          
+          case 'next_question': {
+            const result = await gameManager.nextQuestion(data.payload.gameId);
+            
+            if (result.game) {
+              if (result.completed) {
+                notifyGamePlayers(result.game, {
+                  type: 'stage_completed',
+                  payload: {
+                    gameId: data.payload.gameId,
+                    nextStage: result.nextStage
+                  }
+                });
+              } else {
+                notifyGamePlayers(result.game);
+              }
+            }
+            break;
+          }
+          
+          case 'next_stage': {
+            const game = await gameManager.nextStage(data.payload.gameId);
+            
+            if (game) {
+              notifyGamePlayers(game, {
+                type: 'game_started',
+                payload: game
+              });
+            }
+            break;
+          }
+        }
+      } catch (error) {
+        log(`WebSocket error: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+        
+        // Send error message back to client
+        sendToClient(ws, {
+          type: 'error',
+          payload: { 
+            message: error instanceof Error ? error.message : 'An unknown error occurred'
+          }
+        });
+      }
+    });
+    
+    ws.on('close', () => {
+      if (userId) {
+        // Remove connection
+        connections.delete(userId);
+        
+        // Remove player from any active games
+        gameManager.removePlayerFromAllGames(userId).then(updatedGames => {
+          // Notify remaining players in each game
+          updatedGames.forEach(game => {
+            if (game) {
+              notifyGamePlayers(game);
+            }
+          });
+        }).catch(err => {
+          log(`Error removing player ${userId} from games: ${err.message}`, 'ws-error');
+        });
+      }
+    });
+  });
+  
+  function sendToClient(client: WebSocket, message: ServerMessage) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  }
+  
+  function notifyGamePlayers(game: any, message?: ServerMessage) {
+    const msg = message || {
+      type: 'game_state_update',
+      payload: game
+    };
+    
+    game.players.forEach((player: any) => {
+      const connection = connections.get(player.id);
+      if (connection && connection.readyState === WebSocket.OPEN) {
+        connection.send(JSON.stringify(msg));
+      }
+    });
+  }
+
+  return httpServer;
+}
