@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { useGameStore } from '@/lib/game/gameState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,15 +10,29 @@ const StartGameModal: FC = () => {
     currentUser, 
     setCurrentUser,
     createGame, 
+    startGame,
+    currentGame,
     setShowStartModal 
   } = useGameStore();
   
   const [gameMode, setGameMode] = useState<'single' | 'multi' | null>(null);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
-  const [playerName, setPlayerName] = useState(currentUser?.username || '');
+  const [playerName, setPlayerName] = useState('');
+  
+  // Update player name when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      setPlayerName(currentUser.username);
+    }
+  }, [currentUser]);
   
   const handleStartGame = () => {
     if (!currentUser) return;
+    
+    // Make sure player name is not empty
+    if (!playerName.trim()) {
+      return;
+    }
     
     // Update name if changed
     if (playerName !== currentUser.username) {
@@ -33,6 +47,11 @@ const StartGameModal: FC = () => {
     const maxPlayers = isMultiplayer ? 4 : 1;
     
     createGame(isMultiplayer, maxPlayers);
+    
+    // If we already have a game, start it with the selected difficulty
+    if (currentGame) {
+      startGame(currentGame.id, difficulty);
+    }
   };
   
   return (
@@ -117,10 +136,10 @@ const StartGameModal: FC = () => {
         
         <button 
           className={`w-full ${
-            gameMode ? 'bg-seaweed' : 'bg-gray-400'
+            gameMode && playerName.trim() ? 'bg-seaweed' : 'bg-gray-400'
           } text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition text-xl`}
           onClick={handleStartGame}
-          disabled={!gameMode}
+          disabled={!gameMode || !playerName.trim()}
         >
           Start Game
         </button>
