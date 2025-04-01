@@ -39,6 +39,36 @@ const StartGameModal: FC = () => {
     console.log('Current game:', currentGame);
   }, [currentUser, isConnected, currentGame]);
   
+  // Monitor game creation and start game when created
+  useEffect(() => {
+    // If we're in the processing state and have a game, start it
+    if (isProcessing && currentGame && currentGame.status === 'waiting') {
+      console.log('Game was created, starting game with ID:', currentGame.id);
+      startGame(currentGame.id, difficulty);
+    }
+    
+    // Set a timeout to cancel the processing state if game creation takes too long
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (isProcessing) {
+      timeoutId = setTimeout(() => {
+        // If we're still processing after 5 seconds, something went wrong
+        if (isProcessing && (!currentGame || currentGame.status === 'waiting')) {
+          setIsProcessing(false);
+          toast({
+            title: "Game Creation Error",
+            description: "Could not create the game. Please try again.",
+            variant: "destructive"
+          });
+        }
+      }, 5000);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [currentGame, isProcessing, difficulty, startGame, toast]);
+  
   const handleStartGame = () => {
     if (!currentUser) {
       toast({
@@ -99,21 +129,8 @@ const StartGameModal: FC = () => {
         description: "Setting up your math adventure..."
       });
       
-      // Start the game after a short delay to ensure game creation is processed
-      setTimeout(() => {
-        if (currentGame) {
-          console.log('Starting game with ID:', currentGame.id);
-          startGame(currentGame.id, difficulty);
-        } else {
-          // If no game was created after the delay, show an error
-          toast({
-            title: "Game Creation Error",
-            description: "Could not create the game. Please try again.",
-            variant: "destructive"
-          });
-          setIsProcessing(false);
-        }
-      }, 1500);
+      // We will listen for game updates in the useEffect below
+      // Instead of using setTimeout, we'll use the useEffect to monitor changes to currentGame
     } catch (error) {
       console.error('Error starting the game:', error);
       toast({

@@ -112,47 +112,79 @@ function generateQuestion(type: QuestionType, difficulty: Difficulty): Question 
 
 // Generate a set of questions for a specific stage
 export function generateQuestionsForStage(stage: GameStage, difficulty: Difficulty): Question[] {
-  const questions: Question[] = [];
-  
-  // Generate 5 questions per stage
-  switch (stage) {
-    case "BASIC_ADDITION_SUBTRACTION":
-      // 3 addition, 2 subtraction
-      for (let i = 0; i < 3; i++) {
-        questions.push(generateQuestion("ADDITION", difficulty));
-      }
-      for (let i = 0; i < 2; i++) {
-        questions.push(generateQuestion("SUBTRACTION", difficulty));
-      }
-      break;
+  try {
+    const questions: Question[] = [];
     
-    case "COMPLEX_ADDITION_SUBTRACTION":
-      // 2 addition, 3 subtraction with higher difficulty
-      for (let i = 0; i < 2; i++) {
-        questions.push(generateQuestion("ADDITION", 
-          difficulty === "easy" ? "medium" : "hard"));
-      }
-      for (let i = 0; i < 3; i++) {
-        questions.push(generateQuestion("SUBTRACTION", 
-          difficulty === "easy" ? "medium" : "hard"));
-      }
-      break;
+    // Generate 5 questions per stage
+    switch (stage) {
+      case "BASIC_ADDITION_SUBTRACTION":
+        // 3 addition, 2 subtraction
+        for (let i = 0; i < 3; i++) {
+          questions.push(generateQuestion("ADDITION", difficulty));
+        }
+        for (let i = 0; i < 2; i++) {
+          questions.push(generateQuestion("SUBTRACTION", difficulty));
+        }
+        break;
+      
+      case "COMPLEX_ADDITION_SUBTRACTION":
+        // 2 addition, 3 subtraction with higher difficulty
+        for (let i = 0; i < 2; i++) {
+          questions.push(generateQuestion("ADDITION", 
+            difficulty === "easy" ? "medium" : "hard"));
+        }
+        for (let i = 0; i < 3; i++) {
+          questions.push(generateQuestion("SUBTRACTION", 
+            difficulty === "easy" ? "medium" : "hard"));
+        }
+        break;
+      
+      case "MULTIPLICATION":
+        // 5 multiplication questions
+        for (let i = 0; i < 5; i++) {
+          questions.push(generateQuestion("MULTIPLICATION", difficulty));
+        }
+        break;
+      
+      case "DIVISION":
+        // 5 division questions
+        for (let i = 0; i < 5; i++) {
+          questions.push(generateQuestion("DIVISION", difficulty));
+        }
+        break;
+      
+      default:
+        // If we somehow get an invalid stage, default to basic addition
+        console.error(`Unknown stage: ${stage}, defaulting to basic addition`);
+        for (let i = 0; i < 5; i++) {
+          questions.push(generateQuestion("ADDITION", "easy"));
+        }
+        break;
+    }
     
-    case "MULTIPLICATION":
-      // 5 multiplication questions
-      for (let i = 0; i < 5; i++) {
-        questions.push(generateQuestion("MULTIPLICATION", difficulty));
+    // Ensure we have at least 5 questions
+    if (questions.length < 5) {
+      console.warn(`Generated only ${questions.length} questions for stage ${stage}, adding more basic questions`);
+      // Add some basic addition questions to fill the gap
+      for (let i = questions.length; i < 5; i++) {
+        questions.push(generateQuestion("ADDITION", "easy"));
       }
-      break;
+    }
     
-    case "DIVISION":
-      // 5 division questions
-      for (let i = 0; i < 5; i++) {
-        questions.push(generateQuestion("DIVISION", difficulty));
-      }
-      break;
+    // Shuffle the questions
+    return questions.sort(() => Math.random() - 0.5);
+  } catch (error) {
+    console.error("Error generating questions:", error);
+    // Return a set of fallback questions if generation fails
+    const fallbackQuestions: Question[] = [];
+    for (let i = 0; i < 5; i++) {
+      fallbackQuestions.push({
+        id: `fallback-${i}`,
+        text: `${i + 1} + ${i + 2}`,
+        answer: (i + 1) + (i + 2),
+        type: "ADDITION"
+      });
+    }
+    return fallbackQuestions;
   }
-  
-  // Shuffle the questions
-  return questions.sort(() => Math.random() - 0.5);
 }

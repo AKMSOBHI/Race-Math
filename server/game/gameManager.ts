@@ -51,32 +51,41 @@ export class GameManager {
   }
 
   async startGame(gameId: string, difficulty: "easy" | "medium" | "hard" = "easy"): Promise<GameSession | undefined> {
-    const game = await this.storage.getGameSession(gameId);
-    
-    if (!game) {
-      throw new Error("Game not found");
+    try {
+      const game = await this.storage.getGameSession(gameId);
+      
+      if (!game) {
+        throw new Error("Game not found");
+      }
+      
+      if (game.status !== "waiting") {
+        throw new Error("Game has already started");
+      }
+      
+      // Generate questions for the first stage
+      const questions = generateQuestionsForStage(game.stage, difficulty);
+      
+      if (!questions || questions.length === 0) {
+        throw new Error("Failed to generate questions for the game");
+      }
+      
+      // Reset player attempt counts
+      const updatedPlayers = game.players.map(player => ({
+        ...player,
+        attemptsLeft: 3,
+        progress: 0
+      }));
+      
+      return this.storage.updateGameSession(gameId, {
+        status: "active",
+        questions,
+        currentQuestionIndex: 0,
+        players: updatedPlayers
+      });
+    } catch (error) {
+      console.error(`Error starting game ${gameId}:`, error);
+      throw error; // Re-throw to be handled by the caller
     }
-    
-    if (game.status !== "waiting") {
-      throw new Error("Game has already started");
-    }
-    
-    // Generate questions for the first stage
-    const questions = generateQuestionsForStage(game.stage, difficulty);
-    
-    // Reset player attempt counts
-    const updatedPlayers = game.players.map(player => ({
-      ...player,
-      attemptsLeft: 3,
-      progress: 0
-    }));
-    
-    return this.storage.updateGameSession(gameId, {
-      status: "active",
-      questions,
-      currentQuestionIndex: 0,
-      players: updatedPlayers
-    });
   }
 
   async submitAnswer(gameId: string, playerId: number, answer: number): Promise<{ 

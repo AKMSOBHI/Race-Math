@@ -99,122 +99,203 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     ws.on('message', async (message) => {
       try {
-        const data = JSON.parse(message.toString()) as ClientMessage;
+        let data: ClientMessage;
+        
+        try {
+          data = JSON.parse(message.toString()) as ClientMessage;
+        } catch (parseError) {
+          log(`Invalid message format: ${message.toString().substring(0, 100)}`, 'ws-error');
+          sendToClient(ws, {
+            type: 'error',
+            payload: {
+              message: 'Invalid message format'
+            }
+          });
+          return;
+        }
         
         switch (data.type) {
           case 'join_game': {
-            userId = data.payload.playerId;
-            connections.set(userId, ws);
-            
-            const result = await gameManager.joinGame(
-              data.payload.gameId,
-              data.payload.playerId
-            );
-            
-            // Notify all players in the game
-            if (result.game) {
-              notifyGamePlayers(result.game);
+            try {
+              userId = data.payload.playerId;
+              connections.set(userId, ws);
+              
+              const result = await gameManager.joinGame(
+                data.payload.gameId,
+                data.payload.playerId
+              );
+              
+              // Notify all players in the game
+              if (result.game) {
+                notifyGamePlayers(result.game);
+              }
+            } catch (error) {
+              log(`Error joining game: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to join game'
+                }
+              });
             }
             break;
           }
           
           case 'create_game': {
-            userId = data.payload.playerId;
-            connections.set(userId, ws);
-            
-            const game = await gameManager.createGame(
-              data.payload.playerId,
-              data.payload.isMultiplayer,
-              data.payload.maxPlayers
-            );
-            
-            sendToClient(ws, {
-              type: 'game_state_update',
-              payload: game
-            });
+            try {
+              userId = data.payload.playerId;
+              connections.set(userId, ws);
+              
+              const game = await gameManager.createGame(
+                data.payload.playerId,
+                data.payload.isMultiplayer,
+                data.payload.maxPlayers
+              );
+              
+              sendToClient(ws, {
+                type: 'game_state_update',
+                payload: game
+              });
+            } catch (error) {
+              log(`Error creating game: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to create game'
+                }
+              });
+            }
             break;
           }
           
           case 'start_game': {
-            const game = await gameManager.startGame(
-              data.payload.gameId,
-              data.payload.difficulty || 'easy'
-            );
-            
-            if (game) {
-              // Notify all players the game has started
-              notifyGamePlayers(game, {
-                type: 'game_started',
-                payload: game
+            try {
+              const game = await gameManager.startGame(
+                data.payload.gameId,
+                data.payload.difficulty || 'easy'
+              );
+              
+              if (game) {
+                // Notify all players the game has started
+                notifyGamePlayers(game, {
+                  type: 'game_started',
+                  payload: game
+                });
+              }
+            } catch (error) {
+              log(`Error starting game: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to start game'
+                }
               });
             }
             break;
           }
           
           case 'submit_answer': {
-            if (!userId) break;
-            
-            const result = await gameManager.submitAnswer(
-              data.payload.gameId,
-              data.payload.playerId,
-              data.payload.answer
-            );
-            
-            if (result) {
-              // Notify the player who submitted the answer
+            try {
+              if (!userId) {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: {
+                    message: 'User not authenticated'
+                  }
+                });
+                break;
+              }
+              
+              const result = await gameManager.submitAnswer(
+                data.payload.gameId,
+                data.payload.playerId,
+                data.payload.answer
+              );
+              
+              if (result) {
+                // Notify the player who submitted the answer
+                sendToClient(ws, {
+                  type: 'answer_result',
+                  payload: {
+                    correct: result.correct,
+                    playerId: data.payload.playerId,
+                    points: result.points,
+                    gameId: data.payload.gameId
+                  }
+                });
+                
+                // Update all players with new game state
+                if (result.game) {
+                  notifyGamePlayers(result.game);
+                }
+                
+                // Check if all players completed current question
+                const allCompleted = await gameManager.checkAllPlayersCompleted(data.payload.gameId);
+                if (allCompleted) {
+                  const game = await storage.getGameSession(data.payload.gameId);
+                  if (game) {
+                    notifyGamePlayers(game);
+                  }
+                }
+              }
+            } catch (error) {
+              log(`Error submitting answer: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
               sendToClient(ws, {
-                type: 'answer_result',
+                type: 'error',
                 payload: {
-                  correct: result.correct,
-                  playerId: data.payload.playerId,
-                  points: result.points,
-                  gameId: data.payload.gameId
+                  message: error instanceof Error ? error.message : 'Failed to submit answer'
                 }
               });
-              
-              // Update all players with new game state
-              if (result.game) {
-                notifyGamePlayers(result.game);
-              }
-              
-              // Check if all players completed current question
-              const allCompleted = await gameManager.checkAllPlayersCompleted(data.payload.gameId);
-              if (allCompleted) {
-                const game = await storage.getGameSession(data.payload.gameId);
-                if (game) {
-                  notifyGamePlayers(game);
-                }
-              }
             }
             break;
           }
           
           case 'next_question': {
-            const result = await gameManager.nextQuestion(data.payload.gameId);
-            
-            if (result.game) {
-              if (result.completed) {
-                notifyGamePlayers(result.game, {
-                  type: 'stage_completed',
-                  payload: {
-                    gameId: data.payload.gameId,
-                    nextStage: result.nextStage
-                  }
-                });
-              } else {
-                notifyGamePlayers(result.game);
+            try {
+              const result = await gameManager.nextQuestion(data.payload.gameId);
+              
+              if (result.game) {
+                if (result.completed) {
+                  notifyGamePlayers(result.game, {
+                    type: 'stage_completed',
+                    payload: {
+                      gameId: data.payload.gameId,
+                      nextStage: result.nextStage
+                    }
+                  });
+                } else {
+                  notifyGamePlayers(result.game);
+                }
               }
+            } catch (error) {
+              log(`Error moving to next question: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to move to next question'
+                }
+              });
             }
             break;
           }
           
           case 'next_stage': {
-            const game = await gameManager.nextStage(data.payload.gameId);
-            
-            if (game) {
-              notifyGamePlayers(game, {
-                type: 'game_started',
-                payload: game
+            try {
+              const game = await gameManager.nextStage(data.payload.gameId);
+              
+              if (game) {
+                notifyGamePlayers(game, {
+                  type: 'game_started',
+                  payload: game
+                });
+              }
+            } catch (error) {
+              log(`Error moving to next stage: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to move to next stage'
+                }
               });
             }
             break;

@@ -222,6 +222,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         
       case 'error':
         console.error("Server error:", message.payload.message);
+        // Reset loading state when error occurs
+        set({ isLoading: false });
         break;
     }
   }
