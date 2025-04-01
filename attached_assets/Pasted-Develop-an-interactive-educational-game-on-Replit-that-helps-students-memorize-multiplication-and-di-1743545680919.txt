@@ -1,0 +1,47 @@
+Develop an interactive educational game on Replit that helps students memorize multiplication and division tables in a fun and engaging way. The game should support online multiplayer mode, allowing students to compete in real time while the game manager controls the number of participants. Students should also have the option to play individually. The game must be fully free and should not include any third-party platform branding.”
+
+Game Requirements:
+	•	Question Stages:
+	1.	Basic addition and subtraction
+	2.	Complex addition and subtraction
+	3.	Multiplication
+	4.	Division
+	•	Player Interaction:
+	•	Questions appear inside floating water bubbles that gently move with an underwater background.
+	•	An octopus character is at the center of the screen:
+	•	Correct answer: The octopus smiles and pops the correct bubble.
+	•	Incorrect answer: The octopus looks sad and plays a “wrong answer” sound.
+	•	Players earn points based on their attempts:
+	•	1st attempt: 3 points
+	•	2nd attempt: 2 points
+	•	3rd attempt: 1 point
+	•	Failed all attempts: 0 points, moves to the next question
+	•	A timer appears at the top of the screen for each question.
+	•	Each stage consists of 5 questions, and each question allows 3 attempts.
+	•	Players can see each other’s progress on the same screen.
+
+Technical Specifications:
+	•	Frontend:
+	•	Built with HTML, CSS, JavaScript using Phaser.js for game rendering and animations.
+	•	Backend:
+	•	Node.js with Express.js and WebSockets for real-time multiplayer functionality.
+	•	Database:
+	•	Firebase Realtime Database or Supabase to store player scores and progress.
+	•	User Registration:
+	•	Simple login system with an option to play as a guest.
+	•	Game Deployment:
+	•	Hosted on Replit for instant online accessibility.
+
+Potential Challenges:
+	•	Managing Real-Time Multiplayer:
+	•	WebSockets will be used to synchronize player data instantly.
+	•	Performance and Graphics Optimization:
+	•	Compressed assets will be used for smooth performance across devices.
+	•	Completion Within Two Days:
+	•	A Minimum Viable Product (MVP) will be developed first, with enhancements later.
+
+Next Steps:
+	1.	Set up the development environment on Replit.
+	2.	Design the initial UI layout.
+	3.	Implement core functions: player management, question handling, octopus animations, and scoring.
+	4.	Test and finalize for deployment.
