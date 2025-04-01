@@ -69,7 +69,15 @@ export default function Home() {
     if (!currentUser && !isLoading) {
       createGuestUser();
     }
-  }, [currentUser]);
+  }, [currentUser, isLoading]);
+  
+  // For debugging
+  useEffect(() => {
+    console.log("WebSocket connected:", isConnected);
+    console.log("Current user:", currentUser);
+    console.log("Current game:", currentGame);
+    console.log("Show start modal:", showStartModal);
+  }, [isConnected, currentUser, currentGame, showStartModal]);
   
   return (
     <div className="min-h-screen w-full overflow-hidden font-nunito text-white relative bg-gradient-to-b from-deep-blue to-ocean-blue">

@@ -117,6 +117,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     set({ isLoading: true });
     
+    console.log('Sending create_game message with payload:', {
+      isMultiplayer,
+      maxPlayers,
+      playerId: currentUser.id
+    });
+    
     sendMessage({
       type: 'create_game',
       payload: {

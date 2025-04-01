@@ -2,56 +2,94 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ClientMessage, ServerMessage } from '@shared/schema';
 
+// Global WebSocket instance
 let socket: WebSocket | null = null;
 const listeners: ((message: ServerMessage) => void)[] = [];
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY = 3000;
 
 export function connectWebSocket() {
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
     return socket;
   }
   
+  // Create WebSocket URL
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const wsUrl = `${protocol}//${window.location.host}/ws`;
   
-  socket = new WebSocket(wsUrl);
+  console.log(`Connecting to WebSocket: ${wsUrl}`);
   
-  socket.onmessage = (event) => {
-    try {
-      const message = JSON.parse(event.data) as ServerMessage;
-      listeners.forEach(listener => listener(message));
-    } catch (error) {
-      console.error('Failed to parse WebSocket message:', error);
-    }
-  };
-  
-  socket.onclose = () => {
-    console.log('WebSocket connection closed');
-    // Attempt to reconnect after a delay
-    setTimeout(() => {
-      socket = null;
-      connectWebSocket();
-    }, 3000);
-  };
-  
-  socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-  };
-  
-  return socket;
+  try {
+    socket = new WebSocket(wsUrl);
+    
+    socket.onopen = () => {
+      console.log('WebSocket connection established');
+      // Reset reconnect attempts on successful connection
+      reconnectAttempts = 0;
+      
+      // Notify all listeners about connection
+      document.dispatchEvent(new CustomEvent('websocket-connected'));
+    };
+    
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data) as ServerMessage;
+        console.log('Received WebSocket message:', message);
+        listeners.forEach(listener => listener(message));
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
+      }
+    };
+    
+    socket.onclose = (event) => {
+      console.log(`WebSocket connection closed: ${event.code} - ${event.reason}`);
+      document.dispatchEvent(new CustomEvent('websocket-disconnected'));
+      
+      // Only attempt to reconnect if we haven't reached the maximum number of attempts
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts++;
+        console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+        
+        setTimeout(() => {
+          socket = null;
+          connectWebSocket();
+        }, RECONNECT_DELAY);
+      } else {
+        console.error(`Maximum reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached.`);
+      }
+    };
+    
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    return socket;
+  } catch (error) {
+    console.error('Failed to create WebSocket connection:', error);
+    return null;
+  }
 }
 
 export function sendMessage(message: ClientMessage) {
+  console.log('Sending message:', message);
+  
   if (!socket || socket.readyState !== WebSocket.OPEN) {
+    console.log('Socket not open, attempting to connect before sending...');
     socket = connectWebSocket();
-    // Allow some time for the socket to connect
+    
+    // Wait for connection to establish before sending
     setTimeout(() => {
       if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log('Socket now open, sending delayed message');
         socket.send(JSON.stringify(message));
       } else {
-        console.error('WebSocket not connected, message not sent');
+        console.error('WebSocket still not connected, message not sent');
       }
-    }, 500);
+    }, 1000);
   } else {
+    // Socket is already open, send immediately
+    console.log('Socket open, sending message immediately');
     socket.send(JSON.stringify(message));
   }
 }
@@ -60,10 +98,15 @@ export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
   
-  const connect = useCallback(() => {
-    const ws = connectWebSocket();
+  useEffect(() => {
+    // Connect to WebSocket if not already connected
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      connectWebSocket();
+    }
     
-    ws.onopen = () => {
+    // Handle connection and disconnection events
+    const handleConnect = () => {
+      console.log('WebSocket connected event received');
       setIsConnected(true);
       toast({
         title: "Connected to game server",
@@ -71,7 +114,8 @@ export function useWebSocket() {
       });
     };
     
-    ws.onclose = () => {
+    const handleDisconnect = () => {
+      console.log('WebSocket disconnected event received');
       setIsConnected(false);
       toast({
         title: "Disconnected from game server",
@@ -80,17 +124,21 @@ export function useWebSocket() {
       });
     };
     
-    return ws;
-  }, [toast]);
-  
-  useEffect(() => {
-    const ws = connect();
+    // Check initial connection status
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      setIsConnected(true);
+    }
+    
+    // Add event listeners using custom events
+    document.addEventListener('websocket-connected', handleConnect);
+    document.addEventListener('websocket-disconnected', handleDisconnect);
     
     return () => {
-      // No need to close the socket since it's shared
-      // Just remove our specific listeners
+      // Clean up event listeners
+      document.removeEventListener('websocket-connected', handleConnect);
+      document.removeEventListener('websocket-disconnected', handleDisconnect);
     };
-  }, [connect]);
+  }, [toast]);
   
   const addMessageListener = useCallback((listener: (message: ServerMessage) => void) => {
     listeners.push(listener);
