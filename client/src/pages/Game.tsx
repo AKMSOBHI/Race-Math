@@ -15,8 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function Game() {
   const [_, navigate] = useLocation();
-  const [match] = useRoute<{ gameId: string }>('/game/:gameId');
-  const gameId = match?.params.gameId || '';
+  const [match, params] = useRoute<{ gameId: string }>('/game/:gameId');
+  const gameId = match && params ? params.gameId : '';
   const { toast } = useToast();
   
   const { 
@@ -108,19 +108,29 @@ export default function Game() {
   
   if (!currentGame || !currentQuestion || !currentPlayer) {
     return (
-      <div className="min-h-screen w-full font-nunito text-white bg-gradient-to-b from-deep-blue to-ocean-blue flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-xl">Loading game...</p>
+      <div className="min-h-screen w-full text-white flex items-center justify-center">
+        <div className="space-bg">
+          <div className="stars"></div>
+          <div className="planet planet-1"></div>
+          <div className="planet planet-2"></div>
+        </div>
+        <div className="text-center z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
+          <p className="text-xl space-title">Preparing mission control...</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen w-full overflow-hidden font-nunito text-white relative bg-gradient-to-b from-deep-blue to-ocean-blue">
-      {/* Ocean background */}
-      <div className="ocean-bg"></div>
+    <div className="min-h-screen w-full overflow-hidden text-white relative">
+      {/* Space background */}
+      <div className="space-bg">
+        <div className="stars"></div>
+        <div className="planet planet-1"></div>
+        <div className="planet planet-2"></div>
+        <div className="planet planet-3"></div>
+      </div>
       
       {/* Navigation */}
       <NavigationBar />
@@ -130,41 +140,42 @@ export default function Game() {
         {/* Game Header */}
         <div className="flex flex-wrap justify-between items-center mb-6 px-3">
           <div className="w-full md:w-auto mb-4 md:mb-0">
-            <div className="bg-deep-blue bg-opacity-70 rounded-lg p-3 shadow-lg">
-              <p className="text-lg font-semibold">
-                Stage: <span className="text-coral">{formatStageName(currentGame.stage)}</span>
+            <div className="space-container rounded-lg p-3 shadow-lg">
+              <p className="text-lg font-semibold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                Mission: <span style={{ color: 'var(--space-bright)' }}>{formatStageName(currentGame.stage)}</span>
               </p>
               <p className="text-sm">
-                Question <span>{currentGame.currentQuestionIndex + 1}</span> of {currentGame.questions.length}
+                Equation <span>{currentGame.currentQuestionIndex + 1}</span> of {currentGame.questions.length}
               </p>
             </div>
           </div>
           
           <div className="w-full md:w-2/3">
-            <div className="bg-deep-blue bg-opacity-70 rounded-lg p-2 shadow-lg">
-              <p className="text-center mb-1 text-sm">Time Remaining</p>
+            <div className="space-container rounded-lg p-2 shadow-lg">
+              <p className="text-center mb-1 text-sm">Oxygen Remaining</p>
               <Timer />
             </div>
           </div>
           
           <div className="w-full md:w-auto mt-4 md:mt-0">
-            <div className="bg-deep-blue bg-opacity-70 rounded-lg p-3 shadow-lg">
-              <p className="text-lg font-semibold">
-                Your Score: <span className="text-seaweed">{currentPlayer.score}</span>
+            <div className="space-container rounded-lg p-3 shadow-lg">
+              <p className="text-lg font-semibold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                Score: <span style={{ color: 'var(--space-bright)' }}>{currentPlayer.score}</span>
               </p>
               <p className="text-sm">
-                Attempts left: <span>{currentPlayer.attemptsLeft}</span>
+                Shields: <span>{currentPlayer.attemptsLeft}</span>
               </p>
             </div>
           </div>
         </div>
         
         {/* Game Area */}
-        <div className="relative h-3/4 w-full overflow-hidden rounded-2xl border-4 border-ocean-blue bg-deep-blue bg-opacity-40 shadow-2xl">
-          {/* Octopus */}
+        <div className="relative h-3/4 w-full overflow-hidden rounded-2xl border-2 border-purple-500 bg-black bg-opacity-40 shadow-2xl"
+             style={{ background: 'rgba(36, 0, 70, 0.3)', backdropFilter: 'blur(5px)' }}>
+          {/* Space character (was Octopus) */}
           <Octopus mood={octopusMood} />
           
-          {/* Question Bubbles */}
+          {/* Math Asteroids (previously Bubbles) */}
           {answers.map((answer, index) => (
             <Bubble
               key={index}
@@ -178,10 +189,12 @@ export default function Game() {
         
         {/* Player Scoreboard */}
         {currentGame.isMultiplayer && (
-          <PlayerScoreboard 
-            players={currentGame.players} 
-            currentPlayerId={currentUser?.id} 
-          />
+          <div className="mt-4 space-container p-3 rounded-lg">
+            <PlayerScoreboard 
+              players={currentGame.players} 
+              currentPlayerId={currentUser?.id} 
+            />
+          </div>
         )}
       </div>
       

@@ -45,28 +45,49 @@ const StageCompleteModal: FC = () => {
   const score = currentPlayer?.score || 0;
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white text-deep-blue rounded-xl p-6 max-w-md w-full mx-4 text-center">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div className="space-container rounded-xl p-6 max-w-md w-full mx-4 text-center">
         <div className="mb-4">
-          <div className="w-24 h-24 bg-seaweed rounded-full flex items-center justify-center mx-auto">
-            <i className="fas fa-trophy text-white text-5xl"></i>
+          <div 
+            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto"
+            style={{
+              background: 'linear-gradient(45deg, #ffd700, var(--space-bright))',
+              boxShadow: '0 0 30px #ffd700',
+              border: '2px solid #ffd700'
+            }}
+          >
+            <i className="fas fa-star text-white text-5xl"></i>
           </div>
         </div>
-        <h2 className="text-3xl font-bubblegum mb-2">Stage Complete!</h2>
+        <h2 className="text-3xl space-title mb-2" style={{ color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
+          Mission Complete!
+        </h2>
         <p className="text-xl mb-6">
-          You scored <span className="font-bold">{score}/{maxPossibleScore}</span> points
+          Total score: <span className="font-bold text-yellow-300">{score}</span> / {maxPossibleScore}
         </p>
         
-        <div className="bg-gray-100 p-4 rounded-lg mb-6">
-          <h3 className="font-bold mb-2">Next Stage:</h3>
-          <p className="text-2xl font-bubblegum text-ocean-blue">{nextStageName}</p>
+        <div 
+          className="p-4 rounded-lg mb-6"
+          style={{
+            background: 'rgba(123, 44, 191, 0.3)',
+            border: '1px solid var(--space-purple)',
+            boxShadow: '0 0 15px rgba(123, 44, 191, 0.4)'
+          }}
+        >
+          <h3 className="font-bold mb-2 text-purple-300">Next Mission:</h3>
+          <p className="text-2xl space-title text-white">{nextStageName}</p>
         </div>
         
         <button 
-          className="bg-seaweed text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-90 transition"
+          className="space-button text-white font-bold py-3 px-6 rounded-lg transition"
           onClick={handleNextStage}
+          style={{
+            background: 'linear-gradient(45deg, #ffd700, var(--space-bright))',
+            boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)'
+          }}
         >
-          Continue to Next Stage
+          <i className="fas fa-rocket mr-2"></i>
+          Launch Next Mission
         </button>
       </div>
     </div>

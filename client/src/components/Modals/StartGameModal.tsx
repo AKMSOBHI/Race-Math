@@ -129,88 +129,113 @@ const StartGameModal: FC = () => {
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="bg-white text-deep-blue rounded-xl p-6 max-w-md w-full mx-4">
-        <h2 className="text-3xl font-bubblegum text-center mb-6">Math Bubbles</h2>
+      <div className="space-container rounded-xl p-6 max-w-md w-full mx-4">
+        <h2 className="text-3xl space-title text-center mb-6">Math Quest</h2>
         
         {/* Connection Status */}
         {!isConnected && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-center">
-            Connecting to game server... Please wait.
+          <div className="mb-4 p-3 bg-purple-900 bg-opacity-50 border border-pink-500 text-pink-200 rounded-lg text-center">
+            Establishing connection to mission control... Please wait.
           </div>
         )}
         
         <div className="mb-6">
-          <h3 className="text-xl font-bold mb-3">Select Game Mode:</h3>
+          <h3 className="text-xl text-purple-300 font-bold mb-3">Select Mission Type:</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button 
               className={`${
                 gameMode === 'single' 
-                  ? 'bg-ocean-blue ring-4 ring-ocean-blue' 
-                  : 'bg-ocean-blue bg-opacity-80'
+                  ? 'bg-space-purple ring-2 ring-space-bright' 
+                  : 'bg-purple-900 bg-opacity-80'
               } text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center`}
               onClick={() => setGameMode('single')}
               disabled={!isConnected}
+              style={{
+                background: gameMode === 'single' 
+                  ? 'linear-gradient(45deg, var(--space-purple), var(--space-blue))' 
+                  : 'rgba(91, 33, 182, 0.8)'
+              }}
             >
-              <i className="fas fa-user text-2xl mb-2"></i>
-              Single Player
+              <i className="fas fa-user-astronaut text-2xl mb-2"></i>
+              Solo Mission
             </button>
             <button 
               className={`${
                 gameMode === 'multi' 
-                  ? 'bg-coral ring-4 ring-coral' 
-                  : 'bg-coral bg-opacity-80'
+                  ? 'ring-2 ring-space-bright' 
+                  : 'bg-opacity-80'
               } text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center`}
               onClick={() => setGameMode('multi')}
               disabled={!isConnected}
+              style={{
+                background: gameMode === 'multi' 
+                  ? 'linear-gradient(45deg, var(--space-pink), var(--space-purple))' 
+                  : 'rgba(219, 39, 119, 0.8)'
+              }}
             >
               <i className="fas fa-users text-2xl mb-2"></i>
-              Multiplayer
+              Team Mission
             </button>
           </div>
         </div>
         
         <div className="mb-6">
-          <h3 className="text-xl font-bold mb-3">Choose Difficulty:</h3>
+          <h3 className="text-xl text-purple-300 font-bold mb-3">Mission Difficulty:</h3>
           <div className="flex space-x-2">
             <button 
               className={`flex-1 py-2 rounded-lg ${
                 difficulty === 'easy' 
-                  ? 'bg-green-100 border-2 border-green-500 font-bold text-green-700' 
-                  : 'bg-gray-100 border-2 border-gray-300 font-bold text-gray-700'
+                  ? 'border-2 font-bold' 
+                  : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
               }`}
               onClick={() => setDifficulty('easy')}
+              style={{
+                backgroundColor: difficulty === 'easy' ? 'rgba(0, 245, 212, 0.2)' : '',
+                borderColor: difficulty === 'easy' ? 'var(--space-bright)' : '',
+                color: difficulty === 'easy' ? 'var(--space-bright)' : ''
+              }}
             >
-              Easy
+              Cadet
             </button>
             <button 
               className={`flex-1 py-2 rounded-lg ${
                 difficulty === 'medium' 
-                  ? 'bg-yellow-100 border-2 border-yellow-500 font-bold text-yellow-700' 
-                  : 'bg-gray-100 border-2 border-gray-300 font-bold text-gray-700'
+                  ? 'border-2 font-bold' 
+                  : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
               }`}
               onClick={() => setDifficulty('medium')}
+              style={{
+                backgroundColor: difficulty === 'medium' ? 'rgba(123, 44, 191, 0.2)' : '',
+                borderColor: difficulty === 'medium' ? 'var(--space-purple)' : '',
+                color: difficulty === 'medium' ? 'var(--space-purple)' : ''
+              }}
             >
-              Medium
+              Officer
             </button>
             <button 
               className={`flex-1 py-2 rounded-lg ${
                 difficulty === 'hard' 
-                  ? 'bg-red-100 border-2 border-red-500 font-bold text-red-700' 
-                  : 'bg-gray-100 border-2 border-gray-300 font-bold text-gray-700'
+                  ? 'border-2 font-bold' 
+                  : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
               }`}
               onClick={() => setDifficulty('hard')}
+              style={{
+                backgroundColor: difficulty === 'hard' ? 'rgba(229, 0, 164, 0.2)' : '',
+                borderColor: difficulty === 'hard' ? 'var(--space-pink)' : '',
+                color: difficulty === 'hard' ? 'var(--space-pink)' : ''
+              }}
             >
-              Hard
+              Captain
             </button>
           </div>
         </div>
         
         <div className="mb-6">
-          <h3 className="text-xl font-bold mb-3">Your Name:</h3>
+          <h3 className="text-xl text-purple-300 font-bold mb-3">Astronaut Name:</h3>
           <Input 
             type="text" 
-            placeholder="Enter your name" 
-            className="w-full p-3 border-2 border-ocean-blue rounded-lg"
+            placeholder="Enter your code name" 
+            className="w-full p-3 bg-gray-900 border-2 border-purple-500 rounded-lg text-white"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             disabled={!isConnected}
@@ -218,11 +243,13 @@ const StartGameModal: FC = () => {
         </div>
         
         <button 
-          className={`w-full ${
-            !isButtonDisabled ? 'bg-seaweed' : 'bg-gray-400'
-          } text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition text-xl flex items-center justify-center`}
+          className="w-full space-button py-3 px-4 rounded-lg transition text-xl flex items-center justify-center"
           onClick={handleStartGame}
           disabled={isButtonDisabled}
+          style={{
+            opacity: isButtonDisabled ? 0.6 : 1,
+            cursor: isButtonDisabled ? 'not-allowed' : 'pointer'
+          }}
         >
           {isProcessing || isLoading ? (
             <>
@@ -230,10 +257,13 @@ const StartGameModal: FC = () => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Starting...
+              Initiating Launch Sequence...
             </>
           ) : (
-            "Start Game"
+            <>
+              <i className="fas fa-rocket mr-2"></i>
+              Launch Mission
+            </>
           )}
         </button>
       </div>

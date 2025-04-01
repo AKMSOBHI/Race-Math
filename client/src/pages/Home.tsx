@@ -80,44 +80,49 @@ export default function Home() {
   }, [isConnected, currentUser, currentGame, showStartModal]);
   
   return (
-    <div className="min-h-screen w-full overflow-hidden font-nunito text-white relative bg-gradient-to-b from-deep-blue to-ocean-blue">
-      {/* Ocean background */}
-      <div className="ocean-bg"></div>
+    <div className="min-h-screen w-full overflow-hidden text-white relative">
+      {/* Space background */}
+      <div className="space-bg">
+        <div className="stars"></div>
+        <div className="planet planet-1"></div>
+        <div className="planet planet-2"></div>
+        <div className="planet planet-3"></div>
+      </div>
       
       {/* Main content */}
       <div className="container mx-auto px-4 py-6 flex flex-col items-center justify-center min-h-screen relative z-10">
         <div className="text-center mb-12">
-          <h1 className="font-bubblegum text-5xl md:text-7xl mb-4">
-            <span className="text-ocean-blue">Math</span>
-            <span className="text-coral">Bubbles</span>
+          <h1 className="space-title text-5xl md:text-7xl mb-4">
+            <span className="text-purple-400">Math</span>
+            <span className="text-pink-500">Quest</span>
           </h1>
           <p className="text-xl md:text-2xl text-white">
-            Learn mathematics in a fun, underwater adventure!
+            Solve equations and conquer the galaxy!
           </p>
         </div>
         
-        <div className="bg-deep-blue bg-opacity-70 p-8 rounded-xl shadow-2xl max-w-md w-full">
-          <h2 className="text-2xl font-bubblegum mb-6 text-center">Ready to play?</h2>
+        <div className="space-container p-8 rounded-xl max-w-md w-full">
+          <h2 className="text-2xl space-title mb-6 text-center">Ready for launch?</h2>
           
           <button 
-            className="w-full bg-coral hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
+            className="w-full space-button hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
             onClick={() => setShowStartModal(true)}
             disabled={!currentUser || !isConnected}
           >
             {!isConnected ? (
-              <>Connecting to server...</>
+              <>Establishing connection...</>
             ) : !currentUser ? (
-              <>Creating guest account...</>
+              <>Creating space identity...</>
             ) : (
               <>
-                <i className="fas fa-play mr-2"></i>
-                Start Game
+                <i className="fas fa-rocket mr-2"></i>
+                Launch Mission
               </>
             )}
           </button>
           
           <div className="mt-6 text-center text-sm text-white text-opacity-80">
-            Play solo or challenge your friends in our multiplayer mode!
+            Explore solo or team up with fellow astronauts in multiplayer mode!
           </div>
         </div>
       </div>

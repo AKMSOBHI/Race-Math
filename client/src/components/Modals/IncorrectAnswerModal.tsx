@@ -20,23 +20,38 @@ const IncorrectAnswerModal: FC = () => {
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white text-deep-blue rounded-xl p-6 max-w-md w-full mx-4 text-center">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+      <div className="space-container rounded-xl p-6 max-w-md w-full mx-4 text-center">
         <div className="mb-4">
-          <div className="w-24 h-24 bg-coral rounded-full flex items-center justify-center mx-auto">
-            <i className="fas fa-times text-white text-5xl"></i>
+          <div 
+            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto"
+            style={{
+              background: 'linear-gradient(45deg, var(--space-pink), #ff0066)',
+              boxShadow: '0 0 30px var(--space-pink)',
+              border: '2px solid var(--space-pink)'
+            }}
+          >
+            <i className="fas fa-exclamation-triangle text-white text-4xl"></i>
           </div>
         </div>
-        <h2 className="text-3xl font-bubblegum mb-2">Try Again!</h2>
+        <h2 className="text-3xl space-title mb-2" style={{ color: 'var(--space-pink)' }}>
+          Calculation Error!
+        </h2>
         <p className="text-xl mb-4">
-          You have <span className="font-bold">{attemptsLeft}</span> 
-          {attemptsLeft === 1 ? ' attempt' : ' attempts'} left
+          Shield integrity: <span className="font-bold text-pink-300">{attemptsLeft}</span> 
+          {attemptsLeft === 1 ? ' point' : ' points'} remaining
         </p>
         <button 
-          className="bg-ocean-blue text-white font-bold py-3 px-6 rounded-lg hover:bg-opacity-90 transition"
+          className="font-bold py-3 px-6 rounded-lg transition"
           onClick={handleContinue}
+          style={{
+            background: 'linear-gradient(45deg, #ff0066, var(--space-pink))',
+            boxShadow: '0 0 15px rgba(229, 0, 164, 0.5)',
+            fontFamily: 'Orbitron, sans-serif'
+          }}
         >
-          Try Again
+          <i className="fas fa-sync-alt mr-2"></i>
+          Recalculate
         </button>
       </div>
     </div>

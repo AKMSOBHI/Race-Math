@@ -11,15 +11,31 @@ interface BubbleProps {
 const Bubble: FC<BubbleProps> = ({ text, isQuestion = false, position, onClick }) => {
   const animationClass = getRandomAnimationDelay();
   
+  // Generate random rotation for asteroids
+  const rotation = Math.floor(Math.random() * 360);
+  
   return (
     <div 
-      className={`bubble absolute w-32 h-32 md:w-36 md:h-36 flex items-center justify-center text-center p-2 ${animationClass} cursor-pointer`}
-      style={{ top: position.top, left: position.left }}
+      className={`math-bubble absolute flex items-center justify-center text-center p-2 ${animationClass} cursor-pointer rounded-full shadow-lg transform hover:scale-110 transition-all`}
+      style={{ 
+        top: position.top, 
+        left: position.left,
+        width: isQuestion ? '150px' : '110px',
+        height: isQuestion ? '150px' : '110px',
+        transform: isQuestion ? `scale(1.1)` : `rotate(${rotation}deg)`,
+        animation: `${animationClass} ${isQuestion ? '15s' : '12s'} ease-in-out infinite`
+      }}
       onClick={onClick}
     >
-      <div className="font-bold text-deep-blue">
-        <span className="text-xl md:text-2xl">{text}</span>
-      </div>
+      {isQuestion ? (
+        <div className="font-bold text-white">
+          <span className="text-xl md:text-2xl">{text}</span>
+        </div>
+      ) : (
+        <div className="font-bold text-white">
+          <span className="text-xl md:text-2xl">{text}</span>
+        </div>
+      )}
     </div>
   );
 };
