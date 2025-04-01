@@ -78,12 +78,21 @@ export default function Game() {
   // Generate bubble positions when question changes
   useEffect(() => {
     if (currentQuestion) {
-      // Generate 4 unique positions for the bubbles
+      // Generate positions for the bubbles (question + 3 answers = 4 total)
       const positions = [];
       for (let i = 0; i < 4; i++) {
         positions.push(getRandomBubblePosition());
       }
+      
+      // Make sure we always have enough positions even if the array is not filled
+      while (positions.length < 4) {
+        positions.push({ top: '50%', left: '50%' });
+      }
+      
       setBubblePositions(positions);
+      
+      // Debug
+      console.log('Generated bubble positions:', positions);
     }
   }, [currentQuestion]);
   
@@ -176,15 +185,22 @@ export default function Game() {
           <Octopus mood={octopusMood} />
           
           {/* Math Asteroids (previously Bubbles) */}
-          {answers.map((answer, index) => (
-            <Bubble
-              key={index}
-              text={index === 0 ? currentQuestion.text : answer.toString()}
-              isQuestion={index === 0}
-              position={bubblePositions[index]}
-              onClick={() => index === 0 ? null : handleAnswerSubmit(answer)}
-            />
-          ))}
+          {bubblePositions.length > 0 && answers.map((answer, index) => {
+            // Safe guard against out of bounds index access
+            const position = index < bubblePositions.length 
+              ? bubblePositions[index] 
+              : { top: `${30 + (index * 10)}%`, left: `${30 + (index * 15)}%` };
+            
+            return (
+              <Bubble
+                key={index}
+                text={index === 0 ? currentQuestion.text : answer.toString()}
+                isQuestion={index === 0}
+                position={position}
+                onClick={() => index === 0 ? null : handleAnswerSubmit(answer)}
+              />
+            );
+          })}
         </div>
         
         {/* Player Scoreboard */}
