@@ -38,8 +38,10 @@ const Bubble: FC<BubbleProps> = ({ text, isQuestion = false, position, onClick }
       style={{ 
         top, 
         left,
-        width: isQuestion ? '150px' : '110px',
-        height: isQuestion ? '150px' : '110px',
+        width: isQuestion ? 'calc(130px + 2vmin)' : 'calc(90px + 2vmin)',
+        height: isQuestion ? 'calc(130px + 2vmin)' : 'calc(90px + 2vmin)',
+        maxWidth: isQuestion ? '150px' : '110px',
+        maxHeight: isQuestion ? '150px' : '110px',
         transform: isQuestion ? `scale(1.1)` : `rotate(${rotation}deg)`,
         animation: `${animationClass} ${isQuestion ? '15s' : '12s'} ease-in-out infinite`,
         ...bubbleStyles
@@ -47,7 +49,7 @@ const Bubble: FC<BubbleProps> = ({ text, isQuestion = false, position, onClick }
       onClick={onClick}
     >
       <div className="font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-        <span className="text-xl md:text-2xl">{text}</span>
+        <span className="text-sm sm:text-lg md:text-xl">{text}</span>
       </div>
     </div>
   );

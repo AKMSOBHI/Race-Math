@@ -24,6 +24,7 @@
     background-color: #0a0a22;
     font-family: 'Space Mono', monospace;
     overflow-x: hidden;
+    height: 100%;
   }
 }
 
@@ -42,6 +43,7 @@
     background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
     overflow: hidden;
     z-index: 0;
+    min-height: 100vh;
   }
   
   .stars {

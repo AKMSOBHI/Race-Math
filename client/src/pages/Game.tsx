@@ -132,7 +132,7 @@ export default function Game() {
   }
   
   return (
-    <div className="min-h-screen w-full overflow-hidden text-white relative">
+    <div className="min-h-screen w-full text-white relative pb-20 overflow-auto">
       {/* Space background */}
       <div className="space-bg">
         <div className="stars"></div>
@@ -145,7 +145,7 @@ export default function Game() {
       <NavigationBar />
       
       {/* Main game container */}
-      <div className="container mx-auto px-4 py-6 relative h-screen">
+      <div className="container mx-auto px-4 py-6 relative pb-24">
         {/* Game Header */}
         <div className="flex flex-wrap justify-between items-center mb-6 px-3">
           <div className="w-full md:w-auto mb-4 md:mb-0">
@@ -179,7 +179,7 @@ export default function Game() {
         </div>
         
         {/* Game Area */}
-        <div className="relative h-3/4 w-full overflow-hidden rounded-2xl border-2 border-purple-500 bg-black bg-opacity-40 shadow-2xl"
+        <div className="relative h-[400px] md:h-[500px] w-full overflow-hidden rounded-2xl border-2 border-purple-500 bg-black bg-opacity-40 shadow-2xl my-4"
              style={{ background: 'rgba(36, 0, 70, 0.3)', backdropFilter: 'blur(5px)' }}>
           {/* Space character (was Octopus) */}
           <Octopus mood={octopusMood} />
