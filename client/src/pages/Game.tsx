@@ -178,29 +178,63 @@ export default function Game() {
           </div>
         </div>
         
-        {/* Game Area */}
-        <div className="relative h-[400px] md:h-[500px] w-full overflow-hidden rounded-2xl border-2 border-purple-500 bg-black bg-opacity-40 shadow-2xl my-4"
-             style={{ background: 'rgba(36, 0, 70, 0.3)', backdropFilter: 'blur(5px)' }}>
-          {/* Space character (was Octopus) */}
-          <Octopus mood={octopusMood} />
+        {/* Game Area - New Layout */}
+        <div className="flex flex-col space-y-4">
+          {/* Question Section */}
+          <div className="w-full p-4 space-container rounded-xl shadow-lg text-center">
+            <h3 className="text-lg md:text-xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              أجب على السؤال التالي:
+            </h3>
+            <div 
+              className="text-xl md:text-3xl font-bold p-5 rounded-lg flex justify-center items-center"
+              style={{
+                background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.8), rgba(58, 12, 163, 0.8))',
+                border: '2px solid var(--space-bright)',
+                boxShadow: '0 0 15px rgba(0, 245, 212, 0.5)',
+                minHeight: '80px'
+              }}
+            >
+              {currentQuestion.text}
+            </div>
+          </div>
           
-          {/* Math Asteroids (previously Bubbles) */}
-          {bubblePositions.length > 0 && answers.map((answer, index) => {
-            // Safe guard against out of bounds index access
-            const position = index < bubblePositions.length 
-              ? bubblePositions[index] 
-              : { top: `${30 + (index * 10)}%`, left: `${30 + (index * 15)}%` };
-            
-            return (
-              <Bubble
+          {/* Character Section */}
+          <div className="relative h-[150px] md:h-[200px] w-full overflow-hidden">
+            <Octopus mood={octopusMood} />
+          </div>
+          
+          {/* Answer Options Section */}
+          <div className="grid grid-cols-2 gap-4 w-full">
+            {answers.slice(0, 4).map((answer, index) => (
+              index > 0 && 
+              <button
                 key={index}
-                text={index === 0 ? currentQuestion.text : answer.toString()}
-                isQuestion={index === 0}
-                position={position}
-                onClick={() => index === 0 ? null : handleAnswerSubmit(answer)}
-              />
-            );
-          })}
+                className="answer-bubble p-5 rounded-xl font-bold text-lg md:text-2xl transition-all transform hover:scale-105 relative"
+                style={{
+                  background: 'linear-gradient(45deg, rgba(123, 44, 191, 0.8), rgba(36, 0, 70, 0.8))',
+                  border: '2px solid var(--space-bright)',
+                  boxShadow: '0 0 15px var(--space-bright)',
+                  fontFamily: 'Orbitron, sans-serif',
+                  minHeight: '70px'
+                }}
+                onClick={() => handleAnswerSubmit(answer)}
+              >
+                {/* Circle with answer number */}
+                <div 
+                  className="absolute -top-2 -left-2 w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{
+                    background: 'var(--space-pink)',
+                    border: '1px solid var(--space-bright)',
+                    boxShadow: '0 0 8px var(--space-bright)',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  {index}
+                </div>
+                {answer.toString()}
+              </button>
+            ))}
+          </div>
         </div>
         
         {/* Player Scoreboard */}

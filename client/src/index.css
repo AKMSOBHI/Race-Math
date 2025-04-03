@@ -156,4 +156,41 @@
     border: 1px solid var(--space-bright);
     box-shadow: 0 0 20px rgba(0, 245, 212, 0.3);
   }
+  
+  /* Robot face styles */
+  .mask-happy {
+    border-radius: 0 0 100px 100px;
+  }
+  
+  .mask-sad {
+    border-radius: 100px 100px 0 0;
+  }
+  
+  /* Animation for the robot parts */
+  @keyframes blink {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.1); }
+  }
+  
+  .eye {
+    animation: blink 3s infinite;
+  }
+  
+  .antenna-ball {
+    animation: pulse 2s infinite alternate;
+  }
+  
+  /* Styles for answer bubbles */
+  .answer-bubble {
+    transition: all 0.3s ease;
+  }
+  
+  .answer-bubble:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px var(--space-bright);
+  }
+  
+  .answer-bubble:active {
+    transform: scale(0.98);
+  }
 }
