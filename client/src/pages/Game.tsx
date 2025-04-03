@@ -19,6 +19,14 @@ export default function Game() {
   const gameId = match && params ? params.gameId : '';
   const { toast } = useToast();
   
+  // مترجم للمراحل
+  const stageTranslation: Record<string, string> = {
+    'ADDITION': 'الجمع',
+    'SUBTRACTION': 'الطرح',
+    'MULTIPLICATION': 'الضرب',
+    'DIVISION': 'القسمة'
+  };
+  
   const { 
     currentGame, 
     currentUser,
@@ -145,53 +153,60 @@ export default function Game() {
       <NavigationBar />
       
       {/* Main game container */}
-      <div className="container mx-auto px-4 py-6 relative pb-24">
+      <div className="container mx-auto px-3 py-4 relative pb-16">
         {/* Game Header */}
-        <div className="flex flex-wrap justify-between items-center mb-6 px-3">
-          <div className="w-full md:w-auto mb-4 md:mb-0">
-            <div className="space-container rounded-lg p-3 shadow-lg">
-              <p className="text-lg font-semibold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                Mission: <span style={{ color: 'var(--space-bright)' }}>{formatStageName(currentGame.stage)}</span>
-              </p>
-              <p className="text-sm">
-                Equation <span>{currentGame.currentQuestionIndex + 1}</span> of {currentGame.questions.length}
-              </p>
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center space-x-2">
+            <div className="game-stage-indicator p-2 rounded-lg font-bold text-xs md:text-sm" 
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
+                border: '2px solid var(--space-bright)',
+                boxShadow: '0 0 10px var(--space-bright)',
+                fontFamily: 'Orbitron, sans-serif'
+              }}>
+              المرحلة: {stageTranslation[currentGame.stage]}
+            </div>
+            <div className="game-progress p-2 rounded-lg font-bold text-xs md:text-sm flex items-center space-x-1"
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
+                border: '2px solid var(--space-bright)',
+                boxShadow: '0 0 10px var(--space-bright)',
+                fontFamily: 'Orbitron, sans-serif',
+                direction: 'ltr'
+              }}>
+              <span className="block">{currentGame.currentQuestionIndex + 1}/{currentGame.questions.length}</span>
             </div>
           </div>
           
-          <div className="w-full md:w-2/3">
-            <div className="space-container rounded-lg p-2 shadow-lg">
-              <p className="text-center mb-1 text-sm">Oxygen Remaining</p>
-              <Timer />
-            </div>
-          </div>
-          
-          <div className="w-full md:w-auto mt-4 md:mt-0">
-            <div className="space-container rounded-lg p-3 shadow-lg">
-              <p className="text-lg font-semibold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                Score: <span style={{ color: 'var(--space-bright)' }}>{currentPlayer.score}</span>
-              </p>
-              <p className="text-sm">
-                Shields: <span>{currentPlayer.attemptsLeft}</span>
-              </p>
-            </div>
+          <div className="game-score p-2 rounded-lg font-bold text-xs md:text-sm"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
+              border: '2px solid var(--space-bright)',
+              boxShadow: '0 0 10px var(--space-bright)',
+              fontFamily: 'Orbitron, sans-serif'
+            }}>
+            النقاط: {currentPlayer?.score}
           </div>
         </div>
         
         {/* Game Area - New Layout */}
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col space-y-3 bg-gradient-to-br from-purple-900/50 to-indigo-900/50 rounded-2xl p-3" 
+          style={{ 
+            border: '3px solid var(--space-bright)',
+            boxShadow: '0 0 15px rgba(0, 245, 212, 0.4)',
+          }}>
           {/* Question Section */}
-          <div className="w-full p-4 space-container rounded-xl shadow-lg text-center">
-            <h3 className="text-lg md:text-xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          <div className="w-full p-3 rounded-xl text-center">
+            <h3 className="text-md md:text-lg font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
               أجب على السؤال التالي:
             </h3>
             <div 
-              className="text-xl md:text-3xl font-bold p-5 rounded-lg flex justify-center items-center"
+              className="text-xl md:text-3xl font-bold p-4 rounded-xl flex justify-center items-center"
               style={{
-                background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.8), rgba(58, 12, 163, 0.8))',
+                background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(58, 12, 163, 0.9))',
                 border: '2px solid var(--space-bright)',
-                boxShadow: '0 0 15px rgba(0, 245, 212, 0.5)',
-                minHeight: '80px'
+                boxShadow: '0 0 12px rgba(0, 245, 212, 0.5)',
+                minHeight: '65px'
               }}
             >
               {currentQuestion.text}
@@ -199,34 +214,33 @@ export default function Game() {
           </div>
           
           {/* Character Section */}
-          <div className="relative h-[150px] md:h-[200px] w-full overflow-hidden">
+          <div className="relative h-[130px] md:h-[160px] w-full overflow-hidden">
             <Octopus mood={octopusMood} />
           </div>
           
           {/* Answer Options Section */}
-          <div className="grid grid-cols-2 gap-4 w-full">
+          <div className="grid grid-cols-2 gap-3 w-full">
             {answers.slice(0, 4).map((answer, index) => (
               index > 0 && 
               <button
                 key={index}
-                className="answer-bubble p-5 rounded-xl font-bold text-lg md:text-2xl transition-all transform hover:scale-105 relative"
+                className="answer-bubble p-4 rounded-xl font-bold text-lg md:text-xl transition-all transform hover:scale-105 relative"
                 style={{
-                  background: 'linear-gradient(45deg, rgba(123, 44, 191, 0.8), rgba(36, 0, 70, 0.8))',
+                  background: 'linear-gradient(45deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
                   border: '2px solid var(--space-bright)',
-                  boxShadow: '0 0 15px var(--space-bright)',
+                  boxShadow: '0 0 10px var(--space-bright)',
                   fontFamily: 'Orbitron, sans-serif',
-                  minHeight: '70px'
+                  minHeight: '55px'
                 }}
                 onClick={() => handleAnswerSubmit(answer)}
               >
                 {/* Circle with answer number */}
                 <div 
-                  className="absolute -top-2 -left-2 w-8 h-8 rounded-full flex items-center justify-center"
+                  className="absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-sm"
                   style={{
                     background: 'var(--space-pink)',
                     border: '1px solid var(--space-bright)',
-                    boxShadow: '0 0 8px var(--space-bright)',
-                    fontSize: '0.9rem'
+                    boxShadow: '0 0 8px var(--space-bright)'
                   }}
                 >
                   {index}

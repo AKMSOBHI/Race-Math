@@ -21,37 +21,44 @@ const IncorrectAnswerModal: FC = () => {
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="space-container rounded-xl p-6 max-w-md w-full mx-4 text-center">
+      <div 
+        className="rounded-xl p-5 max-w-md w-full mx-4 text-center"
+        style={{
+          background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.9), rgba(76, 29, 149, 0.9))',
+          border: '3px solid var(--space-bright)',
+          boxShadow: '0 0 20px rgba(0, 245, 212, 0.7)'
+        }}
+      >
         <div className="mb-4">
           <div 
-            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto"
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
             style={{
-              background: 'linear-gradient(45deg, var(--space-pink), #ff0066)',
-              boxShadow: '0 0 30px var(--space-pink)',
-              border: '2px solid var(--space-pink)'
+              background: 'linear-gradient(45deg, #ef4444, #b91c1c)',
+              boxShadow: '0 0 20px #ef4444',
+              border: '2px solid #f87171'
             }}
           >
-            <i className="fas fa-exclamation-triangle text-white text-4xl"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </div>
         </div>
-        <h2 className="text-3xl space-title mb-2" style={{ color: 'var(--space-pink)' }}>
-          Calculation Error!
+        <h2 className="text-2xl font-bold mb-2 text-red-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          إجابة خاطئة!
         </h2>
-        <p className="text-xl mb-4">
-          Shield integrity: <span className="font-bold text-pink-300">{attemptsLeft}</span> 
-          {attemptsLeft === 1 ? ' point' : ' points'} remaining
+        <p className="text-lg mb-4">
+          محاولات متبقية: <span className="font-bold text-red-300">{attemptsLeft}</span>
         </p>
         <button 
-          className="font-bold py-3 px-6 rounded-lg transition"
+          className="font-bold py-3 px-6 rounded-lg transition w-full"
           onClick={handleContinue}
           style={{
-            background: 'linear-gradient(45deg, #ff0066, var(--space-pink))',
-            boxShadow: '0 0 15px rgba(229, 0, 164, 0.5)',
-            fontFamily: 'Orbitron, sans-serif'
+            background: 'linear-gradient(45deg, #ef4444, #b91c1c)',
+            border: '2px solid #f87171',
+            boxShadow: '0 0 15px rgba(239, 68, 68, 0.5)'
           }}
         >
-          <i className="fas fa-sync-alt mr-2"></i>
-          Recalculate
+          حاول مرة أخرى
         </button>
       </div>
     </div>

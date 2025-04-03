@@ -146,25 +146,45 @@ const StartGameModal: FC = () => {
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="space-container rounded-xl p-6 max-w-md w-full mx-4">
-        <h2 className="text-3xl space-title text-center mb-6">Math Quest</h2>
+      <div 
+        className="rounded-xl p-5 max-w-md w-full mx-4"
+        style={{
+          background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.9), rgba(76, 29, 149, 0.9))',
+          border: '3px solid var(--space-bright)',
+          boxShadow: '0 0 20px rgba(0, 245, 212, 0.7)'
+        }}
+      >
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center"
+            style={{
+              border: '2px solid var(--space-bright)',
+              boxShadow: '0 0 15px rgba(0, 245, 212, 0.6)',
+            }}
+          >
+            <span className="text-3xl font-bold">أ</span>
+          </div>
+        </div>
+        
+        <h2 className="text-2xl text-center mb-6 font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          لعبة الرياضيات
+        </h2>
         
         {/* Connection Status */}
         {!isConnected && (
-          <div className="mb-4 p-3 bg-purple-900 bg-opacity-50 border border-pink-500 text-pink-200 rounded-lg text-center">
-            Establishing connection to mission control... Please wait.
+          <div className="mb-4 p-3 bg-purple-900 bg-opacity-50 border border-pink-500 text-pink-200 rounded-lg text-center text-sm">
+            جارِ الاتصال بالخادم... الرجاء الانتظار.
           </div>
         )}
         
-        <div className="mb-6">
-          <h3 className="text-xl text-purple-300 font-bold mb-3">Select Mission Type:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mb-4">
+          <h3 className="text-lg text-white font-bold mb-3 text-right">اختر نوع اللعبة:</h3>
+          <div className="grid grid-cols-2 gap-3">
             <button 
               className={`${
                 gameMode === 'single' 
-                  ? 'bg-space-purple ring-2 ring-space-bright' 
-                  : 'bg-purple-900 bg-opacity-80'
-              } text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center`}
+                  ? 'ring-2 ring-space-bright' 
+                  : 'bg-opacity-80'
+              } text-white font-bold py-2 px-3 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center text-sm`}
               onClick={() => setGameMode('single')}
               disabled={!isConnected}
               style={{
@@ -173,15 +193,14 @@ const StartGameModal: FC = () => {
                   : 'rgba(91, 33, 182, 0.8)'
               }}
             >
-              <i className="fas fa-user-astronaut text-2xl mb-2"></i>
-              Solo Mission
+              لاعب واحد
             </button>
             <button 
               className={`${
                 gameMode === 'multi' 
                   ? 'ring-2 ring-space-bright' 
                   : 'bg-opacity-80'
-              } text-white font-bold py-3 px-4 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center`}
+              } text-white font-bold py-2 px-3 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center text-sm`}
               onClick={() => setGameMode('multi')}
               disabled={!isConnected}
               style={{
@@ -190,17 +209,16 @@ const StartGameModal: FC = () => {
                   : 'rgba(219, 39, 119, 0.8)'
               }}
             >
-              <i className="fas fa-users text-2xl mb-2"></i>
-              Team Mission
+              متعدد اللاعبين
             </button>
           </div>
         </div>
         
-        <div className="mb-6">
-          <h3 className="text-xl text-purple-300 font-bold mb-3">Mission Difficulty:</h3>
-          <div className="flex space-x-2">
+        <div className="mb-4">
+          <h3 className="text-lg text-white font-bold mb-3 text-right">مستوى الصعوبة:</h3>
+          <div className="flex space-x-2 rtl:space-x-reverse">
             <button 
-              className={`flex-1 py-2 rounded-lg ${
+              className={`flex-1 py-2 rounded-lg text-sm ${
                 difficulty === 'easy' 
                   ? 'border-2 font-bold' 
                   : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
@@ -212,10 +230,10 @@ const StartGameModal: FC = () => {
                 color: difficulty === 'easy' ? 'var(--space-bright)' : ''
               }}
             >
-              Cadet
+              سهل
             </button>
             <button 
-              className={`flex-1 py-2 rounded-lg ${
+              className={`flex-1 py-2 rounded-lg text-sm ${
                 difficulty === 'medium' 
                   ? 'border-2 font-bold' 
                   : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
@@ -227,10 +245,10 @@ const StartGameModal: FC = () => {
                 color: difficulty === 'medium' ? 'var(--space-purple)' : ''
               }}
             >
-              Officer
+              متوسط
             </button>
             <button 
-              className={`flex-1 py-2 rounded-lg ${
+              className={`flex-1 py-2 rounded-lg text-sm ${
                 difficulty === 'hard' 
                   ? 'border-2 font-bold' 
                   : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
@@ -242,17 +260,17 @@ const StartGameModal: FC = () => {
                 color: difficulty === 'hard' ? 'var(--space-pink)' : ''
               }}
             >
-              Captain
+              صعب
             </button>
           </div>
         </div>
         
-        <div className="mb-6">
-          <h3 className="text-xl text-purple-300 font-bold mb-3">Astronaut Name:</h3>
+        <div className="mb-5">
+          <h3 className="text-lg text-white font-bold mb-3 text-right">اسم اللاعب:</h3>
           <Input 
             type="text" 
-            placeholder="Enter your code name" 
-            className="w-full p-3 bg-gray-900 border-2 border-purple-500 rounded-lg text-white"
+            placeholder="أدخل اسمك هنا" 
+            className="w-full p-3 bg-gray-900 border-2 border-purple-500 rounded-lg text-white text-right"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             disabled={!isConnected}
@@ -260,10 +278,13 @@ const StartGameModal: FC = () => {
         </div>
         
         <button 
-          className="w-full space-button py-3 px-4 rounded-lg transition text-xl flex items-center justify-center"
+          className="w-full py-3 px-4 rounded-lg transition text-lg flex items-center justify-center"
           onClick={handleStartGame}
           disabled={isButtonDisabled}
           style={{
+            background: 'linear-gradient(45deg, var(--space-purple), var(--space-blue))',
+            border: '2px solid var(--space-bright)',
+            boxShadow: '0 0 15px rgba(0, 245, 212, 0.5)',
             opacity: isButtonDisabled ? 0.6 : 1,
             cursor: isButtonDisabled ? 'not-allowed' : 'pointer'
           }}
@@ -274,12 +295,11 @@ const StartGameModal: FC = () => {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Initiating Launch Sequence...
+              جارِ بدء اللعبة...
             </>
           ) : (
             <>
-              <i className="fas fa-rocket mr-2"></i>
-              Launch Mission
+              ابدأ اللعبة
             </>
           )}
         </button>

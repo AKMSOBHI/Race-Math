@@ -20,29 +20,44 @@ const CorrectAnswerModal: FC = () => {
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-      <div className="space-container rounded-xl p-6 max-w-md w-full mx-4 text-center">
+      <div 
+        className="rounded-xl p-5 max-w-md w-full mx-4 text-center"
+        style={{
+          background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.9), rgba(76, 29, 149, 0.9))',
+          border: '3px solid var(--space-bright)',
+          boxShadow: '0 0 20px rgba(0, 245, 212, 0.7)'
+        }}
+      >
         <div className="mb-4">
           <div 
-            className="w-24 h-24 rounded-full flex items-center justify-center mx-auto"
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
             style={{
-              background: 'linear-gradient(45deg, var(--space-bright), var(--space-purple))',
-              boxShadow: '0 0 30px var(--space-bright)',
-              border: '2px solid var(--space-bright)'
+              background: 'linear-gradient(45deg, #10b981, #059669)',
+              boxShadow: '0 0 20px #10b981',
+              border: '2px solid #34d399'
             }}
           >
-            <i className="fas fa-check text-white text-5xl"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
         </div>
-        <h2 className="text-3xl space-title mb-2">Mission Successful!</h2>
-        <p className="text-xl mb-4">
-          <span className="font-bold text-purple-300">{points}</span> points added to your score!
+        <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          إجابة صحيحة!
+        </h2>
+        <p className="text-lg mb-4">
+          تم إضافة <span className="font-bold text-green-300">{points}</span> نقطة إلى مجموعك!
         </p>
         <button 
-          className="space-button font-bold py-3 px-6 rounded-lg transition"
+          className="font-bold py-3 px-6 rounded-lg transition w-full"
           onClick={handleNextQuestion}
+          style={{
+            background: 'linear-gradient(45deg, var(--space-purple), var(--space-blue))',
+            border: '2px solid var(--space-bright)',
+            boxShadow: '0 0 15px rgba(0, 245, 212, 0.5)'
+          }}
         >
-          <i className="fas fa-arrow-right mr-2"></i>
-          Continue Mission
+          المتابعة
         </button>
       </div>
     </div>
