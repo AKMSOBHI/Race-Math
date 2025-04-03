@@ -10,8 +10,10 @@ import PlayerScoreboard from '@/components/GameUI/PlayerScoreboard';
 import CorrectAnswerModal from '@/components/Modals/CorrectAnswerModal';
 import IncorrectAnswerModal from '@/components/Modals/IncorrectAnswerModal';
 import StageCompleteModal from '@/components/Modals/StageCompleteModal';
+import GameOverModal from '@/components/Modals/GameOverModal';
 import { formatStageName, generateWrongAnswers, getRandomBubblePosition } from '@/lib/game/questions';
 import { useToast } from '@/hooks/use-toast';
+import { soundService } from '@/lib/soundService';
 
 export default function Game() {
   const [_, navigate] = useLocation();
@@ -36,7 +38,13 @@ export default function Game() {
     handleServerMessage,
     showCorrectModal,
     showIncorrectModal,
-    showStageCompleteModal
+    showStageCompleteModal,
+    showGameOverModal,
+    gameOverReason,
+    isTimeUp,
+    setIsTimeUp,
+    setShowGameOverModal,
+    isSoundEnabled
   } = useGameStore();
   
   const { addMessageListener } = useWebSocket();
@@ -106,7 +114,12 @@ export default function Game() {
   
   // Handle bubble click / answer submission
   const handleAnswerSubmit = (answer: number) => {
-    if (!currentGame) return;
+    if (!currentGame || isTimeUp) return;
+    
+    // تشغيل صوت النقر
+    if (isSoundEnabled) {
+      soundService.play('click');
+    }
     
     submitAnswer(currentGame.id, answer);
   };
@@ -155,38 +168,49 @@ export default function Game() {
       {/* Main game container */}
       <div className="container mx-auto px-3 py-4 relative pb-16">
         {/* Game Header */}
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center space-x-2">
-            <div className="game-stage-indicator p-2 rounded-lg font-bold text-xs md:text-sm" 
+        <div className="flex flex-col space-y-2">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <div className="game-stage-indicator p-2 rounded-lg font-bold text-xs md:text-sm" 
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
+                  border: '2px solid var(--space-bright)',
+                  boxShadow: '0 0 10px var(--space-bright)',
+                  fontFamily: 'Orbitron, sans-serif'
+                }}>
+                المرحلة: {stageTranslation[currentGame.stage]}
+              </div>
+              <div className="game-progress p-2 rounded-lg font-bold text-xs md:text-sm flex items-center space-x-1"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
+                  border: '2px solid var(--space-bright)',
+                  boxShadow: '0 0 10px var(--space-bright)',
+                  fontFamily: 'Orbitron, sans-serif',
+                  direction: 'ltr'
+                }}>
+                <span className="block">{currentGame.currentQuestionIndex + 1}/{currentGame.questions.length}</span>
+              </div>
+            </div>
+            
+            <div className="game-score p-2 rounded-lg font-bold text-xs md:text-sm"
               style={{ 
                 background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
                 border: '2px solid var(--space-bright)',
                 boxShadow: '0 0 10px var(--space-bright)',
                 fontFamily: 'Orbitron, sans-serif'
               }}>
-              المرحلة: {stageTranslation[currentGame.stage]}
-            </div>
-            <div className="game-progress p-2 rounded-lg font-bold text-xs md:text-sm flex items-center space-x-1"
-              style={{ 
-                background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
-                border: '2px solid var(--space-bright)',
-                boxShadow: '0 0 10px var(--space-bright)',
-                fontFamily: 'Orbitron, sans-serif',
-                direction: 'ltr'
-              }}>
-              <span className="block">{currentGame.currentQuestionIndex + 1}/{currentGame.questions.length}</span>
+              النقاط: {currentPlayer?.score}
             </div>
           </div>
           
-          <div className="game-score p-2 rounded-lg font-bold text-xs md:text-sm"
-            style={{ 
-              background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
-              border: '2px solid var(--space-bright)',
-              boxShadow: '0 0 10px var(--space-bright)',
-              fontFamily: 'Orbitron, sans-serif'
-            }}>
-            النقاط: {currentPlayer?.score}
-          </div>
+          {/* Timer */}
+          <Timer 
+            duration={20} 
+            onTimeEnd={() => {
+              setIsTimeUp(true);
+              setShowGameOverModal(true, 'time');
+            }} 
+          />
         </div>
         
         {/* Game Area - New Layout */}
@@ -266,6 +290,7 @@ export default function Game() {
       {showCorrectModal && <CorrectAnswerModal />}
       {showIncorrectModal && <IncorrectAnswerModal />}
       {showStageCompleteModal && <StageCompleteModal />}
+      {showGameOverModal && <GameOverModal reason={gameOverReason || 'time'} finalScore={currentPlayer?.score} />}
     </div>
   );
 }

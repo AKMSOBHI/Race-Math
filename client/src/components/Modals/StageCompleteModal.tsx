@@ -1,14 +1,23 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { useGameStore } from '@/lib/game/gameState';
 import { formatStageName } from '@/lib/game/questions';
+import { soundService } from '@/lib/soundService';
 
 const StageCompleteModal: FC = () => {
   const { 
     currentGame, 
     currentUser,
     setShowStageCompleteModal,
-    nextStage
+    nextStage,
+    isSoundEnabled
   } = useGameStore();
+  
+  // تشغيل صوت إكمال المرحلة عند ظهور النافذة
+  useEffect(() => {
+    if (isSoundEnabled) {
+      soundService.play('levelComplete');
+    }
+  }, [isSoundEnabled]);
   
   // Find current player to get score
   const currentPlayer = currentGame?.players.find(
@@ -36,6 +45,10 @@ const StageCompleteModal: FC = () => {
   
   const handleNextStage = () => {
     if (!currentGame) return;
+    
+    if (isSoundEnabled) {
+      soundService.play('click');
+    }
     
     setShowStageCompleteModal(false);
     nextStage(currentGame.id);

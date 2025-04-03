@@ -27,11 +27,16 @@ interface GameState {
   showCorrectModal: boolean;
   showIncorrectModal: boolean;
   showStageCompleteModal: boolean;
+  showGameOverModal: boolean;
+  gameOverReason: 'time' | 'completed' | 'failed' | null;
+  isTimeUp: boolean;
   
   setShowStartModal: (show: boolean) => void;
   setShowCorrectModal: (show: boolean) => void;
   setShowIncorrectModal: (show: boolean) => void;
   setShowStageCompleteModal: (show: boolean) => void;
+  setShowGameOverModal: (show: boolean, reason?: 'time' | 'completed' | 'failed' | null) => void;
+  setIsTimeUp: (isTimeUp: boolean) => void;
   
   // Game actions
   joinGame: (gameId: string) => void;
@@ -40,6 +45,7 @@ interface GameState {
   submitAnswer: (gameId: string, answer: number) => void;
   nextQuestion: (gameId: string) => void;
   nextStage: (gameId: string) => void;
+  resetGameState: () => void;
   
   // Handle WebSocket messages
   handleServerMessage: (message: ServerMessage) => void;
@@ -79,11 +85,19 @@ export const useGameStore = create<GameState>((set, get) => ({
   showCorrectModal: false,
   showIncorrectModal: false,
   showStageCompleteModal: false,
+  showGameOverModal: false,
+  gameOverReason: null,
+  isTimeUp: false,
   
   setShowStartModal: (show) => set({ showStartModal: show }),
   setShowCorrectModal: (show) => set({ showCorrectModal: show }),
   setShowIncorrectModal: (show) => set({ showIncorrectModal: show }),
   setShowStageCompleteModal: (show) => set({ showStageCompleteModal: show }),
+  setShowGameOverModal: (show, reason = null) => set({ 
+    showGameOverModal: show, 
+    gameOverReason: reason 
+  }),
+  setIsTimeUp: (isTimeUp) => set({ isTimeUp }),
   
   // Last answer result
   lastAnswerResult: null,
@@ -174,6 +188,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     sendMessage({
       type: 'next_stage',
       payload: { gameId }
+    });
+  },
+  
+  resetGameState: () => {
+    set({
+      currentGame: null,
+      currentQuestion: null,
+      showStartModal: true,
+      showCorrectModal: false,
+      showIncorrectModal: false,
+      showStageCompleteModal: false,
+      showGameOverModal: false,
+      gameOverReason: null,
+      isTimeUp: false,
+      lastAnswerResult: null,
+      isLoading: false
     });
   },
   

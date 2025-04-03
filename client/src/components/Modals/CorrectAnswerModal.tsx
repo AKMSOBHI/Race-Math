@@ -1,16 +1,29 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { useGameStore } from '@/lib/game/gameState';
+import { soundService } from '@/lib/soundService';
 
 const CorrectAnswerModal: FC = () => {
   const { 
     currentGame, 
     setShowCorrectModal, 
     nextQuestion,
-    lastAnswerResult
+    lastAnswerResult,
+    isSoundEnabled
   } = useGameStore();
+  
+  // تشغيل صوت الإجابة الصحيحة عند عرض النافذة
+  useEffect(() => {
+    if (isSoundEnabled) {
+      soundService.play('correct');
+    }
+  }, [isSoundEnabled]);
   
   const handleNextQuestion = () => {
     if (!currentGame) return;
+    
+    if (isSoundEnabled) {
+      soundService.play('click');
+    }
     
     setShowCorrectModal(false);
     nextQuestion(currentGame.id);

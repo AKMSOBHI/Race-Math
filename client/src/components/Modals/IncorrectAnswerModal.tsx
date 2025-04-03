@@ -1,12 +1,21 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { useGameStore } from '@/lib/game/gameState';
+import { soundService } from '@/lib/soundService';
 
 const IncorrectAnswerModal: FC = () => {
   const { 
     currentGame, 
     currentUser,
-    setShowIncorrectModal
+    setShowIncorrectModal,
+    isSoundEnabled
   } = useGameStore();
+  
+  // تشغيل صوت الإجابة الخاطئة عند ظهور النافذة
+  useEffect(() => {
+    if (isSoundEnabled) {
+      soundService.play('wrong');
+    }
+  }, [isSoundEnabled]);
   
   // Find current player to get attempts left
   const currentPlayer = currentGame?.players.find(
@@ -16,6 +25,9 @@ const IncorrectAnswerModal: FC = () => {
   const attemptsLeft = currentPlayer?.attemptsLeft || 0;
   
   const handleContinue = () => {
+    if (isSoundEnabled) {
+      soundService.play('click');
+    }
     setShowIncorrectModal(false);
   };
   

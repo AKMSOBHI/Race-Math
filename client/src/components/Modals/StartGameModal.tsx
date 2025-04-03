@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useLocation } from 'wouter';
 import { useWebSocket } from '@/lib/websocket';
 import { useToast } from '@/hooks/use-toast';
+import { soundService } from '@/lib/soundService';
 
 const StartGameModal: FC = () => {
   const [_, navigate] = useLocation();
@@ -17,7 +18,8 @@ const StartGameModal: FC = () => {
     startGame,
     currentGame,
     setShowStartModal,
-    isLoading
+    isLoading,
+    isSoundEnabled
   } = useGameStore();
   
   const [gameMode, setGameMode] = useState<'single' | 'multi' | null>(null);
@@ -96,6 +98,11 @@ const StartGameModal: FC = () => {
         variant: "destructive"
       });
       return;
+    }
+    
+    // تشغيل صوت النقر
+    if (isSoundEnabled) {
+      soundService.play('click');
     }
     
     // Start processing
@@ -185,7 +192,12 @@ const StartGameModal: FC = () => {
                   ? 'ring-2 ring-space-bright' 
                   : 'bg-opacity-80'
               } text-white font-bold py-2 px-3 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center text-sm`}
-              onClick={() => setGameMode('single')}
+              onClick={() => {
+                if (isSoundEnabled) {
+                  soundService.play('click');
+                }
+                setGameMode('single');
+              }}
               disabled={!isConnected}
               style={{
                 background: gameMode === 'single' 
@@ -201,7 +213,12 @@ const StartGameModal: FC = () => {
                   ? 'ring-2 ring-space-bright' 
                   : 'bg-opacity-80'
               } text-white font-bold py-2 px-3 rounded-lg hover:bg-opacity-90 transition flex flex-col items-center text-sm`}
-              onClick={() => setGameMode('multi')}
+              onClick={() => {
+                if (isSoundEnabled) {
+                  soundService.play('click');
+                }
+                setGameMode('multi');
+              }}
               disabled={!isConnected}
               style={{
                 background: gameMode === 'multi' 
@@ -223,7 +240,12 @@ const StartGameModal: FC = () => {
                   ? 'border-2 font-bold' 
                   : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
               }`}
-              onClick={() => setDifficulty('easy')}
+              onClick={() => {
+                if (isSoundEnabled) {
+                  soundService.play('click');
+                }
+                setDifficulty('easy');
+              }}
               style={{
                 backgroundColor: difficulty === 'easy' ? 'rgba(0, 245, 212, 0.2)' : '',
                 borderColor: difficulty === 'easy' ? 'var(--space-bright)' : '',
@@ -238,7 +260,12 @@ const StartGameModal: FC = () => {
                   ? 'border-2 font-bold' 
                   : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
               }`}
-              onClick={() => setDifficulty('medium')}
+              onClick={() => {
+                if (isSoundEnabled) {
+                  soundService.play('click');
+                }
+                setDifficulty('medium');
+              }}
               style={{
                 backgroundColor: difficulty === 'medium' ? 'rgba(123, 44, 191, 0.2)' : '',
                 borderColor: difficulty === 'medium' ? 'var(--space-purple)' : '',
@@ -253,7 +280,12 @@ const StartGameModal: FC = () => {
                   ? 'border-2 font-bold' 
                   : 'bg-gray-800 border-2 border-gray-700 font-bold text-gray-400'
               }`}
-              onClick={() => setDifficulty('hard')}
+              onClick={() => {
+                if (isSoundEnabled) {
+                  soundService.play('click');
+                }
+                setDifficulty('hard');
+              }}
               style={{
                 backgroundColor: difficulty === 'hard' ? 'rgba(229, 0, 164, 0.2)' : '',
                 borderColor: difficulty === 'hard' ? 'var(--space-pink)' : '',
