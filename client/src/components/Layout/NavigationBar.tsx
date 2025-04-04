@@ -12,9 +12,9 @@ export default function NavigationBar() {
   return (
     <nav className="relative z-50 space-container px-6 py-3 flex justify-between items-center shadow-lg border-b-2" style={{ borderColor: 'var(--space-bright)' }}>
       <div className="flex items-center">
-        <div className="space-title text-2xl md:text-3xl">
-          <span className="text-purple-400">Math</span>
-          <span className="text-pink-500">Quest</span>
+        <div className="space-title text-2xl md:text-3xl" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          <span className="text-purple-400">رحلة</span>
+          <span className="text-pink-500">الرياضيات</span>
         </div>
       </div>
       
@@ -23,10 +23,11 @@ export default function NavigationBar() {
           className="space-button text-white font-bold py-2 px-4 rounded-full transition"
           onClick={handleExit}
           style={{
-            background: 'linear-gradient(45deg, var(--space-pink), var(--space-purple))'
+            background: 'linear-gradient(45deg, var(--space-pink), var(--space-purple))',
+            fontFamily: 'Orbitron, sans-serif'
           }}
         >
-          <i className="fas fa-door-open mr-2"></i>Abort Mission
+          <i className="fas fa-door-open ml-2"></i>إلغاء المهمة
         </button>
         
         <div 

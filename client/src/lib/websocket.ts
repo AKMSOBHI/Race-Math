@@ -133,8 +133,8 @@ export function useWebSocket() {
       console.log('WebSocket connected event received');
       setIsConnected(true);
       toast({
-        title: "Connected to game server",
-        description: "You are now connected to the multiplayer server",
+        title: "تم الاتصال بالخادم",
+        description: "أنت الآن متصل بخادم اللعب المتعدد",
       });
     };
     
@@ -142,8 +142,8 @@ export function useWebSocket() {
       console.log('WebSocket disconnected event received');
       setIsConnected(false);
       toast({
-        title: "Disconnected from game server",
-        description: "Attempting to reconnect...",
+        title: "انقطع الاتصال بالخادم",
+        description: "جاري محاولة إعادة الاتصال...",
         variant: "destructive"
       });
     };
