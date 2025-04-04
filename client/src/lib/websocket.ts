@@ -72,7 +72,7 @@ export function connectWebSocket() {
 }
 
 export function sendMessage(message: ClientMessage) {
-  console.log('Sending message:', message);
+  console.log('إرسال رسالة:', message);
   
   if (!socket || socket.readyState !== WebSocket.OPEN) {
     console.log('Socket not open, attempting to connect before sending...');
@@ -82,15 +82,39 @@ export function sendMessage(message: ClientMessage) {
     setTimeout(() => {
       if (socket && socket.readyState === WebSocket.OPEN) {
         console.log('Socket now open, sending delayed message');
-        socket.send(JSON.stringify(message));
+        try {
+          socket.send(JSON.stringify(message));
+          console.log('تم إرسال الرسالة المؤجلة بنجاح');
+        } catch (error) {
+          console.error('خطأ عند إرسال الرسالة المؤجلة عبر WebSocket:', error);
+        }
       } else {
-        console.error('WebSocket still not connected, message not sent');
+        console.error('WebSocket still not connected, message not sent. State:', socket?.readyState);
+        
+        // محاولة إعادة المحاولة مرة أخرى بعد مدة أطول
+        setTimeout(() => {
+          socket = connectWebSocket();
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            console.log('محاولة أخيرة لإرسال الرسالة');
+            try {
+              socket.send(JSON.stringify(message));
+              console.log('تم إرسال الرسالة في المحاولة الأخيرة');
+            } catch (err) {
+              console.error('فشل في إرسال الرسالة حتى في المحاولة الأخيرة:', err);
+            }
+          }
+        }, 2000);
       }
     }, 1000);
   } else {
     // Socket is already open, send immediately
     console.log('Socket open, sending message immediately');
-    socket.send(JSON.stringify(message));
+    try {
+      socket.send(JSON.stringify(message));
+      console.log('تم إرسال الرسالة فوراً بنجاح');
+    } catch (error) {
+      console.error('خطأ عند إرسال الرسالة الفورية عبر WebSocket:', error);
+    }
   }
 }
 

@@ -16,12 +16,12 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   const [hasNotified, setHasNotified] = useState(false);
   const [lastPlayedTime, setLastPlayedTime] = useState(duration);
   
-  // Reset timer when question changes
+  // Reset timer when question or stage changes
   useEffect(() => {
     setTimeLeft(duration);
     setHasNotified(false);
     setLastPlayedTime(duration);
-  }, [currentGame?.currentQuestionIndex, duration]);
+  }, [currentGame?.currentQuestionIndex, currentGame?.stage, duration]);
   
   // Timer countdown
   useEffect(() => {

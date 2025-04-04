@@ -185,10 +185,27 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   nextStage: (gameId) => {
-    sendMessage({
-      type: 'next_stage',
-      payload: { gameId }
+    console.log('استدعاء دالة nextStage مع معرف اللعبة:', gameId);
+    
+    // إعادة ضبط حالة التطبيق عند الانتقال للمرحلة التالية
+    set({
+      currentQuestion: null,    // إعادة ضبط السؤال الحالي
+      isTimeUp: false,          // إعادة ضبط حالة انتهاء الوقت
+      showCorrectModal: false,  // إخفاء نوافذ التغذية الراجعة
+      showIncorrectModal: false
     });
+    
+    console.log('تم إعادة ضبط حالة اللعبة');
+    
+    try {
+      sendMessage({
+        type: 'next_stage',
+        payload: { gameId }
+      });
+      console.log('تم إرسال رسالة next_stage بنجاح');
+    } catch (error) {
+      console.error('خطأ عند إرسال رسالة next_stage:', error);
+    }
   },
   
   resetGameState: () => {
@@ -213,10 +230,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     switch (message.type) {
       case 'game_state_update':
+        // تحديث حالة اللعبة وإعادة ضبط حالة المؤقت عند الحاجة
+        const payload = message.payload;
+        const currentGameState = get().currentGame;
+        
+        // إذا انتقلنا إلى مرحلة جديدة أو سؤال جديد
+        const isNewStage = currentGameState && payload && currentGameState.stage !== payload.stage;
+        const isNewQuestion = currentGameState && payload && 
+                             (currentGameState.currentQuestionIndex !== payload.currentQuestionIndex);
+        
         set({ 
-          currentGame: message.payload,
-          currentQuestion: message.payload.questions[message.payload.currentQuestionIndex],
-          isLoading: false
+          currentGame: payload,
+          currentQuestion: payload.questions[payload.currentQuestionIndex],
+          isLoading: false,
+          // إعادة ضبط مؤقت الوقت عند الانتقال إلى مرحلة أو سؤال جديد
+          isTimeUp: isNewStage || isNewQuestion ? false : get().isTimeUp
         });
         break;
         
@@ -247,7 +275,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         break;
         
       case 'stage_completed':
-        set({ showStageCompleteModal: true });
+        // إظهار نافذة إكمال المرحلة وإعادة ضبط حالة الوقت
+        set({ 
+          showStageCompleteModal: true,
+          isTimeUp: false  // إعادة ضبط مؤقت الوقت
+        });
         break;
         
       case 'error':
