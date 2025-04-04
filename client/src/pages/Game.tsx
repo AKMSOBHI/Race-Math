@@ -147,11 +147,35 @@ export default function Game() {
     p => currentUser && p.id === currentUser.id
   );
   
-  // Get wrong answers
+  // Get answer options including the correct one
   let answers: number[] = [];
   if (currentQuestion) {
+    // تأكد من أن الجواب الصحيح دائماً موجود
+    answers = [currentQuestion.answer];
+    
+    // إضافة إجابات خاطئة متنوعة
     const wrongAnswers = generateWrongAnswers(currentQuestion.answer);
-    answers = [...wrongAnswers, currentQuestion.answer].sort(() => Math.random() - 0.5);
+    answers = [...answers, ...wrongAnswers];
+    
+    // عدد ثابت من الإجابات (4)
+    while (answers.length < 4) {
+      // إضافة إجابات إضافية إذا لم يكن هناك ما يكفي
+      const randomOffset = Math.floor(Math.random() * 10) + 5;
+      const extraWrong = currentQuestion.answer + (Math.random() > 0.5 ? randomOffset : -randomOffset);
+      
+      if (!answers.includes(extraWrong) && extraWrong > 0) {
+        answers.push(extraWrong);
+      }
+    }
+    
+    // تأكد من أن لديك بالضبط 4 إجابات
+    answers = answers.slice(0, 4);
+    
+    // خلط الإجابات بشكل عشوائي
+    answers.sort(() => Math.random() - 0.5);
+    
+    console.log('الإجابة الصحيحة:', currentQuestion.answer);
+    console.log('جميع الإجابات:', answers);
   }
   
   if (!currentGame || !currentQuestion || !currentPlayer) {

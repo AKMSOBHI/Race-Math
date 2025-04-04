@@ -258,11 +258,28 @@ export const useGameStore = create<GameState>((set, get) => ({
         break;
         
       case 'answer_result':
+        // إضافة المؤثرات الصوتية من soundService
+        const { isSoundEnabled } = get();
+        
         if (currentUser && message.payload.playerId === currentUser.id) {
           set({ 
             lastAnswerResult: {
               correct: message.payload.correct,
               points: message.payload.points
+            }
+          });
+          
+          // إضافة المؤثرات الصوتية
+          import('../soundService').then(({ soundService }) => {
+            // التأكد من تفعيل الصوت
+            if (isSoundEnabled) {
+              if (message.payload.correct) {
+                console.log('تشغيل صوت الإجابة الصحيحة');
+                soundService.play('correct');
+              } else {
+                console.log('تشغيل صوت الإجابة الخاطئة');
+                soundService.play('wrong');
+              }
             }
           });
           
@@ -279,6 +296,14 @@ export const useGameStore = create<GameState>((set, get) => ({
         set({ 
           showStageCompleteModal: true,
           isTimeUp: false  // إعادة ضبط مؤقت الوقت
+        });
+        
+        // إضافة صوت إكمال المرحلة
+        import('../soundService').then(({ soundService }) => {
+          if (get().isSoundEnabled) {
+            console.log('تشغيل صوت إكمال المرحلة');
+            soundService.play('levelComplete');
+          }
         });
         break;
         
