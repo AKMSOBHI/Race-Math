@@ -1,36 +1,75 @@
 import { Question } from '@shared/schema';
 
-// Function to generate 4 wrong answers for a given correct answer
+// Function to generate realistic wrong answers for a given correct answer
 export function generateWrongAnswers(correctAnswer: number, min: number = 0, max: number = 100): number[] {
-  const wrongAnswers: number[] = [];
-  const range = Math.min(20, max - min);
+  const wrongAnswers: Set<number> = new Set();
+  const maxAttempts = 20; // حد أقصى لمحاولات التوليد لتجنب الحلقات الغير منتهية
+  let attempts = 0;
   
-  // Add a close answer (+-1 or +-2)
+  // استراتيجية 1: إضافة إجابة قريبة جداً (+-1 أو +-2)
   const closeOffset = Math.random() > 0.5 ? 1 : 2;
   const closeAnswer = correctAnswer + (Math.random() > 0.5 ? closeOffset : -closeOffset);
   
   if (closeAnswer >= min && closeAnswer <= max && closeAnswer !== correctAnswer) {
-    wrongAnswers.push(closeAnswer);
+    wrongAnswers.add(closeAnswer);
   }
   
-  // Generate remaining wrong answers until we have 4 total
-  while (wrongAnswers.length < 3) {
-    // Generate a random answer within range of the correct answer
-    const randomOffset = Math.floor(Math.random() * range) - Math.floor(range / 2);
-    const wrongAnswer = correctAnswer + randomOffset;
+  // استراتيجية 2: خطأ شائع في الجمع/الطرح - تبديل الأرقام أو نسيان الحمل
+  if (correctAnswer >= 10) {
+    // تبديل أرقام العشرات والآحاد
+    const tensDigit = Math.floor(correctAnswer / 10);
+    const onesDigit = correctAnswer % 10;
+    const swappedAnswer = onesDigit * 10 + tensDigit;
     
-    // Ensure it's different from correct answer and not already added
-    if (
-      wrongAnswer !== correctAnswer && 
-      !wrongAnswers.includes(wrongAnswer) &&
-      wrongAnswer >= min &&
-      wrongAnswer <= max
-    ) {
-      wrongAnswers.push(wrongAnswer);
+    if (swappedAnswer >= min && swappedAnswer <= max && swappedAnswer !== correctAnswer && !wrongAnswers.has(swappedAnswer)) {
+      wrongAnswers.add(swappedAnswer);
+    }
+    
+    // نسيان الحمل (مثلاً: ٦٨ - ١٠ = ٥٨)
+    const carryMistake = correctAnswer - 10;
+    if (carryMistake >= min && !wrongAnswers.has(carryMistake)) {
+      wrongAnswers.add(carryMistake);
     }
   }
   
-  return wrongAnswers;
+  // استراتيجية 3: توليد إجابة شبه عشوائية
+  while (wrongAnswers.size < 3 && attempts < maxAttempts) {
+    attempts++;
+    
+    // إنشاء إجابة خاطئة بناءً على الإجابة الصحيحة
+    // نستخدم نطاق أصغر للأرقام الصغيرة
+    const range = correctAnswer < 20 ? 10 : Math.min(30, max - min);
+    const randomOffset = Math.floor(Math.random() * range) - Math.floor(range / 2);
+    const wrongAnswer = correctAnswer + randomOffset;
+    
+    // تأكد من أن الإجابة ضمن النطاق المسموح وغير مكررة وليست هي الإجابة الصحيحة
+    if (
+      wrongAnswer !== correctAnswer && 
+      !wrongAnswers.has(wrongAnswer) &&
+      wrongAnswer >= min &&
+      wrongAnswer <= max
+    ) {
+      wrongAnswers.add(wrongAnswer);
+    }
+  }
+  
+  // التأكد من وجود 3 إجابات خاطئة على الأقل
+  const fillerAnswers = [correctAnswer + 5, correctAnswer - 7, correctAnswer + 10, correctAnswer - 4];
+  
+  for (const filler of fillerAnswers) {
+    if (wrongAnswers.size >= 3) break;
+    
+    if (
+      filler !== correctAnswer && 
+      !wrongAnswers.has(filler) &&
+      filler >= min &&
+      filler <= max
+    ) {
+      wrongAnswers.add(filler);
+    }
+  }
+  
+  return Array.from(wrongAnswers).slice(0, 3);
 }
 
 // Function to format the stage name for display

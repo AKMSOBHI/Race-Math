@@ -263,7 +263,6 @@ export default function Game() {
           {/* Answer Options Section */}
           <div className="grid grid-cols-2 gap-3 w-full">
             {answers.slice(0, 4).map((answer, index) => (
-              index > 0 && 
               <button
                 key={index}
                 className="answer-bubble p-4 rounded-xl font-bold text-lg md:text-xl transition-all transform hover:scale-105 relative"
@@ -285,7 +284,7 @@ export default function Game() {
                     boxShadow: '0 0 8px var(--space-bright)'
                   }}
                 >
-                  {convertToArabicNumerals(index)}
+                  {convertToArabicNumerals(index + 1)}
                 </div>
                 {convertToArabicNumerals(answer)}
               </button>
