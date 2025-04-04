@@ -2,6 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import { useGameStore } from '@/lib/game/gameState';
 import { useToast } from '@/hooks/use-toast';
 import { soundService } from '@/lib/soundService';
+import { convertToArabicNumerals } from '@/lib/utils';
 
 interface TimerProps {
   duration?: number; // Duration in seconds
@@ -91,7 +92,7 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
         }}
       >
         <span className="text-xs font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          {timeLeft}
+          {convertToArabicNumerals(timeLeft)}
         </span>
       </div>
     </div>

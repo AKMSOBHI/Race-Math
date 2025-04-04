@@ -5,39 +5,47 @@ const sounds = {
   // أصوات الإجابات
   correct: new Howl({
     src: ['https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3'],
-    volume: 0.5,
+    volume: 0.6,
     preload: true
   }),
   wrong: new Howl({
     src: ['https://assets.mixkit.co/sfx/preview/mixkit-wrong-electricity-buzz-955.mp3'],
-    volume: 0.5,
+    volume: 0.6,
     preload: true
   }),
   
   // أصوات النظام
   click: new Howl({
     src: ['https://assets.mixkit.co/sfx/preview/mixkit-video-game-retro-click-237.mp3'],
-    volume: 0.3,
+    volume: 0.4,
     preload: true
   }),
   countdown: new Howl({
     src: ['https://assets.mixkit.co/sfx/preview/mixkit-game-ball-tap-2073.mp3'],
-    volume: 0.3,
+    volume: 0.4,
     preload: true
   }),
   success: new Howl({
     src: ['https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3'],
-    volume: 0.5,
+    volume: 0.6,
     preload: true
   }),
   gameOver: new Howl({
     src: ['https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-game-over-470.mp3'],
-    volume: 0.5,
+    volume: 0.6,
     preload: true
   }),
   levelComplete: new Howl({
     src: ['https://assets.mixkit.co/sfx/preview/mixkit-game-level-completed-2059.mp3'],
-    volume: 0.5,
+    volume: 0.6,
+    preload: true
+  }),
+  
+  // الموسيقى الخلفية
+  backgroundMusic: new Howl({
+    src: ['https://assets.mixkit.co/sfx/preview/mixkit-game-show-electronic-waiting-music-loop-955.mp3'],
+    volume: 0.3,
+    loop: true,
     preload: true
   })
 };
@@ -68,12 +76,36 @@ class SoundService {
       sound.stop();
       sound.play();
     }
+    
+    return sound;
+  }
+  
+  // تشغيل الموسيقى الخلفية
+  playBackgroundMusic() {
+    if (this.muted) return;
+    
+    if (!sounds.backgroundMusic.playing()) {
+      sounds.backgroundMusic.play();
+    }
+  }
+  
+  // إيقاف الموسيقى الخلفية
+  stopBackgroundMusic() {
+    sounds.backgroundMusic.stop();
   }
   
   // التحكم في كتم/تشغيل الصوت
   toggleMute(): boolean {
     this.muted = !this.muted;
     Howler.mute(this.muted);
+    
+    // إيقاف/تشغيل الموسيقى الخلفية وفقًا لحالة كتم الصوت
+    if (this.muted) {
+      sounds.backgroundMusic.stop();
+    } else if (!sounds.backgroundMusic.playing()) {
+      sounds.backgroundMusic.play();
+    }
+    
     return this.muted;
   }
   
@@ -81,6 +113,13 @@ class SoundService {
   setMute(muted: boolean) {
     this.muted = muted;
     Howler.mute(this.muted);
+    
+    // إيقاف/تشغيل الموسيقى الخلفية وفقًا لحالة كتم الصوت
+    if (this.muted) {
+      sounds.backgroundMusic.stop();
+    } else if (!sounds.backgroundMusic.playing()) {
+      sounds.backgroundMusic.play();
+    }
   }
   
   // الحصول على حالة كتم الصوت الحالية

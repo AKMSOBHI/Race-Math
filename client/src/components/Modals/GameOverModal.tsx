@@ -2,6 +2,7 @@ import { FC, useEffect } from 'react';
 import { useGameStore } from '@/lib/game/gameState';
 import { useLocation } from 'wouter';
 import { soundService } from '@/lib/soundService';
+import { convertToArabicNumerals } from '@/lib/utils';
 
 interface GameOverModalProps {
   reason: 'time' | 'completed' | 'failed';
@@ -125,7 +126,7 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
         </p>
         
         <div className="text-xl font-bold mb-5" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          النقاط النهائية: {finalScore}
+          النقاط النهائية: {convertToArabicNumerals(finalScore)}
         </div>
         
         <div className="grid grid-cols-2 gap-3">

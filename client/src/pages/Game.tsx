@@ -13,6 +13,7 @@ import StageCompleteModal from '@/components/Modals/StageCompleteModal';
 import GameOverModal from '@/components/Modals/GameOverModal';
 import { formatStageName, generateWrongAnswers, getRandomBubblePosition } from '@/lib/game/questions';
 import { useToast } from '@/hooks/use-toast';
+import { convertToArabicNumerals } from '@/lib/utils';
 import { soundService } from '@/lib/soundService';
 
 export default function Game() {
@@ -60,7 +61,17 @@ export default function Game() {
     if (!currentGame && gameId && currentUser) {
       joinGame(gameId);
     }
-  }, [gameId, currentUser, currentGame, joinGame]);
+    
+    // تشغيل الموسيقى الخلفية عند بدء اللعبة
+    if (isSoundEnabled) {
+      soundService.playBackgroundMusic();
+    }
+    
+    return () => {
+      // إيقاف الموسيقى الخلفية عند الخروج من اللعبة
+      soundService.stopBackgroundMusic();
+    };
+  }, [gameId, currentUser, currentGame, joinGame, isSoundEnabled]);
   
   // Listen to WebSocket messages
   useEffect(() => {
@@ -188,7 +199,7 @@ export default function Game() {
                   fontFamily: 'Orbitron, sans-serif',
                   direction: 'ltr'
                 }}>
-                <span className="block">{currentGame.currentQuestionIndex + 1}/{currentGame.questions.length}</span>
+                <span className="block">{convertToArabicNumerals(currentGame.currentQuestionIndex + 1)}/{convertToArabicNumerals(currentGame.questions.length)}</span>
               </div>
             </div>
             
@@ -199,7 +210,7 @@ export default function Game() {
                 boxShadow: '0 0 10px var(--space-bright)',
                 fontFamily: 'Orbitron, sans-serif'
               }}>
-              النقاط: {currentPlayer?.score}
+              النقاط: {convertToArabicNumerals(currentPlayer?.score)}
             </div>
           </div>
           
@@ -233,7 +244,7 @@ export default function Game() {
                 minHeight: '65px'
               }}
             >
-              {currentQuestion.text}
+              {currentQuestion.text.replace(/[0-9]/g, (match) => convertToArabicNumerals(match))}
             </div>
           </div>
           
@@ -267,9 +278,9 @@ export default function Game() {
                     boxShadow: '0 0 8px var(--space-bright)'
                   }}
                 >
-                  {index}
+                  {convertToArabicNumerals(index)}
                 </div>
-                {answer.toString()}
+                {convertToArabicNumerals(answer)}
               </button>
             ))}
           </div>
