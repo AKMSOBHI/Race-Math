@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { GameManager } from "./game/gameManager";
+import { RoomManager } from "./room/roomManager";
 import { z } from "zod";
 import { insertUserSchema, type ServerMessage, type ClientMessage } from "@shared/schema";
 import { log } from "./vite";
@@ -15,6 +16,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize game manager
   const gameManager = new GameManager(storage);
+  
+  // Initialize room manager
+  const roomManager = new RoomManager(gameManager);
   
   // Store active connections with user IDs
   const connections = new Map<number, WebSocket>();
@@ -295,6 +299,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 type: 'error',
                 payload: {
                   message: error instanceof Error ? error.message : 'Failed to move to next stage'
+                }
+              });
+            }
+            break;
+          }
+          
+          // Room management cases
+          case 'create_room': {
+            try {
+              userId = data.payload.teacherId;
+              connections.set(userId, ws);
+              
+              log(`Creating room: ${data.payload.name} by teacher ${userId}`, 'room');
+              
+              const room = await roomManager.createRoom(
+                data.payload.name,
+                data.payload.teacherId,
+                data.payload.maxPlayers || 100,
+                data.payload.contestMode || 'synchronized',
+                data.payload.endTime
+              );
+              
+              if (room) {
+                sendToClient(ws, {
+                  type: 'room_created',
+                  payload: room
+                });
+                
+                // Also refresh room list for the teacher
+                const rooms = await roomManager.getActiveRooms(data.payload.teacherId);
+                sendToClient(ws, {
+                  type: 'room_list',
+                  payload: rooms
+                });
+              } else {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Could not create room' }
+                });
+              }
+            } catch (error) {
+              log(`Error creating room: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to create room'
+                }
+              });
+            }
+            break;
+          }
+          
+          case 'get_room_list': {
+            try {
+              if (data.payload.teacherId) {
+                userId = data.payload.teacherId;
+                connections.set(userId, ws);
+              }
+              
+              const rooms = await roomManager.getActiveRooms(data.payload.teacherId);
+              
+              sendToClient(ws, {
+                type: 'room_list',
+                payload: rooms
+              });
+            } catch (error) {
+              log(`Error getting room list: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to get room list'
+                }
+              });
+            }
+            break;
+          }
+          
+          case 'join_room': {
+            try {
+              userId = data.payload.userId;
+              connections.set(userId, ws);
+              
+              const room = await roomManager.getRoomByCode(data.payload.roomCode);
+              
+              if (!room) {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Room not found with the provided code' }
+                });
+                break;
+              }
+              
+              const result = await roomManager.joinRoom(room.id, data.payload.userId);
+              
+              if (result.success) {
+                sendToClient(ws, {
+                  type: 'room_joined',
+                  payload: {
+                    roomId: room.id,
+                    userId: data.payload.userId,
+                    username: result.username || 'Unknown'
+                  }
+                });
+              } else {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Could not join the room' }
+                });
+              }
+            } catch (error) {
+              log(`Error joining room: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to join room'
+                }
+              });
+            }
+            break;
+          }
+          
+          case 'start_contest': {
+            try {
+              userId = data.payload.teacherId;
+              connections.set(userId, ws);
+              
+              const result = await roomManager.startContest(
+                data.payload.roomId,
+                data.payload.teacherId,
+                data.payload.difficulty || 'easy'
+              );
+              
+              if (result.success && result.gameSession) {
+                // نرسل إشعار لجميع اللاعبين بالغرفة
+                sendToClient(ws, {
+                  type: 'contest_started',
+                  payload: {
+                    roomId: data.payload.roomId,
+                    gameSession: result.gameSession
+                  }
+                });
+              } else {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Could not start the contest' }
+                });
+              }
+            } catch (error) {
+              log(`Error starting contest: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to start contest'
+                }
+              });
+            }
+            break;
+          }
+          
+          case 'get_dashboard_data': {
+            try {
+              userId = data.payload.teacherId;
+              connections.set(userId, ws);
+              
+              const result = await roomManager.getTeacherDashboardData(
+                data.payload.roomId,
+                data.payload.teacherId
+              );
+              
+              if (result.success) {
+                sendToClient(ws, {
+                  type: 'teacher_dashboard_data',
+                  payload: result.dashboard
+                });
+              } else {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Could not get dashboard data' }
+                });
+              }
+            } catch (error) {
+              log(`Error getting dashboard data: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to get dashboard data'
                 }
               });
             }

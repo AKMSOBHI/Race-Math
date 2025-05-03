@@ -137,9 +137,24 @@ export default function TeacherDashboard() {
   return (
     <div className="container py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          لوحة تحكم المعلمة
-        </h1>
+        <div>
+          <button 
+            className="mb-2 text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1"
+            onClick={() => {
+              soundService.play('click');
+              navigate('/');
+            }}
+            style={{
+              background: 'rgba(50, 50, 80, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            &larr; العودة للصفحة الرئيسية
+          </button>
+          <h1 className="text-2xl font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+            لوحة تحكم المعلمة
+          </h1>
+        </div>
         
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
