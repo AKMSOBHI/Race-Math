@@ -29,13 +29,14 @@ interface GameState {
   showStageCompleteModal: boolean;
   showGameOverModal: boolean;
   gameOverReason: 'time' | 'completed' | 'failed' | null;
+  finalScore: number | null | undefined;
   isTimeUp: boolean;
   
   setShowStartModal: (show: boolean) => void;
   setShowCorrectModal: (show: boolean) => void;
   setShowIncorrectModal: (show: boolean) => void;
   setShowStageCompleteModal: (show: boolean) => void;
-  setShowGameOverModal: (show: boolean, reason?: 'time' | 'completed' | 'failed' | null) => void;
+  setShowGameOverModal: (show: boolean, reason?: 'time' | 'completed' | 'failed' | null, finalScore?: number) => void;
   setIsTimeUp: (isTimeUp: boolean) => void;
   
   // Game actions
@@ -87,15 +88,17 @@ export const useGameStore = create<GameState>((set, get) => ({
   showStageCompleteModal: false,
   showGameOverModal: false,
   gameOverReason: null,
+  finalScore: null,
   isTimeUp: false,
   
   setShowStartModal: (show) => set({ showStartModal: show }),
   setShowCorrectModal: (show) => set({ showCorrectModal: show }),
   setShowIncorrectModal: (show) => set({ showIncorrectModal: show }),
   setShowStageCompleteModal: (show) => set({ showStageCompleteModal: show }),
-  setShowGameOverModal: (show, reason = null) => set({ 
+  setShowGameOverModal: (show, reason = null, finalScore?: number) => set({ 
     showGameOverModal: show, 
-    gameOverReason: reason 
+    gameOverReason: reason,
+    finalScore: finalScore !== undefined ? finalScore : null
   }),
   setIsTimeUp: (isTimeUp) => set({ isTimeUp }),
   
@@ -218,6 +221,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       showStageCompleteModal: false,
       showGameOverModal: false,
       gameOverReason: null,
+      finalScore: null,
       isTimeUp: false,
       lastAnswerResult: null,
       isLoading: false

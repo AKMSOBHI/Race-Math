@@ -10,6 +10,8 @@ const StageCompleteModal: FC = () => {
     currentUser,
     setShowStageCompleteModal,
     nextStage,
+    resetGameState,
+    setShowGameOverModal,
     isSoundEnabled
   } = useGameStore();
   
@@ -35,8 +37,10 @@ const StageCompleteModal: FC = () => {
     'COMPLEX_ADDITION_SUBTRACTION': 'الجمع والطرح المتقدم'
   };
   
-  // الحصول على اسم المرحلة التالية
+  // الحصول على اسم المرحلة التالية وما إذا كانت اللعبة انتهت
   let nextStageName = '';
+  let isGameCompleted = false;
+  
   if (currentGame) {
     switch (currentGame.stage) {
       case 'BASIC_ADDITION_SUBTRACTION':
@@ -50,6 +54,7 @@ const StageCompleteModal: FC = () => {
         break;
       case 'DIVISION':
         nextStageName = 'اكتملت اللعبة!';
+        isGameCompleted = true;
         break;
     }
   }
@@ -63,6 +68,18 @@ const StageCompleteModal: FC = () => {
     
     console.log('تم النقر على زر "المرحلة التالية"...');
     setShowStageCompleteModal(false);
+    
+    // إذا كانت هذه هي المرحلة الأخيرة، قم بعرض شاشة اكتمال اللعبة بدلاً من الانتقال إلى مرحلة جديدة
+    if (isGameCompleted) {
+      console.log('اللعبة اكتملت! عرض شاشة انتهاء اللعبة...');
+      setTimeout(() => {
+        // استخدام معلمات دالة setShowGameOverModal المحدثة
+        const score = currentPlayer?.score || 0;
+        console.log('إظهار شاشة انتهاء اللعبة مع النتيجة النهائية:', score);
+        setShowGameOverModal(true, 'completed');
+      }, 100);
+      return;
+    }
     
     // قم بتأخير إرسال طلب المرحلة التالية لضمان إخفاء النافذة أولاً
     setTimeout(() => {
@@ -96,29 +113,47 @@ const StageCompleteModal: FC = () => {
           مجموع النقاط: <span className="font-bold text-yellow-300">{convertToArabicNumerals(score)}</span> / {convertToArabicNumerals(maxPossibleScore)}
         </p>
         
-        <div 
-          className="p-4 rounded-lg mb-6"
-          style={{
-            background: 'rgba(123, 44, 191, 0.3)',
-            border: '1px solid var(--space-purple)',
-            boxShadow: '0 0 15px rgba(123, 44, 191, 0.4)'
-          }}
-        >
-          <h3 className="font-bold mb-2 text-purple-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>المهمة التالية:</h3>
-          <p className="text-2xl space-title text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{nextStageName}</p>
-        </div>
+        {!isGameCompleted ? (
+          <div 
+            className="p-4 rounded-lg mb-6"
+            style={{
+              background: 'rgba(123, 44, 191, 0.3)',
+              border: '1px solid var(--space-purple)',
+              boxShadow: '0 0 15px rgba(123, 44, 191, 0.4)'
+            }}
+          >
+            <h3 className="font-bold mb-2 text-purple-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>المهمة التالية:</h3>
+            <p className="text-2xl space-title text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>{nextStageName}</p>
+          </div>
+        ) : (
+          <div 
+            className="p-4 rounded-lg mb-6"
+            style={{
+              background: 'rgba(0, 200, 83, 0.3)',
+              border: '1px solid #00c853',
+              boxShadow: '0 0 15px rgba(0, 200, 83, 0.4)'
+            }}
+          >
+            <h3 className="font-bold mb-2 text-green-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>تهانينا!</h3>
+            <p className="text-2xl space-title text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>لقد أكملت جميع المهام بنجاح!</p>
+          </div>
+        )}
         
         <button 
           className="space-button text-white font-bold py-3 px-6 rounded-lg transition"
           onClick={handleNextStage}
           style={{
-            background: 'linear-gradient(45deg, #ffd700, var(--space-bright))',
-            boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)',
+            background: isGameCompleted
+              ? 'linear-gradient(45deg, #00c853, #69f0ae)'
+              : 'linear-gradient(45deg, #ffd700, var(--space-bright))',
+            boxShadow: isGameCompleted
+              ? '0 0 20px rgba(0, 200, 83, 0.5)'
+              : '0 0 20px rgba(255, 215, 0, 0.5)',
             fontFamily: 'Orbitron, sans-serif'
           }}
         >
-          <i className="fas fa-rocket ml-2"></i>
-          إطلاق المهمة التالية
+          <i className={`fas ${isGameCompleted ? 'fa-trophy' : 'fa-rocket'} ml-2`}></i>
+          {isGameCompleted ? 'عرض النتائج النهائية' : 'إطلاق المهمة التالية'}
         </button>
       </div>
     </div>
