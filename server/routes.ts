@@ -524,6 +524,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             break;
           }
+
+          case 'send_message': {
+            try {
+              userId = data.payload.teacherId;
+              connections.set(userId, ws);
+              
+              log(`Teacher ${userId} sending message: ${data.payload.type}`, 'message');
+              
+              // الحصول على اسم المعلم
+              const teacher = await storage.getUser(userId);
+              const teacherName = teacher?.username || 'معلمة';
+              
+              // إنشاء رسالة بالتنسيق المناسب
+              const messagePayload: any = {
+                teacherId: userId,
+                teacherName: teacherName,
+                message: data.payload.message,
+                timestamp: new Date().toISOString()
+              };
+              
+              if (data.payload.type === 'room' && data.payload.roomId) {
+                // إرسال للطلاب في غرفة محددة
+                const roomId = parseInt(data.payload.roomId.toString());
+                const rooms = await roomManager.getActiveRooms();
+                const room = rooms.find(r => r.id === roomId);
+                
+                if (room) {
+                  messagePayload.roomId = room.id; // يستخدم كرقم
+                  messagePayload.roomName = room.name;
+                  
+                  // إرسال لجميع الطلاب في الغرفة
+                  // طريقة بديلة للتكرار على Map
+                  Array.from(connections.entries()).forEach(([studentId, studentWs]) => {
+                    if (studentId !== userId && studentWs.readyState === WebSocket.OPEN) {
+                      sendToClient(studentWs, {
+                        type: 'teacher_message',
+                        payload: messagePayload
+                      });
+                    }
+                  });
+                  
+                  // إرسال تأكيد للمعلم
+                  sendToClient(ws, {
+                    type: 'teacher_message',
+                    payload: messagePayload
+                  });
+                }
+              } else {
+                // إرسال لجميع المستخدمين المتصلين
+                // طريقة بديلة للتكرار على Map
+                Array.from(connections.entries()).forEach(([studentId, studentWs]) => {
+                  if (studentId !== userId && studentWs.readyState === WebSocket.OPEN) {
+                    sendToClient(studentWs, {
+                      type: 'teacher_message',
+                      payload: messagePayload
+                    });
+                  }
+                });
+                
+                // إرسال تأكيد للمعلم
+                sendToClient(ws, {
+                  type: 'teacher_message',
+                  payload: messagePayload
+                });
+              }
+              
+              log(`Message sent successfully by teacher ${userId}`, 'message');
+            } catch (error) {
+              log(`Error sending message: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to send message'
+                }
+              });
+            }
+            break;
+          }
         }
       } catch (error) {
         log(`WebSocket error: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');

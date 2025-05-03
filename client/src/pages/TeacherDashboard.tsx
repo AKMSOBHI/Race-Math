@@ -117,11 +117,11 @@ export default function TeacherDashboard() {
       message: messageText
     };
     
-    // هنا سيتم إرسال الرسالة عند تنفيذ هذه الميزة بالكامل
-    // sendMessage({
-    //   type: "send_message",
-    //   payload
-    // });
+    // إرسال الرسالة إلى الخادم
+    sendMessage({
+      type: "send_message",
+      payload
+    });
     
     // نموذج مبسط لعرض نجاح العملية
     setTimeout(() => {
