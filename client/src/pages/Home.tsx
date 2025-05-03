@@ -72,6 +72,11 @@ export default function Home() {
     }
   }, [currentUser, isLoading]);
   
+  // نريد إغلاق StartGameModal بشكل افتراضي
+  useEffect(() => {
+    setShowStartModal(false);
+  }, []);
+  
   // For debugging
   useEffect(() => {
     console.log("WebSocket connected:", isConnected);
