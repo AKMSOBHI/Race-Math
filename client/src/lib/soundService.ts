@@ -9,7 +9,8 @@ const soundPaths = {
   success: '/sounds/success.mp3', // صوت النجاح
   gameOver: '/sounds/game-over.mp3', // صوت انتهاء اللعبة
   levelComplete: '/sounds/level-complete.mp3', // صوت اكتمال المرحلة
-  backgroundMusic: '/sounds/background-music.mp3' // الموسيقى الخلفية
+  backgroundMusic: '/sounds/background-music.mp3', // الموسيقى الخلفية
+  notification: '/sounds/notification.mp3' // صوت الإشعارات
 };
 
 // مخزن للأصوات النشطة

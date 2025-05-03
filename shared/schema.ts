@@ -167,6 +167,17 @@ export type ServerMessage =
       gameStats: { questionsAnswered: number; correctAnswers: number; averageScore: number } 
     } 
   }
+  
+  // رسائل الإشعارات
+  | { type: "student_joined_room"; payload: { 
+      roomId: number; 
+      roomName: string;
+      studentId: number; 
+      studentName: string;
+      timestamp: string;
+    } 
+  }
+  
   // رسالة الخطأ
   | { type: "error"; payload: { message: string } };
 

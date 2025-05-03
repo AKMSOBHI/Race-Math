@@ -66,6 +66,16 @@ export default function TeacherDashboard() {
     },
   });
   
+  // تتبع الإشعارات وتحديثات الطلاب
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: string;
+    title: string;
+    description: string;
+    timestamp: Date;
+    read: boolean;
+  }>>([]);
+
   // الاستماع لتحديثات الغرف من الخادم
   useEffect(() => {
     const handleMessage = (message: any) => {
@@ -77,6 +87,28 @@ export default function TeacherDashboard() {
         });
       } else if (message.type === "room_list") {
         setRooms(message.payload);
+      } else if (message.type === "student_joined_room") {
+        // إضافة إشعار جديد
+        const newNotification = {
+          id: Date.now().toString(),
+          type: "student_joined",
+          title: "طالبة جديدة انضمت للغرفة",
+          description: `انضمت ${message.payload.studentName} إلى غرفة ${message.payload.roomName}`,
+          timestamp: new Date(message.payload.timestamp),
+          read: false
+        };
+        
+        setNotifications(prev => [newNotification, ...prev]);
+        
+        // عرض إشعار توست
+        toast({
+          title: "طالبة جديدة انضمت للغرفة",
+          description: `انضمت ${message.payload.studentName} إلى غرفة ${message.payload.roomName}`,
+          variant: "default"
+        });
+        
+        // تشغيل صوت الإشعار
+        soundService.play('notification');
       }
     };
     
