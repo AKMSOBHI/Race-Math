@@ -394,6 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const result = await roomManager.joinRoom(room.id, data.payload.userId);
               
               if (result.success) {
+                // إرسال إشعار للطالب المنضم
                 sendToClient(ws, {
                   type: 'room_joined',
                   payload: {
@@ -402,6 +403,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     username: result.username || 'Unknown'
                   }
                 });
+                
+                // إرسال إشعار للمعلمة (صاحبة الغرفة)
+                const teacherConnection = connections.get(room.teacherId);
+                if (teacherConnection && teacherConnection.readyState === WebSocket.OPEN) {
+                  log(`Notifying teacher ${room.teacherId} about new student ${data.payload.userId} joining room ${room.id}`, 'room');
+                  sendToClient(teacherConnection, {
+                    type: 'student_joined_room',
+                    payload: {
+                      roomId: room.id,
+                      roomName: room.name,
+                      studentId: data.payload.userId,
+                      studentName: result.username || 'Unknown',
+                      timestamp: new Date().toISOString()
+                    }
+                  });
+                } else {
+                  log(`Teacher ${room.teacherId} is not connected to receive notification about student joining`, 'room');
+                  // هنا يمكن إضافة آلية حفظ الإشعارات غير المستلمة لعرضها لاحقًا
+                }
               } else {
                 sendToClient(ws, {
                   type: 'error',
