@@ -104,11 +104,11 @@ export default function Home() {
       <div className="container mx-auto px-4 py-6 flex flex-col items-center justify-center min-h-screen relative z-10">
         <div className="text-center mb-12">
           <h1 className="space-title text-5xl md:text-7xl mb-4">
-            <span className="text-purple-400">Math</span>
-            <span className="text-pink-500">Quest</span>
+            <span className="text-purple-400">سباق</span>
+            <span className="text-pink-500"> الرياضيات</span>
           </h1>
           <p className="text-xl md:text-2xl text-white">
-            Solve equations and conquer the galaxy!
+            أطلقي قدراتك وانطلقي نحو النجوم
           </p>
         </div>
         
@@ -184,6 +184,10 @@ export default function Home() {
           
           <div className="mt-6 text-center text-sm text-white text-opacity-80">
             بإمكانك اللعب منفرداً أو الانضمام لغرفة مسابقة مع زميلاتك!
+          </div>
+          
+          <div className="mt-4 text-center text-xs text-white text-opacity-50">
+            مشروع الطالبة: جوانة أحمد صبحي
           </div>
         </div>
       </div>

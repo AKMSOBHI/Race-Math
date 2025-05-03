@@ -193,26 +193,9 @@ const StartGameModal: FC = () => {
         
         {/* خيارات أخرى وأزرار التنقل */}
         <div className="mb-4">
-          <div className="flex flex-row-reverse justify-between items-center mb-3">
-            <button 
-              className="text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1"
-              onClick={() => {
-                if (isSoundEnabled) {
-                  soundService.play('click');
-                }
-                setShowStartModal(false);
-              }}
-              style={{
-                background: 'rgba(50, 50, 80, 0.5)',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}
-            >
-              العودة للقائمة الرئيسية
-            </button>
-            <h3 className="text-lg text-white font-bold">
-              اختر نوع اللعبة
-            </h3>
-          </div>
+          <h3 className="text-lg text-white font-bold text-center mb-3">
+            اختر نوع اللعبة
+          </h3>
         </div>
 
         <div className="mb-4">
@@ -340,32 +323,50 @@ const StartGameModal: FC = () => {
           />
         </div>
         
-        <button 
-          className="w-full py-3 px-4 rounded-lg transition text-lg flex items-center justify-center"
-          onClick={handleStartGame}
-          disabled={isButtonDisabled}
-          style={{
-            background: 'linear-gradient(45deg, var(--space-purple), var(--space-blue))',
-            border: '2px solid var(--space-bright)',
-            boxShadow: '0 0 15px rgba(0, 245, 212, 0.5)',
-            opacity: isButtonDisabled ? 0.6 : 1,
-            cursor: isButtonDisabled ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {isProcessing || isLoading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              جارِ بدء اللعبة...
-            </>
-          ) : (
-            <>
-              ابدأ اللعبة
-            </>
-          )}
-        </button>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <button 
+            className="py-3 px-4 rounded-lg transition text-md flex items-center justify-center bg-gray-800 text-gray-300 hover:text-white border border-gray-700"
+            onClick={() => {
+              if (isSoundEnabled) {
+                soundService.play('click');
+              }
+              setShowStartModal(false);
+            }}
+          >
+            العودة للقائمة الرئيسية
+          </button>
+          
+          <button 
+            className="py-3 px-4 rounded-lg transition text-md flex items-center justify-center"
+            onClick={handleStartGame}
+            disabled={isButtonDisabled}
+            style={{
+              background: 'linear-gradient(45deg, var(--space-purple), var(--space-blue))',
+              border: '2px solid var(--space-bright)',
+              boxShadow: '0 0 15px rgba(0, 245, 212, 0.5)',
+              opacity: isButtonDisabled ? 0.6 : 1,
+              cursor: isButtonDisabled ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isProcessing || isLoading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                جارِ بدء اللعبة...
+              </>
+            ) : (
+              <>
+                ابدأ اللعبة
+              </>
+            )}
+          </button>
+        </div>
+        
+        <div className="mt-4 text-center text-sm text-gray-400">
+          مشروع الطالبة: جوانة أحمد صبحي
+        </div>
       </div>
     </div>
   );
