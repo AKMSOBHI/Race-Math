@@ -2,14 +2,14 @@ import { Howl, Howler } from 'howler';
 
 // كائن يحمل مسارات الأصوات
 const soundPaths = {
-  correct: 'https://www.FreeSound.org/data/previews/443/443129_5356256-lq.mp3', // صوت الإجابة الصحيحة
-  wrong: 'https://www.FreeSound.org/data/previews/131/131657_2398403-lq.mp3', // صوت الإجابة الخاطئة
-  click: 'https://www.FreeSound.org/data/previews/242/242501_4414130-lq.mp3', // صوت الضغط على الأزرار
-  countdown: 'https://www.FreeSound.org/data/previews/254/254316_4404-lq.mp3', // صوت العد التنازلي
-  success: 'https://www.FreeSound.org/data/previews/456/456966_9652874-lq.mp3', // صوت النجاح
-  gameOver: 'https://www.FreeSound.org/data/previews/277/277401_5354534-lq.mp3', // صوت انتهاء اللعبة
-  levelComplete: 'https://www.FreeSound.org/data/previews/270/270402_5123851-lq.mp3', // صوت اكتمال المرحلة
-  backgroundMusic: 'https://www.FreeSound.org/data/previews/353/353546_5712554-lq.mp3' // الموسيقى الخلفية
+  correct: '/sounds/correct.mp3', // صوت الإجابة الصحيحة
+  wrong: '/sounds/wrong.mp3', // صوت الإجابة الخاطئة
+  click: '/sounds/click.mp3', // صوت الضغط على الأزرار
+  countdown: '/sounds/countdown.mp3', // صوت العد التنازلي
+  success: '/sounds/success.mp3', // صوت النجاح
+  gameOver: '/sounds/game-over.mp3', // صوت انتهاء اللعبة
+  levelComplete: '/sounds/level-complete.mp3', // صوت اكتمال المرحلة
+  backgroundMusic: '/sounds/background-music.mp3' // الموسيقى الخلفية
 };
 
 // تهيئة كائن يحمل جميع الأصوات
@@ -25,37 +25,35 @@ class SoundService {
   }
   
   private initSounds() {
-    // إنشاء كائنات الأصوات وتهيئتها
-    Object.entries(soundPaths).forEach(([name, path]) => {
-      try {
-        console.log('تهيئة الصوت:', name);
-        
-        // إعدادات خاصة للموسيقى الخلفية
-        if (name === 'backgroundMusic') {
-          sounds[name] = new Howl({
-            src: [path],
-            volume: 0.3,
-            loop: true,
-            html5: true,
-            preload: true,
-            onload: () => console.log('تم تحميل الموسيقى الخلفية'),
-            onloaderror: (id, err) => console.error('خطأ في تحميل الموسيقى:', err)
-          });
-        } else {
-          // إعدادات للأصوات الأخرى
-          sounds[name] = new Howl({
-            src: [path],
-            volume: 0.6,
-            html5: true,
-            preload: true,
-            onload: () => console.log('تم تحميل الصوت:', name),
-            onloaderror: (id, err) => console.error('خطأ في تحميل الصوت:', name, err)
-          });
-        }
-      } catch (error) {
-        console.error('خطأ في تهيئة الصوت:', name, error);
-      }
-    });
+    // فقط تهيئة الموسيقى الخلفية مسبقًا - بقية الأصوات يتم تحميلها عند الحاجة
+    try {
+      console.log('تهيئة الموسيقى الخلفية');
+      sounds['backgroundMusic'] = new Howl({
+        src: [soundPaths.backgroundMusic],
+        volume: 0.3,
+        loop: true,
+        html5: false,
+        preload: true,
+        onload: () => {
+          console.log('تم تحميل الموسيقى الخلفية');
+          // تشغيل الموسيقى فور تحميلها
+          if (!this.muted) {
+            sounds['backgroundMusic'].play();
+            console.log('تم تشغيل الموسيقى الخلفية فور تحميلها');
+          }
+        },
+        onloaderror: (id, err) => console.error('خطأ في تحميل الموسيقى:', err)
+      });
+      
+      // تجربة تشغيل مباشرة
+      sounds['backgroundMusic']?.play();
+      
+    } catch (error) {
+      console.error('خطأ في تهيئة الموسيقى الخلفية:', error);
+    }
+    
+    // تجربة تشغيل صوت النقر
+    this.play('click');
   }
   
   // تشغيل صوت محدد
@@ -65,29 +63,24 @@ class SoundService {
     try {
       console.log('تشغيل الصوت:', soundName);
       
-      // إذا لم يكن الصوت موجودًا بعد، قم بإنشائه
-      if (!sounds[soundName]) {
-        console.log('الصوت غير موجود، جاري إنشاؤه:', soundName);
-        const path = soundPaths[soundName];
-        sounds[soundName] = new Howl({
-          src: [path],
-          volume: 0.6,
-          html5: true,
-          preload: true,
-          onload: () => {
-            console.log('تم تحميل الصوت على الفور:', soundName);
-            sounds[soundName].play();
-          },
-          onloaderror: (id, err) => console.error('خطأ في تحميل الصوت على الفور:', soundName, err)
-        });
-        return sounds[soundName];
-      }
+      // إعادة إنشاء الصوت في كل مرة
+      const path = soundPaths[soundName];
+      const sound = new Howl({
+        src: [path],
+        volume: soundName === 'click' ? 0.8 : 0.6,
+        html5: false,  // عدم استخدام HTML5 Audio لزيادة التوافق
+        preload: false,  // تحميل الصوت عند الحاجة فقط
+        autoplay: true,  // تشغيل تلقائي
+        onend: () => {
+          // حذف الصوت من الذاكرة بعد الانتهاء
+          if (soundName !== 'backgroundMusic') {
+            sound.unload();
+          }
+        },
+        onplay: () => console.log('تم تشغيل الصوت بنجاح:', soundName),
+        onloaderror: (id, err) => console.error('خطأ في تحميل الصوت:', soundName, err)
+      });
       
-      // إيقاف الصوت نفسه إذا كان يعمل بالفعل ثم إعادة تشغيله
-      const sound = sounds[soundName];
-      sound.stop();
-      sound.play();
-      console.log('تم تشغيل الصوت بنجاح:', soundName);
       return sound;
     } catch (error) {
       console.error('خطأ في تشغيل الصوت:', soundName, error);
@@ -102,34 +95,28 @@ class SoundService {
     try {
       console.log('محاولة تشغيل الموسيقى الخلفية');
       
-      // إذا لم تكن الموسيقى الخلفية موجودة، قم بإنشائها
-      if (!sounds.backgroundMusic) {
-        console.log('الموسيقى الخلفية غير موجودة، جاري إنشاؤها');
-        sounds.backgroundMusic = new Howl({
-          src: [soundPaths.backgroundMusic],
-          volume: 0.3,
-          loop: true,
-          html5: true,
-          preload: true,
-          onload: () => {
-            console.log('تم تحميل الموسيقى الخلفية');
-            if (!this.muted) {
-              sounds.backgroundMusic.play();
-              console.log('تم تشغيل الموسيقى الخلفية بنجاح');
-            }
-          },
-          onloaderror: (id, err) => console.error('خطأ في تحميل الموسيقى الخلفية:', err)
-        });
-        return;
+      // تأكد من إيقاف أي موسيقى سابقة
+      if (sounds.backgroundMusic) {
+        sounds.backgroundMusic.stop();
+        console.log('تم إيقاف الموسيقى الخلفية السابقة');
       }
       
-      // إذا كانت موجودة بالفعل، تحقق من أنها تعمل
-      if (!sounds.backgroundMusic.playing()) {
-        sounds.backgroundMusic.play();
-        console.log('تم تشغيل الموسيقى الخلفية بنجاح');
-      } else {
-        console.log('الموسيقى الخلفية تعمل بالفعل');
-      }
+      // تشغيل الموسيقى الخلفية بشكل مباشر
+      const music = new Howl({
+        src: [soundPaths.backgroundMusic],
+        volume: 0.3,
+        loop: true,
+        html5: false,  // عدم استخدام HTML5 Audio لزيادة التوافق
+        autoplay: true,  // تشغيل تلقائي
+        onplay: () => {
+          console.log('تم تشغيل الموسيقى الخلفية بنجاح');
+        },
+        onloaderror: (id, err) => console.error('خطأ في تحميل الموسيقى الخلفية:', err)
+      });
+      
+      // تخزين مرجع الموسيقى الخلفية
+      sounds.backgroundMusic = music;
+      
     } catch (error) {
       console.error('خطأ في تشغيل الموسيقى الخلفية:', error);
     }
