@@ -414,9 +414,9 @@ export default function TeacherDashboard() {
               </Button>
               
               {showNotifications && (
-                <div className="absolute z-50 right-0 mt-2 w-80 bg-slate-950 rounded-lg shadow-lg p-2 border border-purple-800 max-h-96 overflow-y-auto">
-                  <div className="p-3 border-b border-slate-800">
-                    <h3 className="text-lg font-semibold text-white text-right">الإشعارات</h3>
+                <div className="absolute z-50 right-0 mt-2 w-72 xs:w-80 md:w-96 bg-slate-950 rounded-lg shadow-lg p-2 border border-purple-800 max-h-80 overflow-y-auto" style={{ maxWidth: 'calc(100vw - 20px)' }}>
+                  <div className="p-2 border-b border-slate-800">
+                    <h3 className="text-base font-semibold text-white text-right">الإشعارات</h3>
                   </div>
                   
                   {notifications.length === 0 ? (
