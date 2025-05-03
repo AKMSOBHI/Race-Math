@@ -88,8 +88,29 @@ const StageCompleteModal: FC = () => {
     }, 100);
   };
   
-  const maxPossibleScore = 5 * 3; // 5 questions × 3 points max
+  // حساب النقاط القصوى لكل مرحلة منفردة (5 أسئلة × 3 نقاط لكل سؤال)
+  const pointsPerStage = 5 * 3; // 15 نقطة لكل مرحلة
+  
+  // حساب النقاط الحالية والنقاط القصوى للمرحلة الحالية فقط
   const score = currentPlayer?.score || 0;
+  const stageProgress = currentPlayer?.progress || 0;
+  
+  // نسبة الإكمال للمرحلة الحالية من 5 أسئلة
+  const stageCompletionPercent = Math.min(100, Math.round((stageProgress / 5) * 100));
+  
+  // هنا نعرض نقاط المرحلة الحالية فقط، وليس إجمالي النقاط
+  const currentStageScore = Math.min(pointsPerStage, score - (getStageIndex(currentGame?.stage) * pointsPerStage));
+  
+  // الوظيفة المساعدة للحصول على ترتيب المرحلة (0 للمرحلة الأولى، 1 للثانية، إلخ)
+  function getStageIndex(stage?: string): number {
+    switch (stage) {
+      case 'BASIC_ADDITION_SUBTRACTION': return 0;
+      case 'COMPLEX_ADDITION_SUBTRACTION': return 1;
+      case 'MULTIPLICATION': return 2;
+      case 'DIVISION': return 3;
+      default: return 0;
+    }
+  }
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
@@ -109,9 +130,20 @@ const StageCompleteModal: FC = () => {
         <h2 className="text-3xl space-title mb-2" style={{ color: '#ffd700', textShadow: '0 0 10px #ffd700', fontFamily: 'Orbitron, sans-serif' }}>
           أكملت المهمة!
         </h2>
-        <p className="text-xl mb-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          مجموع النقاط: <span className="font-bold text-yellow-300">{convertToArabicNumerals(score)}</span> / {convertToArabicNumerals(maxPossibleScore)}
-        </p>
+        <div className="text-xl mb-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          <p className="mb-2">
+            مجموع النقاط الكلي: <span className="font-bold text-yellow-300">{convertToArabicNumerals(score)}</span>
+          </p>
+          <p className="mb-2">
+            نقاط هذه المرحلة: <span className="font-bold text-yellow-300">{convertToArabicNumerals(currentStageScore)}</span> / {convertToArabicNumerals(pointsPerStage)}
+          </p>
+          <div className="w-full bg-gray-700 rounded-full h-2.5 mb-2">
+            <div className="bg-yellow-300 h-2.5 rounded-full" style={{ width: `${stageCompletionPercent}%` }}></div>
+          </div>
+          <p className="text-sm text-yellow-200">
+            {convertToArabicNumerals(stageProgress)} من 5 أسئلة مكتملة
+          </p>
+        </div>
         
         {!isGameCompleted ? (
           <div 
