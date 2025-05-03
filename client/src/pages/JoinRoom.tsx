@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useWebSocket } from '@/lib/websocket';
 import { soundService } from '@/lib/soundService';
+import { useGameStore } from '@/lib/game/gameState';
 
 /**
  * صفحة الانضمام للغرفة - تتيح للطالبات الانضمام إلى غرفة باستخدام الرمز
@@ -22,6 +23,7 @@ export default function JoinRoom() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   const { addMessageListener, sendMessage } = useWebSocket();
+  const { currentUser } = useGameStore();
   
   // حالة الصفحة
   const [roomCode, setRoomCode] = useState('');
@@ -35,12 +37,14 @@ export default function JoinRoom() {
       return;
     }
     
+    if (!currentUser) {
+      setError('يرجى الانتظار حتى يتم تحميل بيانات المستخدم');
+      return;
+    }
+    
     setError('');
     setIsLoading(true);
     soundService.play('click');
-    
-    // في التطبيق الحقيقي، سيتم استخدام معرف المستخدم الحالي
-    const currentUserId = 1; 
     
     // سنضيف مستمع للرسائل القادمة من WebSocket
     const messageListener = (message: any) => {
@@ -64,14 +68,16 @@ export default function JoinRoom() {
     // إضافة المستمع للرسائل
     addMessageListener(messageListener);
     
-    // إرسال طلب الانضمام
+    // إرسال طلب الانضمام باستخدام معرف المستخدم الحالي
     sendMessage({
       type: "join_room",
       payload: {
         roomCode: roomCode.trim(),
-        userId: currentUserId
+        userId: currentUser.id
       }
     });
+    
+    console.log(`إرسال طلب انضمام للغرفة باستخدام معرف المستخدم: ${currentUser.id}`);
   };
   
   // العودة للصفحة الرئيسية
