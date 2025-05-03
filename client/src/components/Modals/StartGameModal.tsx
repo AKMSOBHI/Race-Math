@@ -6,6 +6,7 @@ import { useLocation } from 'wouter';
 import { useWebSocket } from '@/lib/websocket';
 import { useToast } from '@/hooks/use-toast';
 import { soundService } from '@/lib/soundService';
+import logoImage from '../../assets/logo.png';
 
 const StartGameModal: FC = () => {
   const [_, navigate] = useLocation();
@@ -172,7 +173,7 @@ const StartGameModal: FC = () => {
             }}
           >
             <img 
-              src="/images/logo.png" 
+              src={logoImage} 
               alt="شعار المدرسة الابتدائية لعبة الرياضيات"
               className="w-full h-full object-contain"
             />
@@ -191,25 +192,27 @@ const StartGameModal: FC = () => {
         )}
         
         {/* خيارات أخرى وأزرار التنقل */}
-        <div className="mb-4 flex flex-col">
-          <h3 className="text-lg text-white font-bold text-center mb-3">
-            اختر نوع اللعبة
-          </h3>
-          <button 
-            className="text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1 mx-auto mb-2"
-            onClick={() => {
-              if (isSoundEnabled) {
-                soundService.play('click');
-              }
-              setShowStartModal(false);
-            }}
-            style={{
-              background: 'rgba(50, 50, 80, 0.5)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
-            }}
-          >
-            العودة للقائمة الرئيسية
-          </button>
+        <div className="mb-4">
+          <div className="flex flex-row-reverse justify-between items-center mb-3">
+            <button 
+              className="text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1"
+              onClick={() => {
+                if (isSoundEnabled) {
+                  soundService.play('click');
+                }
+                setShowStartModal(false);
+              }}
+              style={{
+                background: 'rgba(50, 50, 80, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}
+            >
+              العودة للقائمة الرئيسية
+            </button>
+            <h3 className="text-lg text-white font-bold">
+              اختر نوع اللعبة
+            </h3>
+          </div>
         </div>
 
         <div className="mb-4">
