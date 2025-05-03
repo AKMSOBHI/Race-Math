@@ -157,8 +157,29 @@ export default function Game() {
     p => currentUser && p.id === currentUser.id
   );
   
-  // مستوى المكون - هنا نخزن الإجابات بشكل دائم مرتبطة بمعرف السؤال
-  const [questionsAnswers, setQuestionsAnswers] = useState<Record<string, number[]>>({});
+  // مستوى المكون - استخدام localStorage لتخزين الإجابات بين عمليات التحديث
+  const [questionsAnswers, setQuestionsAnswers] = useState<Record<string, number[]>>(() => {
+    // محاولة استرجاع الإجابات من localStorage عند بدء المكون
+    try {
+      const savedAnswers = localStorage.getItem(`game_answers_${gameId}`);
+      return savedAnswers ? JSON.parse(savedAnswers) : {};
+    } catch (error) {
+      console.error('خطأ في استرجاع الإجابات من localStorage:', error);
+      return {};
+    }
+  });
+  
+  // حفظ الإجابات في localStorage عند تغييرها
+  useEffect(() => {
+    try {
+      if (Object.keys(questionsAnswers).length > 0 && gameId) {
+        console.log('حفظ الإجابات في localStorage');
+        localStorage.setItem(`game_answers_${gameId}`, JSON.stringify(questionsAnswers));
+      }
+    } catch (error) {
+      console.error('خطأ في حفظ الإجابات في localStorage:', error);
+    }
+  }, [questionsAnswers, gameId]);
   
   // Get answer options including the correct one
   let answers: number[] = [];
@@ -192,23 +213,50 @@ export default function Game() {
       // خلط الإجابات بشكل عشوائي
       slicedAnswers.sort(() => Math.random() - 0.5);
       
-      // تخزين الإجابات في حالة المكون مع ربطها بمعرف السؤال
-      setQuestionsAnswers(prev => ({
-        ...prev,
-        [currentQuestion.id]: slicedAnswers
-      }));
+      // تخزين الإجابات في حالة المكون وفي localStorage
+      setQuestionsAnswers(prev => {
+        const newState = {
+          ...prev,
+          [currentQuestion.id]: slicedAnswers
+        };
+        // محاولة حفظ الإجابات في localStorage فوراً
+        try {
+          if (gameId) {
+            localStorage.setItem(`game_answers_${gameId}`, JSON.stringify(newState));
+          }
+        } catch (e) {
+          console.error('خطأ في حفظ الإجابات في localStorage:', e);
+        }
+        return newState;
+      });
       
       console.log('الإجابة الصحيحة:', currentQuestion.answer);
       console.log('جميع الإجابات:', slicedAnswers);
     }
-  }, [currentQuestion?.id, questionsAnswers]); // التبعية لمعرف السؤال وقاموس الإجابات
+  }, [currentQuestion?.id, questionsAnswers, gameId]); // إضافة gameId للتبعيات
+  
+  // مسح الإجابات عند الخروج من المكون
+  useEffect(() => {
+    return () => {
+      // مسح الإجابات من localStorage عند الخروج من المكون
+      try {
+        if (gameId) {
+          localStorage.removeItem(`game_answers_${gameId}`);
+        }
+      } catch (error) {
+        console.error('خطأ في مسح الإجابات من localStorage:', error);
+      }
+    };
+  }, [gameId]);
   
   // استخدام الإجابات المخزنة في حالة المكون (أكثر ثباتاً)
   if (currentQuestion && questionsAnswers[currentQuestion.id]) {
     answers = questionsAnswers[currentQuestion.id];
+    console.log('استخدام الإجابات المخزنة للسؤال:', currentQuestion.id, answers);
   } else if (currentQuestion) {
     // إذا لم تكن الإجابات متوفرة بعد، نستخدم الإجابة الصحيحة فقط بشكل مؤقت
     answers = [currentQuestion.answer];
+    console.log('لم يتم العثور على إجابات مخزنة للسؤال:', currentQuestion.id);
   }
   
   if (!currentGame || !currentQuestion || !currentPlayer) {

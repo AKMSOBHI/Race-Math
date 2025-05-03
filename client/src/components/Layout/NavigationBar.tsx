@@ -1,11 +1,25 @@
 import { useGameStore } from '@/lib/game/gameState';
 import { useLocation } from 'wouter';
+import { soundService } from '@/lib/soundService';
 
 export default function NavigationBar() {
   const [_, navigate] = useLocation();
-  const { toggleSound, isSoundEnabled } = useGameStore();
+  const { toggleSound, isSoundEnabled, resetGameState, currentGame } = useGameStore();
   
   const handleExit = () => {
+    // تشغيل صوت النقر
+    if (isSoundEnabled) {
+      soundService.play('click');
+    }
+    
+    // طباعة معلومات إنهاء المهمة
+    console.log('تم النقر على زر "إلغاء المهمة"...');
+    
+    // إعادة ضبط حالة اللعبة بشكل كامل قبل التوجيه
+    resetGameState();
+    
+    // يتم التوجيه للصفحة الرئيسية بعد مسح البيانات
+    console.log('تم مسح بيانات اللعبة، جاري العودة للصفحة الرئيسية...');
     navigate('/');
   };
   

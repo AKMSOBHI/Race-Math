@@ -213,6 +213,41 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   resetGameState: () => {
+    console.log('إعادة ضبط حالة اللعبة بالكامل...');
+    
+    // الحصول على معرف اللعبة الحالية قبل إعادة الضبط
+    const currentGameId = get().currentGame?.id;
+    
+    // مسح بيانات الإجابات من localStorage إذا وجدت
+    try {
+      if (currentGameId) {
+        console.log('مسح بيانات الإجابات من localStorage:', currentGameId);
+        localStorage.removeItem(`game_answers_${currentGameId}`);
+      }
+      
+      // مسح جميع مفاتيح localStorage المتعلقة بإجابات الألعاب
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('game_answers_')) {
+          console.log('مسح بيانات اللعبة القديمة:', key);
+          localStorage.removeItem(key);
+        }
+      }
+    } catch (e) {
+      console.error('خطأ في مسح بيانات localStorage:', e);
+    }
+    
+    // إيقاف الموسيقى الخلفية للعبة
+    try {
+      const { soundService } = require('../soundService');
+      console.log('إيقاف الموسيقى الخلفية...');
+      soundService.stopBackgroundMusic();
+      soundService.stopAll();
+    } catch (error) {
+      console.error('خطأ في إيقاف الموسيقى:', error);
+    }
+    
+    // إعادة ضبط جميع متغيرات الحالة
     set({
       currentGame: null,
       currentQuestion: null,
@@ -227,6 +262,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       lastAnswerResult: null,
       isLoading: false
     });
+    
+    console.log('تمت إعادة ضبط حالة اللعبة بنجاح!');
   },
   
   // WebSocket message handler
