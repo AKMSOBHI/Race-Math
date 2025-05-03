@@ -10,11 +10,14 @@ interface GameOverModalProps {
 }
 
 // بيانات طلاب وهمية للمقارنة - ستكون هذه البيانات من الخادم في التطبيق الحقيقي
+// الحد الأقصى للنقاط هو 60 نقطة
+const MAX_SCORE = 60;
+
 const mockLeaderboard = [
-  { name: "أحمد", score: 95, time: "3:24" },
-  { name: "سارة", score: 82, time: "4:12" },
-  { name: "محمد", score: 78, time: "3:45" },
-  { name: "نورة", score: 65, time: "5:10" }
+  { name: "أحمد", score: 60, time: "3:24" },
+  { name: "سارة", score: 57, time: "4:12" },
+  { name: "محمد", score: 52, time: "3:45" },
+  { name: "نورة", score: 48, time: "5:10" }
 ];
 
 const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
@@ -125,12 +128,16 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
   
   // إنشاء جدول مقارنة بإضافة اللاعب الحالي
   const generateLeaderboard = () => {
+    // تأكد من أن النتيجة لا تتجاوز الحد الأقصى
+    const cappedScore = Math.min(finalScore, MAX_SCORE);
+    console.log('إظهار شاشة انتهاء اللعبة مع النتيجة النهائية:', cappedScore);
+    
     // نسخة من اللوحة مع إضافة اللاعب الحالي
     const newLeaderboard = [
       ...mockLeaderboard,
       { 
         name: currentUser?.username || 'أنت', 
-        score: finalScore, 
+        score: cappedScore, 
         time: elapsedTime 
       }
     ];
@@ -144,11 +151,14 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
     player.name === (currentUser?.username || 'أنت')
   );
   
-  // حساب المستوى بناءً على النقاط
+  // حساب المستوى بناءً على النقاط (من أصل 60 نقطة كحد أقصى)
   const getLevel = (score: number) => {
-    if (score >= 90) return "ممتاز";
-    if (score >= 75) return "جيد جداً";
-    if (score >= 60) return "جيد";
+    // ضمان أن النقاط لا تتجاوز الحد الأقصى
+    const cappedScore = Math.min(score, MAX_SCORE);
+    
+    if (cappedScore >= 54) return "ممتاز"; // 90% من 60 = 54
+    if (cappedScore >= 45) return "جيد جداً"; // 75% من 60 = 45
+    if (cappedScore >= 36) return "جيد"; // 60% من 60 = 36
     return "مقبول";
   };
   
@@ -187,7 +197,10 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
         {/* قسم النتيجة النهائية */}
         <div className="bg-purple-900/40 rounded-lg p-3 mb-5 border border-purple-500/50">
           <div className="text-xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            النقاط النهائية: {convertToArabicNumerals(finalScore)}
+            النقاط النهائية: {convertToArabicNumerals(Math.min(finalScore, MAX_SCORE))}
+            {finalScore > MAX_SCORE && <span className="text-xs block">
+              (الحد الأقصى {convertToArabicNumerals(MAX_SCORE)} نقطة)  
+            </span>}
           </div>
           
           <div className="flex justify-between text-sm">
