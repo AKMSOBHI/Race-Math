@@ -1,1 +1,2 @@
-<?xml version='1.0' encoding='UTF-8'?><Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist.</Message></Error>
+<?xml version="1.0" encoding="UTF-8"?>
+<Error><Code>AccessDenied</Code><Message>Access Denied</Message><RequestId>MX5XWTDT352VB6JF</RequestId><HostId>7FV65rcHzpdpv5X88Fmm2Dk2Hub07klat3m9rDh6Ssx31ECWsgzkL0+7PDyWNeJ97t7PbTcYTMY=</HostId></Error>

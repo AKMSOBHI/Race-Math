@@ -12,38 +12,117 @@ const soundPaths = {
   backgroundMusic: '/sounds/background-music.mp3' // الموسيقى الخلفية
 };
 
-// مخزن لعناصر الصوت
-const audioElements: Record<string, HTMLAudioElement> = {};
+// مخزن للأصوات النشطة
+const activeSounds: Record<string, HTMLAudioElement[]> = {
+  click: [],
+  correct: [],
+  wrong: [],
+  success: [],
+  countdown: [],
+  gameOver: [],
+  levelComplete: [],
+  backgroundMusic: []
+};
 
 // عنصر الموسيقى الخلفية
 let backgroundMusicElement: HTMLAudioElement | null = null;
+
+// هل تم تفاعل المستخدم مع الصفحة
+let userInteracted = false;
 
 // إدارة الأصوات
 class SoundService {
   private muted: boolean = false;
   
   constructor() {
-    // تهيئة الأصوات عند بداية التطبيق
-    this.initSounds();
+    // إضافة مستمع للنقر على الصفحة لتفعيل الصوت
+    this.setupUserInteractionListener();
+  }
+  
+  // إضافة مستمع للنقر على الصفحة لتفعيل الصوت
+  private setupUserInteractionListener() {
+    try {
+      const handleInteraction = () => {
+        userInteracted = true;
+        console.log('تم التفاعل مع الصفحة - تمكين الصوت');
+        
+        // تشغيل الموسيقى الخلفية
+        this.initSounds();
+        
+        // إزالة المستمعين بعد التفاعل الأول
+        document.removeEventListener('click', handleInteraction);
+        document.removeEventListener('touchstart', handleInteraction);
+        document.removeEventListener('keydown', handleInteraction);
+      };
+      
+      // إضافة مستمعين للتفاعل
+      document.addEventListener('click', handleInteraction);
+      document.addEventListener('touchstart', handleInteraction);
+      document.addEventListener('keydown', handleInteraction);
+      
+      console.log('تمت إضافة مستمعي التفاعل لتمكين الصوت');
+    } catch (error) {
+      console.error('خطأ في إعداد مستمعي التفاعل:', error);
+    }
   }
   
   private initSounds() {
     try {
+      console.log('تهيئة الأصوات');
+      
+      // إنشاء قناصر صوت مسبقًا لتجنب مشكلات التأخير
+      this.preloadSound('click');
+      this.preloadSound('correct');
+      this.preloadSound('wrong');
+      
       // إعداد الموسيقى الخلفية
-      console.log('تهيئة الموسيقى الخلفية');
-      
-      // إنشاء عنصر الموسيقى الخلفية
-      backgroundMusicElement = new Audio(soundPaths.backgroundMusic);
-      backgroundMusicElement.loop = true;
-      backgroundMusicElement.volume = 0.3;
-      
-      // تجربة تشغيل مباشرة
-      this.playBackgroundMusic();
-      
-      // تجربة تشغيل صوت النقر
-      this.play('click');
+      if (!backgroundMusicElement) {
+        console.log('تهيئة الموسيقى الخلفية');
+        backgroundMusicElement = document.createElement('audio');
+        backgroundMusicElement.src = soundPaths.backgroundMusic;
+        backgroundMusicElement.loop = true;
+        backgroundMusicElement.volume = 0.3;
+        backgroundMusicElement.setAttribute('playsinline', '');
+        
+        // إضافة مستمع لأي أخطاء
+        backgroundMusicElement.addEventListener('error', (error) => {
+          console.error('خطأ في تحميل الموسيقى الخلفية:', error);
+        });
+        
+        // محاولة تشغيل الموسيقى
+        this.playBackgroundMusic();
+      }
     } catch (error) {
       console.error('خطأ في تهيئة الأصوات:', error);
+    }
+  }
+  
+  // تحميل صوت مسبقًا
+  private preloadSound(soundName: keyof typeof soundPaths) {
+    try {
+      const audio = document.createElement('audio');
+      audio.src = soundPaths[soundName];
+      audio.setAttribute('preload', 'auto');
+      audio.setAttribute('playsinline', '');
+      audio.volume = soundName === 'click' ? 0.8 : 0.6;
+      
+      // إضافة مستمع لأي أخطاء
+      audio.addEventListener('error', (error) => {
+        console.error(`خطأ في تحميل الصوت ${soundName}:`, error);
+      });
+      
+      // إضافة مستمع للتحميل الناجح
+      audio.addEventListener('canplaythrough', () => {
+        console.log(`تم تحميل الصوت ${soundName} بنجاح`);
+      });
+      
+      // تخزين الصوت في مخزن الأصوات النشطة
+      activeSounds[soundName].push(audio);
+      
+      return audio;
+    } catch (error) {
+      console.error(`خطأ في تحميل الصوت ${soundName}:`, error);
+      return null;
     }
   }
   
@@ -52,31 +131,39 @@ class SoundService {
     if (this.muted) return null;
     
     try {
-      console.log('تشغيل الصوت:', soundName);
-      
-      // إنشاء عنصر صوت جديد في كل مرة (لتجنب مشكلة تشغيل نفس الصوت مرة أخرى قبل انتهائه)
-      const audio = new Audio(soundPaths[soundName]);
+      // إنشاء عنصر صوت جديد لكل تشغيل
+      const audio = document.createElement('audio');
+      audio.src = soundPaths[soundName];
       audio.volume = soundName === 'click' ? 0.8 : 0.6;
       
+      // تعيين خيارات الصوت
+      audio.setAttribute('playsinline', '');
+      
+      
       // تشغيل الصوت
-      const playPromise = audio.play();
-      
-      // التعامل مع الوعد الذي يعيده التشغيل
-      if (playPromise !== undefined) {
-        playPromise
+      audio.addEventListener('canplay', () => {
+        console.log(`الصوت ${soundName} جاهز للتشغيل`);
+        audio.play()
           .then(() => {
-            console.log('تم تشغيل الصوت بنجاح:', soundName);
+            console.log(`تم تشغيل الصوت ${soundName} بنجاح`);
           })
-          .catch((error) => {
-            console.error('فشل تشغيل الصوت:', soundName, error);
+          .catch(error => {
+            console.error(`فشل تشغيل الصوت ${soundName}:`, error);
           });
-      }
+      });
       
-      // إزالة الصوت من الذاكرة بعد الانتهاء
-      audio.onended = () => {
-        // تنظيف المرجع
-        audio.src = '';
-      };
+      // تنظيف الصوت بعد الانتهاء
+      audio.addEventListener('ended', () => {
+        audio.remove();
+      });
+      
+      // إضافة الصوت إلى مصفوفة الأصوات النشطة
+      activeSounds[soundName].push(audio);
+      
+      // محاولة تشغيل الصوت قبل جاهزيته
+      audio.play().catch(() => {
+        // تتم معالجة الخطأ في مستمع canplay
+      });
       
       return audio;
     } catch (error) {
@@ -87,36 +174,29 @@ class SoundService {
   
   // تشغيل الموسيقى الخلفية
   playBackgroundMusic() {
-    if (this.muted) return;
+    if (this.muted || !userInteracted) return;
     
     try {
       console.log('محاولة تشغيل الموسيقى الخلفية');
       
-      // إنشاء عنصر صوت جديد للموسيقى إذا لم يكن موجودًا
       if (!backgroundMusicElement) {
-        backgroundMusicElement = new Audio(soundPaths.backgroundMusic);
+        backgroundMusicElement = document.createElement('audio');
+        backgroundMusicElement.src = soundPaths.backgroundMusic;
         backgroundMusicElement.loop = true;
         backgroundMusicElement.volume = 0.3;
+        backgroundMusicElement.setAttribute('playsinline', '');
+        document.body.appendChild(backgroundMusicElement);
       }
       
-      // تشغيل الموسيقى
-      const playPromise = backgroundMusicElement.play();
-      
-      if (playPromise !== undefined) {
-        playPromise
+      // إذا كانت الموسيقى متوقفة، قم بتشغيلها
+      if (backgroundMusicElement.paused) {
+        backgroundMusicElement.currentTime = 0;
+        backgroundMusicElement.play()
           .then(() => {
             console.log('تم تشغيل الموسيقى الخلفية بنجاح');
           })
-          .catch((error) => {
+          .catch(error => {
             console.error('فشل تشغيل الموسيقى الخلفية:', error);
-            
-            // محاولة إعادة إنشاء عنصر الموسيقى وتشغيله مرة أخرى
-            setTimeout(() => {
-              backgroundMusicElement = new Audio(soundPaths.backgroundMusic);
-              backgroundMusicElement.loop = true;
-              backgroundMusicElement.volume = 0.3;
-              backgroundMusicElement.play().catch(err => console.error('فشلت المحاولة الثانية:', err));
-            }, 1000);
           });
       }
     } catch (error) {
@@ -127,10 +207,10 @@ class SoundService {
   // إيقاف الموسيقى الخلفية
   stopBackgroundMusic() {
     try {
-      console.log('إيقاف الموسيقى الخلفية...');
       if (backgroundMusicElement) {
         backgroundMusicElement.pause();
         backgroundMusicElement.currentTime = 0;
+        console.log('تم إيقاف الموسيقى الخلفية');
       }
     } catch (error) {
       console.error('خطأ في إيقاف الموسيقى الخلفية:', error);
@@ -147,7 +227,7 @@ class SoundService {
         backgroundMusicElement.muted = this.muted;
         
         // إذا تم إلغاء كتم الصوت والموسيقى متوقفة، قم بتشغيلها
-        if (!this.muted && backgroundMusicElement.paused) {
+        if (!this.muted && backgroundMusicElement.paused && userInteracted) {
           this.playBackgroundMusic();
         }
       }
@@ -168,7 +248,7 @@ class SoundService {
         backgroundMusicElement.muted = this.muted;
         
         // إذا تم إلغاء كتم الصوت والموسيقى متوقفة، قم بتشغيلها
-        if (!this.muted && backgroundMusicElement.paused) {
+        if (!this.muted && backgroundMusicElement.paused && userInteracted) {
           this.playBackgroundMusic();
         }
       }
@@ -185,22 +265,24 @@ class SoundService {
   // إيقاف جميع الأصوات
   stopAll() {
     try {
-      console.log('إيقاف جميع الأصوات...');
-      
       // إيقاف الموسيقى الخلفية
       if (backgroundMusicElement) {
         backgroundMusicElement.pause();
         backgroundMusicElement.currentTime = 0;
       }
       
-      // إيقاف جميع الأصوات الأخرى المخزنة
-      Object.entries(audioElements).forEach(([name, audio]) => {
-        if (audio) {
+      // إيقاف جميع الأصوات الأخرى
+      Object.keys(activeSounds).forEach(soundType => {
+        activeSounds[soundType].forEach(audio => {
           audio.pause();
           audio.currentTime = 0;
-          console.log('تم إيقاف الصوت:', name);
-        }
+        });
+        
+        // مسح مصفوفة الأصوات
+        activeSounds[soundType] = [];
       });
+      
+      console.log('تم إيقاف جميع الأصوات');
     } catch (error) {
       console.error('خطأ في إيقاف جميع الأصوات:', error);
     }

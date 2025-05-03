@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>اختبار تشغيل الصوت</title>
+  <style>
+    body { padding: 20px; font-family: Arial; text-align: center; }
+    button { padding: 10px; margin: 5px; }
+  </style>
+</head>
+<body>
+
+  <h1>اختبار تشغيل الصوت</h1>
+  
+  <div>
+    <audio id="audioPlayer" controls autoplay>
+      <source id="audioSource" src="/sounds/click.mp3" type="audio/mpeg">
+      متصفحك لا يدعم عنصر الصوت.
+    </audio>
+  </div>
+  
+  <button onclick="playSound('click.mp3')">صوت النقر</button>
+  <button onclick="playSound('background-music.mp3')">الموسيقى الخلفية</button>
+  <button onclick="playSound('correct.mp3')">إجابة صحيحة</button>
+  <button onclick="playSound('wrong.mp3')">إجابة خاطئة</button>
+  <button onclick="playSound('level-complete.mp3')">اكتمال المرحلة</button>
+  
+  <script>
+    function playSound(filename) {
+      const audioPlayer = document.getElementById('audioPlayer');
+      const audioSource = document.getElementById('audioSource');
+      
+      audioSource.src = `/sounds/${filename}`;
+      audioPlayer.load();
+      audioPlayer.play();
+      
+      console.log(`تشغيل الصوت: ${filename}`);
+    }
+  </script>
+
+</body>
+</html>
