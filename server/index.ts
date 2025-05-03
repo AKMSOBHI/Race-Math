@@ -1,6 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { runMigrations } from "./migrations";
+import { db } from "./db";
+import { seedDefaultTeacher } from "./migrations";
 
 const app = express();
 app.use(express.json());
@@ -37,6 +40,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // تنفيذ هجرات قاعدة البيانات
+  try {
+    await runMigrations();
+    // إنشاء معلم افتراضي للتجربة
+    await seedDefaultTeacher(db);
+  } catch (error: any) {
+    log(`Error during database setup: ${error?.message || 'Unknown error'}`, 'db-error');
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

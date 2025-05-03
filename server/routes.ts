@@ -471,7 +471,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (result.success) {
                 sendToClient(ws, {
                   type: 'teacher_dashboard_data',
-                  payload: result.dashboard
+                  payload: {
+                    roomId: result.dashboard?.roomId || data.payload.roomId,
+                    activeStudents: (result.dashboard?.activeStudents || []).map(student => ({
+                      id: student.id,
+                      username: student.username,
+                      status: student.status,
+                      score: student.score || 0,  // تحويل null إلى 0
+                      progress: student.progress || 0  // تحويل null إلى 0
+                    })),
+                    gameStats: result.dashboard?.gameStats || {
+                      questionsAnswered: 0,
+                      correctAnswers: 0,
+                      averageScore: 0
+                    }
+                  }
                 });
               } else {
                 sendToClient(ws, {

@@ -165,7 +165,6 @@ export type ServerMessage =
       gameStats: { questionsAnswered: number; correctAnswers: number; averageScore: number } 
     } 
   }
-  
   // رسالة الخطأ
   | { type: "error"; payload: { message: string } };
 
