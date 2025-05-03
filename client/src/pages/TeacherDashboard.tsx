@@ -140,7 +140,7 @@ export default function TeacherDashboard() {
       <div className="flex flex-col mb-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between w-full mb-4 gap-3">
           <button 
-            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3 mb-2 sm:mb-0 w-full sm:w-auto"
+            className="text-white hover:text-white font-bold rounded-full transition px-3 sm:px-6 py-2 mb-2 sm:mb-0 w-full sm:w-auto text-center text-sm sm:text-base"
             onClick={() => {
               soundService.play('click');
               navigate('/');
@@ -149,7 +149,7 @@ export default function TeacherDashboard() {
               background: 'rgba(0, 0, 0, 0.3)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)',
-              minWidth: '220px',
+              minWidth: '180px',
               maxWidth: '100%'  
             }}
           >
@@ -160,11 +160,11 @@ export default function TeacherDashboard() {
             <DialogTrigger asChild>
               <Button 
                 onClick={() => soundService.play('click')}
-                className="rounded-md px-6 py-3 font-bold w-full sm:w-auto"
+                className="rounded-md px-3 sm:px-6 py-2 font-bold w-full sm:w-auto text-sm sm:text-base"
                 style={{
                   background: '#00C4A7',
                   border: 'none',
-                  minWidth: '150px',
+                  minWidth: '130px',
                   maxWidth: '100%'
                 }}
               >
@@ -275,27 +275,27 @@ export default function TeacherDashboard() {
                 borderRadius: '12px',
                 minHeight: '250px'
               }}>
-              <CardHeader className="py-4 px-6 border-b-0">
-                <CardTitle className="text-xl text-white">{room.name}</CardTitle>
-                <CardDescription className="text-gray-200">
+              <CardHeader className="py-3 px-3 sm:px-6 border-b-0">
+                <CardTitle className="text-lg sm:text-xl text-white text-center">{room.name}</CardTitle>
+                <CardDescription className="text-gray-200 text-center">
                   رمز الغرفة: <span className="font-bold text-white">{room.code}</span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="px-6 py-2 pt-0">
+              <CardContent className="px-3 sm:px-6 py-2 pt-0">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-white/80">الحد الأقصى للطالبات:</span>
-                    <span className="font-bold text-white text-left">{convertToArabicNumerals(room.maxPlayers)}</span>
+                    <span className="text-white/80 text-sm sm:text-base">الحد الأقصى للطالبات:</span>
+                    <span className="font-bold text-white text-left text-sm sm:text-base">{convertToArabicNumerals(room.maxPlayers)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/80">نوع المسابقة:</span>
-                    <span className="font-bold text-white text-left">
+                    <span className="text-white/80 text-sm sm:text-base">نوع المسابقة:</span>
+                    <span className="font-bold text-white text-left text-sm sm:text-base">
                       {room.contestMode === 'synchronized' ? 'متزامنة' : 'غير متزامنة'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-white/80">الحالة:</span>
-                    <span className="font-bold text-left">
+                    <span className="text-white/80 text-sm sm:text-base">الحالة:</span>
+                    <span className="font-bold text-left text-sm sm:text-base">
                       {room.isActive ? (
                         <span className="text-green-400">نشطة</span>
                       ) : (
@@ -305,10 +305,10 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between gap-3">
+              <CardFooter className="p-3 sm:p-4 pt-0 flex flex-row justify-between gap-2">
                 <Button 
                   variant="outline" 
-                  className="flex-1 rounded-md text-white/90 border border-white/20 bg-black/20 text-sm sm:text-base"
+                  className="flex-1 rounded-md text-white/90 border border-white/20 bg-black/20 text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
                   onClick={() => {
                     soundService.play('click');
                     openRoomDashboard(room.id);
@@ -317,7 +317,7 @@ export default function TeacherDashboard() {
                   لوحة التحكم
                 </Button>
                 <Button 
-                  className="flex-1 rounded-md font-medium text-sm sm:text-base mt-2 sm:mt-0"
+                  className="flex-1 rounded-md font-medium text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
                   onClick={() => {
                     soundService.play('click');
                     startContest(room.id);
