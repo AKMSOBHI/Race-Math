@@ -57,6 +57,7 @@ export async function runMigrations() {
         stage VARCHAR(50) DEFAULT 'BASIC_ADDITION_SUBTRACTION',
         current_question_index INTEGER DEFAULT 0,
         questions JSONB DEFAULT '[]',
+        difficulty VARCHAR(20) DEFAULT 'easy',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 

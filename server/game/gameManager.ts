@@ -9,8 +9,8 @@ export class GameManager {
     this.storage = storage;
   }
 
-  async createGame(hostId: number, isMultiplayer: boolean, maxPlayers: number): Promise<GameSession> {
-    return this.storage.createGameSession(hostId, isMultiplayer, maxPlayers);
+  async createGame(hostId: number, isMultiplayer: boolean, maxPlayers: number, roomId?: number): Promise<GameSession> {
+    return this.storage.createGameSession(hostId, isMultiplayer, maxPlayers, roomId);
   }
 
   async joinGame(gameId: string, playerId: number): Promise<{ game: GameSession | undefined; joined: boolean }> {

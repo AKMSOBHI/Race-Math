@@ -295,8 +295,8 @@ export class RoomManager {
           }
         }
       };
-    } catch (error) {
-      log(`Error getting teacher dashboard data: ${error.message}`, 'room');
+    } catch (error: any) {
+      log(`Error getting teacher dashboard data: ${error?.message || 'Unknown error'}`, 'room');
       return { success: false };
     }
   }
