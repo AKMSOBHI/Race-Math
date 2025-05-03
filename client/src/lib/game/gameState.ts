@@ -195,7 +195,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentQuestion: null,    // إعادة ضبط السؤال الحالي
       isTimeUp: false,          // إعادة ضبط حالة انتهاء الوقت
       showCorrectModal: false,  // إخفاء نوافذ التغذية الراجعة
-      showIncorrectModal: false
+      showIncorrectModal: false,
+      showStageCompleteModal: false // إخفاء نافذة إكمال المرحلة
     });
     
     console.log('تم إعادة ضبط حالة اللعبة');

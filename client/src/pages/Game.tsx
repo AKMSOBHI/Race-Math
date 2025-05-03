@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import { useWebSocket } from '@/lib/websocket';
 import { useGameStore } from '@/lib/game/gameState';
@@ -109,7 +109,7 @@ export default function Game() {
     }
   }, [gameId, navigate]);
   
-  // Generate bubble positions when question changes
+  // Generate bubble positions and answers when question changes
   useEffect(() => {
     if (currentQuestion) {
       // Generate positions for the bubbles (question + 3 answers = 4 total)
@@ -128,7 +128,7 @@ export default function Game() {
       // Debug
       console.log('Generated bubble positions:', positions);
     }
-  }, [currentQuestion]);
+  }, [currentQuestion?.id]); // تغيير التبعية إلى معرف السؤال بدلاً من كامل السؤال
   
   // Handle bubble click / answer submission
   const handleAnswerSubmit = (answer: number) => {
@@ -157,35 +157,50 @@ export default function Game() {
     p => currentUser && p.id === currentUser.id
   );
   
+  // استخدام useRef للاحتفاظ بالإجابات الحالية حتى لا تتغير مع كل تحديث
+  const answersRef = useRef<number[]>([]);
+  
   // Get answer options including the correct one
   let answers: number[] = [];
-  if (currentQuestion) {
-    // تأكد من أن الجواب الصحيح دائماً موجود
-    answers = [currentQuestion.answer];
-    
-    // إضافة إجابات خاطئة متنوعة
-    const wrongAnswers = generateWrongAnswers(currentQuestion.answer);
-    answers = [...answers, ...wrongAnswers];
-    
-    // عدد ثابت من الإجابات (4)
-    while (answers.length < 4) {
-      // إضافة إجابات إضافية إذا لم يكن هناك ما يكفي
-      const randomOffset = Math.floor(Math.random() * 10) + 5;
-      const extraWrong = currentQuestion.answer + (Math.random() > 0.5 ? randomOffset : -randomOffset);
+  
+  // توليد الإجابات فقط عندما يتغير السؤال (وليس مع كل تحديث للمكون)
+  useEffect(() => {
+    if (currentQuestion) {
+      // تأكد من أن الجواب الصحيح دائماً موجود
+      const newAnswers = [currentQuestion.answer];
       
-      if (!answers.includes(extraWrong) && extraWrong > 0) {
-        answers.push(extraWrong);
+      // إضافة إجابات خاطئة متنوعة
+      const wrongAnswers = generateWrongAnswers(currentQuestion.answer);
+      newAnswers.push(...wrongAnswers);
+      
+      // عدد ثابت من الإجابات (4)
+      while (newAnswers.length < 4) {
+        // إضافة إجابات إضافية إذا لم يكن هناك ما يكفي
+        const randomOffset = Math.floor(Math.random() * 10) + 5;
+        const extraWrong = currentQuestion.answer + (Math.random() > 0.5 ? randomOffset : -randomOffset);
+        
+        if (!newAnswers.includes(extraWrong) && extraWrong > 0) {
+          newAnswers.push(extraWrong);
+        }
       }
+      
+      // تأكد من أن لديك بالضبط 4 إجابات
+      const slicedAnswers = newAnswers.slice(0, 4);
+      
+      // خلط الإجابات بشكل عشوائي
+      slicedAnswers.sort(() => Math.random() - 0.5);
+      
+      // تخزين الإجابات في المرجع
+      answersRef.current = slicedAnswers;
+      
+      console.log('الإجابة الصحيحة:', currentQuestion.answer);
+      console.log('جميع الإجابات:', slicedAnswers);
     }
-    
-    // تأكد من أن لديك بالضبط 4 إجابات
-    answers = answers.slice(0, 4);
-    
-    // خلط الإجابات بشكل عشوائي
-    answers.sort(() => Math.random() - 0.5);
-    
-    console.log('الإجابة الصحيحة:', currentQuestion.answer);
-    console.log('جميع الإجابات:', answers);
+  }, [currentQuestion?.id]); // التبعية لمعرف السؤال فقط
+  
+  // استخدام الإجابات المخزنة في المرجع
+  if (currentQuestion && answersRef.current.length > 0) {
+    answers = answersRef.current;
   }
   
   if (!currentGame || !currentQuestion || !currentPlayer) {
