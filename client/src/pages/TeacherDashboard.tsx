@@ -110,12 +110,21 @@ export default function TeacherDashboard() {
     setIsLoading(true);
     
     // إنشاء البيانات للإرسال
-    const payload = {
+    const payload: {
+      type: 'all' | 'room';
+      roomId?: number;
+      teacherId: number;
+      message: string;
+    } = {
       type: messageType,
-      roomId: messageType === 'room' ? selectedRoomId : undefined,
       teacherId: 1, // في التطبيق الحقيقي، سيتم أخذ معرف المعلم من المستخدم الحالي
       message: messageText
     };
+    
+    // إضافة معرف الغرفة إذا كان محدداً
+    if (messageType === 'room' && selectedRoomId !== '') {
+      payload.roomId = Number(selectedRoomId);
+    }
     
     // إرسال الرسالة إلى الخادم
     sendMessage({
@@ -174,6 +183,31 @@ export default function TeacherDashboard() {
         
         // تشغيل صوت الإشعار
         soundService.play('notification');
+      } else if (message.type === "teacher_message") {
+        // إذا كانت رسالة من المعلمة (تأكيد الإرسال)
+        if (message.payload.teacherId === 1) {
+          // إضافة إشعار جديد لسجل الإشعارات
+          const msgText = message.payload.message;
+          const msgPreview = msgText.length > 30 ? msgText.substring(0, 30) + '...' : msgText;
+          
+          let description = '';
+          if (message.payload.roomId) {
+            description = `تم إرسال رسالة إلى غرفة ${message.payload.roomName}: "${msgPreview}"`;
+          } else {
+            description = `تم إرسال رسالة لجميع المستخدمين: "${msgPreview}"`;
+          }
+          
+          const newNotification = {
+            id: Date.now().toString(),
+            type: "message_sent",
+            title: "تم إرسال رسالة",
+            description: description,
+            timestamp: new Date(message.payload.timestamp),
+            read: true
+          };
+          
+          setNotifications(prev => [newNotification, ...prev]);
+        }
       }
     };
     
