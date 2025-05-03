@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/ui/NotificationBell";
 import { soundService } from '@/lib/soundService';
 import { useGameStore } from '@/lib/game/gameState';
+import { useRoute } from 'wouter';
 
 export function NavigationBar() {
   const [_, navigate] = useLocation();
-  const { currentUser } = useGameStore();
+  const [isGamePage] = useRoute('/game/:gameId');
+  const { currentUser, resetGameState } = useGameStore();
   
   const goTo = (path: string) => {
     try {
@@ -16,6 +18,18 @@ export function NavigationBar() {
       console.error("خطأ في تشغيل صوت النقر", e);
     }
     navigate(path);
+  };
+  
+  const handleExitGame = () => {
+    try {
+      soundService.play('click');
+      soundService.stopBackgroundMusic();
+      resetGameState();
+      navigate('/');
+    } catch (e) {
+      console.error("خطأ في الخروج من اللعبة", e);
+      navigate('/');
+    }
   };
   
   return (
@@ -38,6 +52,22 @@ export function NavigationBar() {
       </div>
       
       <div className="flex items-center gap-2">
+        {/* زر الخروج من اللعبة يظهر فقط في صفحة اللعبة */}
+        {isGamePage && (
+          <Button 
+            variant="ghost"
+            className="rounded-full px-2 py-1 flex items-center gap-1 text-sm"
+            onClick={handleExitGame}
+            style={{ 
+              background: 'rgba(255, 0, 0, 0.15)', 
+              border: '1px solid rgba(255, 0, 0, 0.3)' 
+            }}
+          >
+            <LogOut size={16} className="text-white" />
+            <span className="text-white hidden sm:inline">خروج من اللعبة</span>
+          </Button>
+        )}
+        
         {currentUser && (
           <div className="hidden md:flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full">
             <UserCircle size={20} className="text-white" />
