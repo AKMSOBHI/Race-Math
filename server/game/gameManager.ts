@@ -80,7 +80,8 @@ export class GameManager {
         status: "active",
         questions,
         currentQuestionIndex: 0,
-        players: updatedPlayers
+        players: updatedPlayers,
+        difficulty // إضافة مستوى الصعوبة لجلسة اللعب
       });
     } catch (error) {
       console.error(`Error starting game ${gameId}:`, error);

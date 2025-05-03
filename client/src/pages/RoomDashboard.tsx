@@ -66,6 +66,33 @@ export default function RoomDashboard() {
         if (foundRoom) {
           setRoom(foundRoom);
         }
+      } else if (message.type === "contest_started") {
+        if (message.payload.roomId === roomId) {
+          // تم بدء المسابقة بنجاح
+          console.log("تم بدء المسابقة!", message.payload.gameSession);
+          
+          // تحديث بيانات لوحة التحكم فوراً
+          fetchDashboardData();
+          
+          // عرض رسالة نجاح
+          toast({
+            title: "تم بدء المسابقة بنجاح",
+            description: "يمكن للطالبات المشاركة في المسابقة الآن",
+          });
+          
+          // تشغيل صوت نجاح
+          soundService.play('correct');
+        }
+      } else if (message.type === "error") {
+        // عرض رسالة الخطأ
+        toast({
+          title: "حدث خطأ",
+          description: message.payload.message,
+          variant: "destructive"
+        });
+        
+        // تشغيل صوت الخطأ
+        soundService.play('wrong');
       }
     };
     
