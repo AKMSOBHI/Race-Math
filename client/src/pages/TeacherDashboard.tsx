@@ -135,7 +135,7 @@ export default function TeacherDashboard() {
   };
   
   return (
-    <div className="container py-8">
+    <div className="container-fluid px-2 sm:px-4 md:px-6 py-4 sm:py-8">
       {/* شريط التنقل العلوي */}
       <div className="flex flex-col mb-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between w-full mb-4 gap-3">

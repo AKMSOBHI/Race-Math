@@ -169,11 +169,11 @@ export default function RoomDashboard() {
   }
   
   return (
-    <div className="container py-8">
+    <div className="container-fluid px-2 sm:px-4 md:px-6 py-4 sm:py-8">
       <div className="flex flex-col mb-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between w-full mb-4 gap-3">
           <button 
-            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3 mb-2 sm:mb-4 w-full sm:w-auto"
+            className="text-white hover:text-white font-bold rounded-full transition px-3 sm:px-6 py-2 mb-2 sm:mb-4 w-full sm:w-auto text-sm sm:text-base"
             onClick={() => {
               soundService.play('click');
               goBack();
@@ -182,7 +182,7 @@ export default function RoomDashboard() {
               background: 'rgba(0, 0, 0, 0.3)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)',
-              minWidth: '220px',
+              minWidth: '180px',
               maxWidth: '100%'  
             }}
           >
@@ -192,25 +192,25 @@ export default function RoomDashboard() {
           <div className="flex w-full sm:w-auto gap-2 justify-center">
             <Button 
               onClick={endContest}
-              className="rounded-md px-4 py-2 font-bold text-sm sm:text-base"
+              className="rounded-md px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm"
               style={{
                 background: 'rgba(0, 0, 0, 0.4)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 backdropFilter: 'blur(10px)',
-                minWidth: '120px',
+                minWidth: '100px',
                 maxWidth: '45%',
                 flex: 1
               }}
             >
-              ✕ إنهاء المسابقة
+              إنهاء المسابقة
             </Button>
             <Button 
               onClick={startContest}
-              className="rounded-md px-4 py-2 font-bold text-sm sm:text-base"
+              className="rounded-md px-2 sm:px-4 py-1 sm:py-2 font-bold text-xs sm:text-sm"
               style={{
                 background: '#00C4A7',
                 border: 'none',
-                minWidth: '120px',
+                minWidth: '100px',
                 maxWidth: '45%',
                 flex: 1
               }}
