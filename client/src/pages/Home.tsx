@@ -103,30 +103,71 @@ export default function Home() {
         </div>
         
         <div className="space-container p-8 rounded-xl max-w-md w-full">
-          <h2 className="text-2xl space-title mb-6 text-center">Ready for launch?</h2>
+          <h2 className="text-2xl space-title mb-6 text-center">اختر ما تريد</h2>
           
-          <button 
-            className="w-full space-button hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
-            onClick={() => {
-              soundService.play('click');
-              setShowStartModal(true);
-            }}
-            disabled={!currentUser || !isConnected}
-          >
-            {!isConnected ? (
-              <>Establishing connection...</>
-            ) : !currentUser ? (
-              <>Creating space identity...</>
-            ) : (
-              <>
-                <i className="fas fa-rocket mr-2"></i>
-                Launch Mission
-              </>
-            )}
-          </button>
+          <div className="flex flex-col gap-4">
+            {/* زر بدء لعبة جديدة */}
+            <button 
+              className="w-full space-button hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
+              onClick={() => {
+                soundService.play('click');
+                setShowStartModal(true);
+              }}
+              disabled={!currentUser || !isConnected}
+              style={{
+                background: 'linear-gradient(45deg, #10b981, #059669)',
+                border: '2px solid #34d399',
+              }}
+            >
+              {!isConnected ? (
+                <>جاري الاتصال...</>
+              ) : !currentUser ? (
+                <>جاري إنشاء الحساب...</>
+              ) : (
+                <>
+                  <i className="fas fa-rocket mr-2"></i>
+                  بدء لعبة جديدة
+                </>
+              )}
+            </button>
+            
+            {/* زر الانضمام للغرفة */}
+            <button 
+              className="w-full hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
+              onClick={() => {
+                soundService.play('click');
+                navigate('/join');
+              }}
+              disabled={!currentUser || !isConnected}
+              style={{
+                background: 'linear-gradient(45deg, #7c3aed, #4c1d95)',
+                border: '2px solid #8b5cf6',
+              }}
+            >
+              <i className="fas fa-users mr-2"></i>
+              الانضمام لغرفة
+            </button>
+            
+            {/* زر صفحة المعلمة */}
+            <button 
+              className="w-full hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
+              onClick={() => {
+                soundService.play('click');
+                navigate('/teacher');
+              }}
+              disabled={!currentUser || !isConnected}
+              style={{
+                background: 'linear-gradient(45deg, #3b82f6, #1d4ed8)',
+                border: '2px solid #60a5fa',
+              }}
+            >
+              <i className="fas fa-chalkboard-teacher mr-2"></i>
+              صفحة المعلمة
+            </button>
+          </div>
           
           <div className="mt-6 text-center text-sm text-white text-opacity-80">
-            Explore solo or team up with fellow astronauts in multiplayer mode!
+            بإمكانك اللعب منفرداً أو الانضمام لغرفة مسابقة مع زميلاتك!
           </div>
         </div>
       </div>

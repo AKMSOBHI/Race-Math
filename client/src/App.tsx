@@ -3,14 +3,30 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Game from "@/pages/Game";
+import TeacherDashboard from "@/pages/TeacherDashboard";
+import RoomDashboard from "@/pages/RoomDashboard";
+import JoinRoom from "@/pages/JoinRoom";
+import WaitingRoom from "@/pages/WaitingRoom";
 import { useEffect } from "react";
 import { soundService } from "@/lib/soundService";
 
 function Router() {
   return (
     <Switch>
+      {/* الصفحات العامة */}
       <Route path="/" component={Home} />
+      <Route path="/game" component={Game} />
       <Route path="/game/:gameId" component={Game} />
+      
+      {/* صفحات الغرف والانضمام للطالبات */}
+      <Route path="/join" component={JoinRoom} />
+      <Route path="/waiting-room/:id" component={WaitingRoom} />
+      
+      {/* صفحات المعلمة */}
+      <Route path="/teacher" component={TeacherDashboard} />
+      <Route path="/teacher/room/:id" component={RoomDashboard} />
+      
+      {/* صفحة 404 */}
       <Route component={NotFound} />
     </Switch>
   );
