@@ -136,123 +136,128 @@ export default function TeacherDashboard() {
   
   return (
     <div className="container py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
+      {/* شريط التنقل العلوي */}
+      <div className="flex flex-col mb-6">
+        <div className="flex items-start justify-between w-full mb-4">
           <button 
-            className="mb-2 text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1"
+            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3"
             onClick={() => {
               soundService.play('click');
               navigate('/');
             }}
             style={{
-              background: 'rgba(50, 50, 80, 0.5)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
+              background: 'rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              minWidth: '220px'  
             }}
           >
-            &larr; العودة للصفحة الرئيسية
+            ← العودة للصفحة الرئيسية
           </button>
-          <h1 className="text-2xl font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-            لوحة تحكم المعلمة
-          </h1>
+          
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                onClick={() => soundService.play('click')}
+                className="rounded-md px-6 py-3 font-bold"
+                style={{
+                  background: '#00C4A7',
+                  border: 'none',
+                  minWidth: '150px'
+                }}
+              >
+                إنشاء غرفة جديدة
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>إنشاء غرفة جديدة</DialogTitle>
+                <DialogDescription>
+                  قم بإنشاء غرفة جديدة للطالبات للانضمام إليها والمشاركة في المسابقات الرياضية.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...roomForm}>
+                <form onSubmit={roomForm.handleSubmit(handleCreateRoom)} className="space-y-4">
+                  <FormField
+                    control={roomForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>اسم الغرفة</FormLabel>
+                        <FormControl>
+                          <Input placeholder="الفصل الرابع - الرياضيات" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          اسم الغرفة الذي سيظهر للطالبات
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={roomForm.control}
+                    name="maxPlayers"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>الحد الأقصى للطالبات</FormLabel>
+                        <FormControl>
+                          <Input type="number" min="2" max="100" placeholder="100" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          الحد الأقصى لعدد الطالبات في الغرفة (100 كحد أقصى)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={roomForm.control}
+                    name="contestMode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>نوع المسابقة</FormLabel>
+                        <FormControl>
+                          <select
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            {...field}
+                          >
+                            <option value="synchronized">متزامنة (تبدأ وتنتهي في نفس الوقت للجميع)</option>
+                            <option value="asynchronous">غير متزامنة (يمكن للطالبات اللعب في أي وقت)</option>
+                          </select>
+                        </FormControl>
+                        <FormDescription>
+                          نوع المسابقة يحدد كيفية مشاركة الطالبات
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <DialogFooter className="mt-6">
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      style={{
+                        background: 'linear-gradient(45deg, #10b981, #059669)',
+                        border: '2px solid #34d399',
+                        boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)'
+                      }}
+                    >
+                      {isLoading ? 'جاري الإنشاء...' : 'إنشاء الغرفة'}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
         
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              onClick={() => soundService.play('click')}
-              style={{
-                background: 'linear-gradient(45deg, #10b981, #059669)',
-                border: '2px solid #34d399',
-                boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)'
-              }}
-            >
-              إنشاء غرفة جديدة
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>إنشاء غرفة جديدة</DialogTitle>
-              <DialogDescription>
-                قم بإنشاء غرفة جديدة للطالبات للانضمام إليها والمشاركة في المسابقات الرياضية.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <Form {...roomForm}>
-              <form onSubmit={roomForm.handleSubmit(handleCreateRoom)} className="space-y-4">
-                <FormField
-                  control={roomForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>اسم الغرفة</FormLabel>
-                      <FormControl>
-                        <Input placeholder="الفصل الرابع - الرياضيات" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        اسم الغرفة الذي سيظهر للطالبات
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={roomForm.control}
-                  name="maxPlayers"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>الحد الأقصى للطالبات</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="2" max="100" placeholder="100" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        الحد الأقصى لعدد الطالبات في الغرفة (100 كحد أقصى)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={roomForm.control}
-                  name="contestMode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>نوع المسابقة</FormLabel>
-                      <FormControl>
-                        <select
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          {...field}
-                        >
-                          <option value="synchronized">متزامنة (تبدأ وتنتهي في نفس الوقت للجميع)</option>
-                          <option value="asynchronous">غير متزامنة (يمكن للطالبات اللعب في أي وقت)</option>
-                        </select>
-                      </FormControl>
-                      <FormDescription>
-                        نوع المسابقة يحدد كيفية مشاركة الطالبات
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter className="mt-6">
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    style={{
-                      background: 'linear-gradient(45deg, #10b981, #059669)',
-                      border: '2px solid #34d399',
-                      boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)'
-                    }}
-                  >
-                    {isLoading ? 'جاري الإنشاء...' : 'إنشاء الغرفة'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        <h1 className="text-3xl font-bold text-center mb-8" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          لوحة تحكم المعلمة
+        </h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -262,54 +267,63 @@ export default function TeacherDashboard() {
           </p>
         ) : (
           rooms.map((room) => (
-            <Card key={room.id} className="overflow-hidden">
-              <CardHeader style={{
-                background: 'linear-gradient(135deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
-                borderBottom: '2px solid var(--space-bright)',
+            <Card key={room.id} className="overflow-hidden border-0 shadow-xl" 
+              style={{ 
+                background: '#451f92', 
+                borderRadius: '12px',
+                minHeight: '250px'
               }}>
-                <CardTitle className="text-lg">{room.name}</CardTitle>
-                <CardDescription>
+              <CardHeader className="py-4 px-6 border-b-0">
+                <CardTitle className="text-xl text-white">{room.name}</CardTitle>
+                <CardDescription className="text-gray-200">
                   رمز الغرفة: <span className="font-bold text-white">{room.code}</span>
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="px-6 py-2 pt-0">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>الحد الأقصى للطالبات:</span>
-                    <span className="font-bold">{convertToArabicNumerals(room.maxPlayers)}</span>
+                    <span className="text-white/80">الحد الأقصى للطالبات:</span>
+                    <span className="font-bold text-white text-left">{convertToArabicNumerals(room.maxPlayers)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>نوع المسابقة:</span>
-                    <span className="font-bold">
+                    <span className="text-white/80">نوع المسابقة:</span>
+                    <span className="font-bold text-white text-left">
                       {room.contestMode === 'synchronized' ? 'متزامنة' : 'غير متزامنة'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>الحالة:</span>
-                    <span className="font-bold">
+                    <span className="text-white/80">الحالة:</span>
+                    <span className="font-bold text-left">
                       {room.isActive ? (
-                        <span className="text-green-500">نشطة</span>
+                        <span className="text-green-400">نشطة</span>
                       ) : (
-                        <span className="text-red-500">غير نشطة</span>
+                        <span className="text-gray-300">غير نشطة</span>
                       )}
                     </span>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="p-4 pt-0 flex justify-between gap-2">
+              <CardFooter className="p-4 pt-0 flex justify-between gap-3">
                 <Button 
                   variant="outline" 
-                  className="flex-1"
-                  onClick={() => openRoomDashboard(room.id)}
+                  className="flex-1 rounded-md text-white/90 border border-white/20 bg-black/20"
+                  onClick={() => {
+                    soundService.play('click');
+                    openRoomDashboard(room.id);
+                  }}
                 >
                   لوحة التحكم
                 </Button>
                 <Button 
-                  className="flex-1"
-                  onClick={() => startContest(room.id)}
+                  className="flex-1 rounded-md font-medium"
+                  onClick={() => {
+                    soundService.play('click');
+                    startContest(room.id);
+                  }}
                   style={{
-                    background: 'linear-gradient(45deg, #10b981, #059669)',
-                    border: '2px solid #34d399',
+                    background: '#00C4A7',
+                    border: 'none',
+                    color: 'white'
                   }}
                 >
                   بدء مسابقة

@@ -143,41 +143,58 @@ export default function RoomDashboard() {
   
   return (
     <div className="container py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <Button 
-            variant="ghost" 
-            onClick={goBack}
-            className="mb-2"
+      <div className="flex flex-col mb-6">
+        <div className="flex items-start justify-between w-full mb-4">
+          <button 
+            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3 mb-4"
+            onClick={() => {
+              soundService.play('click');
+              goBack();
+            }}
+            style={{
+              background: 'rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              minWidth: '220px'  
+            }}
           >
-            &larr; العودة للوحة التحكم
-          </Button>
-          <h1 className="text-2xl font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+            ← العودة للوحة التحكم
+          </button>
+
+          <div className="flex gap-2">
+            <Button 
+              onClick={endContest}
+              className="rounded-md px-5 py-2 font-bold"
+              style={{
+                background: 'rgba(0, 0, 0, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                minWidth: '150px'
+              }}
+            >
+              ✕ إنهاء المسابقة
+            </Button>
+            <Button 
+              onClick={startContest}
+              className="rounded-md px-5 py-2 font-bold"
+              style={{
+                background: '#00C4A7',
+                border: 'none',
+                minWidth: '160px'  
+              }}
+            >
+              بدء مسابقة
+            </Button>
+          </div>
+        </div>
+        
+        <div className="text-center mb-4">
+          <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
             {room ? room.name : 'غرفة المسابقة'}
           </h1>
           {room && (
-            <p className="text-space-bright">رمز الغرفة: <span className="font-bold">{room.code}</span></p>
+            <p className="text-white/80">رمز الغرفة: <span className="font-bold text-white">{room.code}</span></p>
           )}
-        </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={endContest}
-            className="flex gap-1"
-          >
-            <X size={16} /> إنهاء المسابقة
-          </Button>
-          <Button 
-            onClick={startContest}
-            className="flex gap-1"
-            style={{
-              background: 'linear-gradient(45deg, #10b981, #059669)',
-              border: '2px solid #34d399',
-            }}
-          >
-            <Clock size={16} /> بدء مسابقة جديدة
-          </Button>
         </div>
       </div>
       
