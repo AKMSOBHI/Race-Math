@@ -176,11 +176,20 @@ class SoundService {
     this.muted = muted;
     Howler.mute(this.muted);
     
-    // إيقاف/تشغيل الموسيقى الخلفية وفقًا لحالة كتم الصوت
-    if (this.muted) {
-      sounds.backgroundMusic.stop();
-    } else if (!sounds.backgroundMusic.playing()) {
-      sounds.backgroundMusic.play();
+    try {
+      // إيقاف/تشغيل الموسيقى الخلفية وفقًا لحالة كتم الصوت
+      if (sounds.backgroundMusic) {
+        if (this.muted) {
+          sounds.backgroundMusic.stop();
+        } else if (!sounds.backgroundMusic.playing()) {
+          sounds.backgroundMusic.play();
+        }
+      } else if (!this.muted) {
+        // إذا لم تكن موجودة وتم تفعيل الصوت، قم بتشغيل الموسيقى
+        this.playBackgroundMusic();
+      }
+    } catch (error) {
+      console.error('خطأ في ضبط حالة كتم الصوت:', error);
     }
   }
   
@@ -191,9 +200,18 @@ class SoundService {
   
   // إيقاف جميع الأصوات
   stopAll() {
-    Object.values(sounds).forEach(sound => {
-      sound.stop();
-    });
+    try {
+      console.log('إيقاف جميع الأصوات...');
+      // إيقاف كل صوت بشكل امن باستخدام التحقق من وجوده
+      Object.entries(sounds).forEach(([name, sound]) => {
+        if (sound && typeof sound.stop === 'function') {
+          sound.stop();
+          console.log('تم إيقاف الصوت:', name);
+        }
+      });
+    } catch (error) {
+      console.error('خطأ في إيقاف جميع الأصوات:', error);
+    }
   }
 }
 

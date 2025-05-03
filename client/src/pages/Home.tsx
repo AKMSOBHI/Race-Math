@@ -5,6 +5,7 @@ import StartGameModal from '@/components/Modals/StartGameModal';
 import { useToast } from '@/hooks/use-toast';
 import { connectWebSocket, useWebSocket } from '@/lib/websocket';
 import { apiRequest } from '@/lib/queryClient';
+import { soundService } from '@/lib/soundService';
 
 export default function Home() {
   const [_, navigate] = useLocation();
@@ -106,7 +107,10 @@ export default function Home() {
           
           <button 
             className="w-full space-button hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
-            onClick={() => setShowStartModal(true)}
+            onClick={() => {
+              soundService.play('click');
+              setShowStartModal(true);
+            }}
             disabled={!currentUser || !isConnected}
           >
             {!isConnected ? (
