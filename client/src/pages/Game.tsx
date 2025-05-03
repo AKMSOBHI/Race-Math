@@ -257,7 +257,7 @@ export default function Game() {
           
           {/* Timer */}
           <Timer 
-            duration={20} 
+            duration={30} 
             onTimeEnd={() => {
               console.log('Timer ended, showing game over modal');
               // إذا لم تكن نافذة انتهاء اللعبة معروضة بالفعل، نعرضها
