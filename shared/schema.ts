@@ -118,6 +118,8 @@ export interface GameSession {
   maxPlayers: number;
   isMultiplayer: boolean;
   status: "waiting" | "active" | "completed";
+  roomId?: number; // إضافة معرف الغرفة لربط جلسة اللعب بالغرفة
+  difficulty?: string; // إضافة مستوى الصعوبة
 }
 
 export interface Player {

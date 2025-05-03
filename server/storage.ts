@@ -8,7 +8,7 @@ export interface IStorage {
   updateUserScore(userId: number, score: number): Promise<User | undefined>;
   
   // Game session methods
-  createGameSession(hostId: number, isMultiplayer: boolean, maxPlayers: number): Promise<GameSession>;
+  createGameSession(hostId: number, isMultiplayer: boolean, maxPlayers: number, roomId?: number): Promise<GameSession>;
   getGameSession(id: string): Promise<GameSession | undefined>;
   updateGameSession(id: string, updates: Partial<GameSession>): Promise<GameSession | undefined>;
   addPlayerToGame(gameId: string, player: Player): Promise<GameSession | undefined>;
@@ -62,7 +62,7 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
 
-  async createGameSession(hostId: number, isMultiplayer: boolean, maxPlayers: number): Promise<GameSession> {
+  async createGameSession(hostId: number, isMultiplayer: boolean, maxPlayers: number, roomId?: number): Promise<GameSession> {
     const host = await this.getUser(hostId);
     if (!host) {
       throw new Error("Host user not found");
@@ -86,7 +86,8 @@ export class MemStorage implements IStorage {
       questions: [],
       maxPlayers,
       isMultiplayer,
-      status: "waiting"
+      status: "waiting",
+      roomId // إضافة معرف الغرفة إذا كان موجوداً
     };
 
     this.gameSessions.set(sessionId, session);
