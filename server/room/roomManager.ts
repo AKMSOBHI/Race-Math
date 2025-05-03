@@ -86,10 +86,28 @@ export class RoomManager {
    */
   async getRoomByCode(code: string): Promise<Room | null> {
     try {
-      const room = await db.select().from(rooms).where(eq(rooms.code, code));
-      return room.length > 0 ? room[0] : null;
-    } catch (error) {
-      log(`Error getting room by code: ${error.message}`, 'room');
+      log(`Searching for room with code: '${code}'`, 'room');
+      // التأكد من أن رمز الغرفة نظيف (إزالة المسافات وتحويله للأحرف الكبيرة)
+      const cleanCode = code.trim().toUpperCase();
+      log(`Clean room code: '${cleanCode}'`, 'room');
+      
+      // الحصول على جميع الغرف وعرضها للتشخيص
+      const allRooms = await db.select().from(rooms);
+      log(`Total rooms in database: ${allRooms.length}`, 'room');
+      allRooms.forEach(r => log(`Room code: '${r.code}', name: ${r.name}, id: ${r.id}`, 'room'));
+      
+      // البحث عن الغرفة باستخدام الرمز المنظف
+      const room = await db.select().from(rooms).where(eq(rooms.code, cleanCode));
+      
+      if (room.length > 0) {
+        log(`Room found: ${room[0].name} (ID: ${room[0].id})`, 'room');
+        return room[0];
+      } else {
+        log(`No room found with code: '${cleanCode}'`, 'room');
+        return null;
+      }
+    } catch (error: any) {
+      log(`Error getting room by code: ${error?.message}`, 'room');
       return null;
     }
   }

@@ -86,10 +86,11 @@ export default function JoinRoom() {
     addMessageListener(messageListener);
     
     // إرسال طلب الانضمام باستخدام معرف المستخدم الحالي
-    const joinMessage = {
+    // نعرف الرسالة باستخدام النوع ClientMessage من المخطط المشترك
+    const joinMessage: any = {
       type: "join_room",
       payload: {
-        roomCode: roomCode.trim(),
+        roomCode: roomCode.trim().toUpperCase(),
         userId: currentUser.id
       }
     };
