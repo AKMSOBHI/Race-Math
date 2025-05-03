@@ -205,7 +205,12 @@ export default function WaitingRoom() {
               <Button 
                 variant="ghost" 
                 onClick={leaveRoom}
-                className="text-gray-300 hover:text-white"
+                className="text-gray-300 hover:text-white w-full sm:w-auto px-6 py-2 text-sm sm:text-base"
+                style={{
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '8px',
+                  background: 'rgba(0, 0, 0, 0.2)'
+                }}
               >
                 مغادرة الغرفة
               </Button>

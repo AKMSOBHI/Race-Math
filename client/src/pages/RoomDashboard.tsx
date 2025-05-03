@@ -171,9 +171,9 @@ export default function RoomDashboard() {
   return (
     <div className="container py-8">
       <div className="flex flex-col mb-6">
-        <div className="flex items-start justify-between w-full mb-4">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between w-full mb-4 gap-3">
           <button 
-            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3 mb-4"
+            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3 mb-2 sm:mb-4 w-full sm:w-auto"
             onClick={() => {
               soundService.play('click');
               goBack();
@@ -182,32 +182,37 @@ export default function RoomDashboard() {
               background: 'rgba(0, 0, 0, 0.3)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)',
-              minWidth: '220px'  
+              minWidth: '220px',
+              maxWidth: '100%'  
             }}
           >
             ← العودة للوحة التحكم
           </button>
 
-          <div className="flex gap-2">
+          <div className="flex w-full sm:w-auto gap-2 justify-center">
             <Button 
               onClick={endContest}
-              className="rounded-md px-5 py-2 font-bold"
+              className="rounded-md px-4 py-2 font-bold text-sm sm:text-base"
               style={{
                 background: 'rgba(0, 0, 0, 0.4)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 backdropFilter: 'blur(10px)',
-                minWidth: '150px'
+                minWidth: '120px',
+                maxWidth: '45%',
+                flex: 1
               }}
             >
               ✕ إنهاء المسابقة
             </Button>
             <Button 
               onClick={startContest}
-              className="rounded-md px-5 py-2 font-bold"
+              className="rounded-md px-4 py-2 font-bold text-sm sm:text-base"
               style={{
                 background: '#00C4A7',
                 border: 'none',
-                minWidth: '160px'  
+                minWidth: '120px',
+                maxWidth: '45%',
+                flex: 1
               }}
             >
               بدء مسابقة

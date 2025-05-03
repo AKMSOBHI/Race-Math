@@ -138,9 +138,9 @@ export default function TeacherDashboard() {
     <div className="container py-8">
       {/* شريط التنقل العلوي */}
       <div className="flex flex-col mb-6">
-        <div className="flex items-start justify-between w-full mb-4">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between w-full mb-4 gap-3">
           <button 
-            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3"
+            className="text-white hover:text-white font-bold rounded-full transition px-6 py-3 mb-2 sm:mb-0 w-full sm:w-auto"
             onClick={() => {
               soundService.play('click');
               navigate('/');
@@ -149,7 +149,8 @@ export default function TeacherDashboard() {
               background: 'rgba(0, 0, 0, 0.3)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
               backdropFilter: 'blur(10px)',
-              minWidth: '220px'  
+              minWidth: '220px',
+              maxWidth: '100%'  
             }}
           >
             ← العودة للصفحة الرئيسية
@@ -159,11 +160,12 @@ export default function TeacherDashboard() {
             <DialogTrigger asChild>
               <Button 
                 onClick={() => soundService.play('click')}
-                className="rounded-md px-6 py-3 font-bold"
+                className="rounded-md px-6 py-3 font-bold w-full sm:w-auto"
                 style={{
                   background: '#00C4A7',
                   border: 'none',
-                  minWidth: '150px'
+                  minWidth: '150px',
+                  maxWidth: '100%'
                 }}
               >
                 إنشاء غرفة جديدة
@@ -303,10 +305,10 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="p-4 pt-0 flex justify-between gap-3">
+              <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between gap-3">
                 <Button 
                   variant="outline" 
-                  className="flex-1 rounded-md text-white/90 border border-white/20 bg-black/20"
+                  className="flex-1 rounded-md text-white/90 border border-white/20 bg-black/20 text-sm sm:text-base"
                   onClick={() => {
                     soundService.play('click');
                     openRoomDashboard(room.id);
@@ -315,7 +317,7 @@ export default function TeacherDashboard() {
                   لوحة التحكم
                 </Button>
                 <Button 
-                  className="flex-1 rounded-md font-medium"
+                  className="flex-1 rounded-md font-medium text-sm sm:text-base mt-2 sm:mt-0"
                   onClick={() => {
                     soundService.play('click');
                     startContest(room.id);
