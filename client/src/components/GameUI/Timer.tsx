@@ -26,22 +26,37 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   // Timer countdown
   useEffect(() => {
     if (timeLeft <= 0) {
+      console.log('Timer reached zero, hasNotified:', hasNotified);
+      
       if (!hasNotified && onTimeEnd) {
-        if (isSoundEnabled) {
-          soundService.play('gameOver');
-        }
-        onTimeEnd();
-        setHasNotified(true);
+        console.log('Notifying time end and playing game over sound');
+        setHasNotified(true); // تعيين التنبيه أولاً لمنع التكرار
         
-        // Automatically submit a wrong answer when time runs out
-        if (currentGame && currentUser) {
-          submitAnswer(currentGame.id, -1); // -1 is invalid answer
+        try {
+          // تشغيل صوت انتهاء الوقت
+          if (isSoundEnabled) {
+            console.log('تشغيل صوت انتهاء الوقت');
+            soundService.play('gameOver');
+          }
           
-          toast({
-            title: "انتهى الوقت!",
-            description: "انتهى وقت الإجابة على السؤال",
-            variant: "destructive",
-          });
+          // إرسال إجابة خاطئة تلقائياً عند انتهاء الوقت
+          if (currentGame && currentUser && currentGame.status === 'active') {
+            console.log('إرسال إجابة خاطئة تلقائياً');
+            submitAnswer(currentGame.id, -1); // -1 is invalid answer
+            
+            toast({
+              title: "انتهى الوقت!",
+              description: "انتهى وقت الإجابة على السؤال",
+              variant: "destructive",
+            });
+          }
+          
+          // استدعاء دالة انتهاء الوقت
+          console.log('Calling onTimeEnd callback');
+          onTimeEnd();
+          
+        } catch (error) {
+          console.error('Error in timer end handling:', error);
         }
       }
       return;

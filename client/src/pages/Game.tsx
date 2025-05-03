@@ -132,13 +132,23 @@ export default function Game() {
   
   // Handle bubble click / answer submission
   const handleAnswerSubmit = (answer: number) => {
-    if (!currentGame || isTimeUp) return;
+    if (!currentGame || isTimeUp) {
+      console.log('لا يمكن إرسال الإجابة: اللعبة غير نشطة أو انتهى الوقت');
+      return;
+    }
+    
+    // التحقق من أن اللعبة في حالة نشطة
+    if (currentGame.status !== 'active') {
+      console.log('لا يمكن إرسال الإجابة: اللعبة ليست في حالة نشطة', currentGame.status);
+      return;
+    }
     
     // تشغيل صوت النقر
     if (isSoundEnabled) {
       soundService.play('click');
     }
     
+    console.log('إرسال الإجابة:', answer);
     submitAnswer(currentGame.id, answer);
   };
   

@@ -70,22 +70,39 @@ class SoundService {
   play(soundName: keyof typeof sounds) {
     if (this.muted) return;
     
-    const sound = sounds[soundName];
-    if (sound) {
-      // إيقاف الصوت نفسه إذا كان يعمل بالفعل ثم إعادة تشغيله
-      sound.stop();
-      sound.play();
+    try {
+      console.log('تشغيل الصوت:', soundName);
+      const sound = sounds[soundName];
+      if (sound) {
+        // إيقاف الصوت نفسه إذا كان يعمل بالفعل ثم إعادة تشغيله
+        sound.stop();
+        sound.play();
+        console.log('تم تشغيل الصوت بنجاح:', soundName);
+        return sound;
+      } else {
+        console.error('الصوت غير موجود:', soundName);
+      }
+    } catch (error) {
+      console.error('خطأ في تشغيل الصوت:', soundName, error);
     }
     
-    return sound;
+    return null;
   }
   
   // تشغيل الموسيقى الخلفية
   playBackgroundMusic() {
     if (this.muted) return;
     
-    if (!sounds.backgroundMusic.playing()) {
-      sounds.backgroundMusic.play();
+    try {
+      console.log('محاولة تشغيل الموسيقى الخلفية');
+      if (!sounds.backgroundMusic.playing()) {
+        sounds.backgroundMusic.play();
+        console.log('تم تشغيل الموسيقى الخلفية بنجاح');
+      } else {
+        console.log('الموسيقى الخلفية تعمل بالفعل');
+      }
+    } catch (error) {
+      console.error('خطأ في تشغيل الموسيقى الخلفية:', error);
     }
   }
   

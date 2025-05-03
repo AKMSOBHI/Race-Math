@@ -211,4 +211,17 @@
   .answer-bubble:active {
     transform: scale(0.98);
   }
+  
+  /* أنيميشن لشاشة الاحتفال */
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+  
+  .animate-scale-in {
+    animation: scale-in 0.4s ease-out forwards;
+  }
+  
+  .animate-celebrate {
+    animation: celebrate 1s ease-in-out;
+  }
 }
