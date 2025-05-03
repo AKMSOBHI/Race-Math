@@ -74,8 +74,11 @@ export default function Home() {
   
   // نريد إغلاق StartGameModal بشكل افتراضي
   useEffect(() => {
-    setShowStartModal(false);
-  }, []);
+    // تأكد من إغلاق النافذة المنبثقة
+    setTimeout(() => {
+      setShowStartModal(false);
+    }, 500);
+  }, [setShowStartModal]);
   
   // For debugging
   useEffect(() => {

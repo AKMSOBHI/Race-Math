@@ -183,8 +183,29 @@ const StartGameModal: FC = () => {
           </div>
         )}
         
+        {/* خيارات أخرى وأزرار التنقل */}
+        <div className="mb-4 flex justify-between items-center">
+          <button 
+            className="text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1"
+            onClick={() => {
+              if (isSoundEnabled) {
+                soundService.play('click');
+              }
+              setShowStartModal(false);
+            }}
+            style={{
+              background: 'rgba(50, 50, 80, 0.5)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            العودة للقائمة الرئيسية
+          </button>
+          <h3 className="text-lg text-white font-bold">
+            اختر نوع اللعبة
+          </h3>
+        </div>
+
         <div className="mb-4">
-          <h3 className="text-lg text-white font-bold mb-3 text-right">اختر نوع اللعبة:</h3>
           <div className="grid grid-cols-2 gap-3">
             <button 
               className={`${
