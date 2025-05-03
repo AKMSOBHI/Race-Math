@@ -20,6 +20,7 @@ function Router() {
       
       {/* صفحات الغرف والانضمام للطالبات */}
       <Route path="/join" component={JoinRoom} />
+      <Route path="/join-room" component={JoinRoom} />
       <Route path="/waiting-room/:id" component={WaitingRoom} />
       
       {/* صفحات المعلمة */}
