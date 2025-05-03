@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { connectWebSocket, useWebSocket } from '@/lib/websocket';
 import { apiRequest } from '@/lib/queryClient';
 import { soundService } from '@/lib/soundService';
+import { NavigationBar } from '@/components/Layout/NavigationBar';
 
 export default function Home() {
   const [_, navigate] = useLocation();
@@ -99,6 +100,9 @@ export default function Home() {
         <div className="planet planet-2"></div>
         <div className="planet planet-3"></div>
       </div>
+      
+      {/* Navigation Bar with Notifications */}
+      {currentUser && <NavigationBar />}
       
       {/* Main content */}
       <div className="container mx-auto px-4 py-6 flex flex-col items-center justify-center min-h-screen relative z-10">

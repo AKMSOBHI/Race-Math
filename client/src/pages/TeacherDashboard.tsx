@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { NavigationBar } from '@/components/Layout/NavigationBar';
 import {
   Dialog,
   DialogContent,
@@ -325,7 +326,11 @@ export default function TeacherDashboard() {
   };
   
   return (
-    <div className="container-fluid px-2 sm:px-4 md:px-6 py-4 sm:py-8">
+    <div className="min-h-screen flex flex-col">
+      {/* Navigation Bar with Notifications */}
+      <NavigationBar />
+      
+      <div className="container-fluid px-2 sm:px-4 md:px-6 py-4 sm:py-8 flex-1">
       {/* شريط التنقل العلوي */}
       <div className="flex flex-col mb-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between w-full mb-4 gap-3">
@@ -703,6 +708,7 @@ export default function TeacherDashboard() {
             </Card>
           ))
         )}
+      </div>
       </div>
     </div>
   );

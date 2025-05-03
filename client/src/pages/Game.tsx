@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import { useWebSocket } from '@/lib/websocket';
 import { useGameStore } from '@/lib/game/gameState';
-import NavigationBar from '@/components/Layout/NavigationBar';
+import { NavigationBar } from '@/components/Layout/NavigationBar';
 import Octopus from '@/components/GameUI/Octopus';
 import Bubble from '@/components/GameUI/Bubble';
 import Timer from '@/components/GameUI/Timer';

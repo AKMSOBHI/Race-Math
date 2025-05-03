@@ -16,6 +16,7 @@ import { useWebSocket } from '@/lib/websocket';
 import { soundService } from '@/lib/soundService';
 import { useGameStore } from '@/lib/game/gameState';
 import { ClientMessage, ServerMessage } from '@shared/schema';
+import { NavigationBar } from '@/components/Layout/NavigationBar';
 
 /**
  * صفحة الانضمام للغرفة - تتيح للطالبات الانضمام إلى غرفة باستخدام الرمز
@@ -158,8 +159,12 @@ export default function JoinRoom() {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md p-4">
+    <div className="min-h-screen flex flex-col">
+      {/* Navigation Bar with Notifications */}
+      {currentUser && <NavigationBar />}
+      
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-md p-4">
         <Card className="overflow-hidden shadow-lg"
           style={{
             background: 'linear-gradient(135deg, rgba(109, 40, 217, 0.9), rgba(76, 29, 149, 0.9))',
@@ -223,6 +228,7 @@ export default function JoinRoom() {
             </Button>
           </CardFooter>
         </Card>
+        </div>
       </div>
     </div>
   );

@@ -1,97 +1,50 @@
-import { useGameStore } from '@/lib/game/gameState';
 import { useLocation } from 'wouter';
+import { Home, UserCircle, LogOut } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/ui/NotificationBell";
 import { soundService } from '@/lib/soundService';
+import { useGameStore } from '@/lib/game/gameState';
 
-export default function NavigationBar() {
+export function NavigationBar() {
   const [_, navigate] = useLocation();
-  const { toggleSound, isSoundEnabled, resetGameState, currentGame, setShowGameOverModal } = useGameStore();
+  const { currentUser } = useGameStore();
   
-  const handleExit = () => {
-    // تشغيل صوت النقر
-    if (isSoundEnabled) {
+  const goTo = (path: string) => {
+    try {
       soundService.play('click');
+    } catch (e) {
+      console.error("خطأ في تشغيل صوت النقر", e);
     }
-    
-    // طباعة معلومات إنهاء المهمة
-    console.log('تم النقر على زر "إلغاء المهمة"...');
-    
-    // إذا كنا في صفحة اللعبة، تعامل معها بشكل خاص
-    if (window.location.pathname.includes('/game/')) {
-      if (currentGame) {
-        console.log('إنهاء اللعبة الحالية وإظهار شاشة انتهاء اللعبة...');
-        
-        // إيقاف جميع الأصوات
-        try {
-          soundService.stopBackgroundMusic();
-          soundService.stopAll();
-        } catch (error) {
-          console.error('خطأ في إيقاف الموسيقى:', error);
-        }
-        
-        // إظهار شاشة انتهاء اللعبة بسبب الإلغاء
-        setShowGameOverModal(true, 'cancelled', currentGame.players[0]?.score);
-       
-        // مسح البيانات من التخزين المحلي
-        try {
-          // مسح جميع بيانات اللعبة من التخزين المحلي
-          const gameId = currentGame.id;
-          localStorage.removeItem(`game_answers_${gameId}`);
-        } catch (e) {
-          console.error('خطأ في مسح بيانات اللعبة:', e);
-        }
-        
-        // عدم التنقل مباشرة، السماح للمستخدم برؤية نتيجته أولاً
-        return;
-      }
-    }
-    
-    // إذا لم نكن في صفحة اللعبة، إعادة ضبط الحالة والعودة للصفحة الرئيسية
-    resetGameState();
-    
-    // يتم التوجيه للصفحة الرئيسية بعد مسح البيانات
-    console.log('تم مسح بيانات اللعبة، جاري العودة للصفحة الرئيسية...');
-    navigate('/');
+    navigate(path);
   };
   
   return (
-    <nav className="relative z-50 space-container px-6 py-3 flex justify-between items-center shadow-lg border-b-2" style={{ borderColor: 'var(--space-bright)' }}>
-      <div className="flex items-center">
-        <div className="space-title text-2xl md:text-3xl" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          <span className="text-purple-400">رحلة</span>
-          <span className="text-pink-500">الرياضيات</span>
-        </div>
+    <div className="flex items-center justify-between w-full py-2 px-4 md:px-6 bg-opacity-20 backdrop-blur-md bg-black/10 relative z-10">
+      <div className="flex items-center gap-2 md:gap-4">
+        <Button 
+          variant="ghost" 
+          className="rounded-full p-2"
+          onClick={() => goTo('/')}
+          style={{ 
+            background: 'rgba(0, 0, 0, 0.2)', 
+            border: '1px solid rgba(255, 255, 255, 0.1)' 
+          }}
+        >
+          <Home size={20} className="text-white" />
+        </Button>
+        
+        {/* إضافة مكون الإشعارات */}
+        <NotificationBell />
       </div>
       
-      <div className="flex items-center space-x-4">
-        <button 
-          className="space-button text-white font-bold py-2 px-4 rounded-full transition"
-          onClick={handleExit}
-          style={{
-            background: 'linear-gradient(45deg, var(--space-pink), var(--space-purple))',
-            fontFamily: 'Orbitron, sans-serif'
-          }}
-        >
-          <i className="fas fa-door-open ml-2"></i>إلغاء المهمة
-        </button>
-        
-        <div 
-          className="p-2 rounded-full relative"
-          style={{
-            background: isSoundEnabled 
-              ? 'rgba(0, 245, 212, 0.3)' 
-              : 'rgba(229, 0, 164, 0.3)',
-            border: `1px solid ${isSoundEnabled ? 'var(--space-bright)' : 'var(--space-pink)'}`,
-            boxShadow: `0 0 10px ${isSoundEnabled ? 'var(--space-bright)' : 'var(--space-pink)'}`
-          }}
-        >
-          <button 
-            className="focus:outline-none"
-            onClick={toggleSound}
-          >
-            <i className={`fas ${isSoundEnabled ? 'fa-volume-up' : 'fa-volume-mute'} text-white text-xl`}></i>
-          </button>
-        </div>
+      <div className="flex items-center gap-2">
+        {currentUser && (
+          <div className="hidden md:flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full">
+            <UserCircle size={20} className="text-white" />
+            <span className="text-white text-sm">{currentUser.username}</span>
+          </div>
+        )}
       </div>
-    </nav>
+    </div>
   );
 }
