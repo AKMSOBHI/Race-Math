@@ -157,15 +157,17 @@ export default function Game() {
     p => currentUser && p.id === currentUser.id
   );
   
-  // استخدام useRef للاحتفاظ بالإجابات الحالية حتى لا تتغير مع كل تحديث
-  const answersRef = useRef<number[]>([]);
+  // مستوى المكون - هنا نخزن الإجابات بشكل دائم مرتبطة بمعرف السؤال
+  const [questionsAnswers, setQuestionsAnswers] = useState<Record<string, number[]>>({});
   
   // Get answer options including the correct one
   let answers: number[] = [];
   
-  // توليد الإجابات فقط عندما يتغير السؤال (وليس مع كل تحديث للمكون)
+  // توليد الإجابات فقط عندما يتغير السؤال وتخزينها في حالة المكون
   useEffect(() => {
-    if (currentQuestion) {
+    if (currentQuestion && !questionsAnswers[currentQuestion.id]) {
+      console.log('توليد إجابات جديدة للسؤال:', currentQuestion.id);
+      
       // تأكد من أن الجواب الصحيح دائماً موجود
       const newAnswers = [currentQuestion.answer];
       
@@ -190,17 +192,23 @@ export default function Game() {
       // خلط الإجابات بشكل عشوائي
       slicedAnswers.sort(() => Math.random() - 0.5);
       
-      // تخزين الإجابات في المرجع
-      answersRef.current = slicedAnswers;
+      // تخزين الإجابات في حالة المكون مع ربطها بمعرف السؤال
+      setQuestionsAnswers(prev => ({
+        ...prev,
+        [currentQuestion.id]: slicedAnswers
+      }));
       
       console.log('الإجابة الصحيحة:', currentQuestion.answer);
       console.log('جميع الإجابات:', slicedAnswers);
     }
-  }, [currentQuestion?.id]); // التبعية لمعرف السؤال فقط
+  }, [currentQuestion?.id, questionsAnswers]); // التبعية لمعرف السؤال وقاموس الإجابات
   
-  // استخدام الإجابات المخزنة في المرجع
-  if (currentQuestion && answersRef.current.length > 0) {
-    answers = answersRef.current;
+  // استخدام الإجابات المخزنة في حالة المكون (أكثر ثباتاً)
+  if (currentQuestion && questionsAnswers[currentQuestion.id]) {
+    answers = questionsAnswers[currentQuestion.id];
+  } else if (currentQuestion) {
+    // إذا لم تكن الإجابات متوفرة بعد، نستخدم الإجابة الصحيحة فقط بشكل مؤقت
+    answers = [currentQuestion.answer];
   }
   
   if (!currentGame || !currentQuestion || !currentPlayer) {

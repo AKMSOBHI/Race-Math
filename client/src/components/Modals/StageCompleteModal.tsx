@@ -68,24 +68,27 @@ const StageCompleteModal: FC = () => {
     
     console.log('تم النقر على زر "المرحلة التالية"...');
     
+    // إخفاء هذه النافذة أولاً بغض النظر عن الحالة
+    setShowStageCompleteModal(false);
+    
     // إذا كانت هذه هي المرحلة الأخيرة، قم بعرض شاشة اكتمال اللعبة بدلاً من الانتقال إلى مرحلة جديدة
     if (isGameCompleted) {
       console.log('اللعبة اكتملت! عرض شاشة انتهاء اللعبة...');
-      // إخفاء نافذة إكمال المرحلة قبل إظهار نافذة انتهاء اللعبة
-      setShowStageCompleteModal(false);
       
+      // إظهار نافذة انتهاء اللعبة بعد فترة قصيرة
       setTimeout(() => {
         // استخدام معلمات دالة setShowGameOverModal المحدثة
         const score = currentPlayer?.score || 0;
         console.log('إظهار شاشة انتهاء اللعبة مع النتيجة النهائية:', score);
         setShowGameOverModal(true, 'completed', score);
-      }, 100);
-      return;
+      }, 200);
+    } else {
+      // إرسال طلب المرحلة التالية بعد فترة قصيرة
+      setTimeout(() => {
+        console.log('بدء المرحلة التالية، رقم اللعبة:', currentGame.id);
+        nextStage(currentGame.id);
+      }, 200);
     }
-    
-    // إرسال طلب المرحلة التالية مباشرةً (سيتم إخفاء نافذة المرحلة في دالة nextStage)
-    console.log('بدء المرحلة التالية، رقم اللعبة:', currentGame.id);
-    nextStage(currentGame.id);
   };
   
   // حساب النقاط القصوى لكل مرحلة منفردة (5 أسئلة × 3 نقاط لكل سؤال)
