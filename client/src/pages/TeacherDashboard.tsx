@@ -34,6 +34,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useWebSocket } from '@/lib/websocket';
+import { ClientMessage } from '@shared/schema';
 import { soundService } from '@/lib/soundService';
 import { convertToArabicNumerals } from '@/lib/utils';
 
@@ -248,15 +249,73 @@ export default function TeacherDashboard() {
   // بدء مسابقة في غرفة
   const startContest = (roomId: number) => {
     soundService.play('click');
+    setIsLoading(true);
     
-    sendMessage({
+    console.log(`بدء مسابقة في الغرفة رقم ${roomId}`);
+    
+    // إضافة مستمع مؤقت للتعامل مع الرد
+    const tempListener = (response: any) => {
+      console.log("استلام رد على طلب بدء المسابقة:", response);
+      
+      if (response.type === 'contest_started') {
+        console.log('تم بدء المسابقة بنجاح:', response.payload);
+        toast({
+          title: 'تم بدء المسابقة',
+          description: 'يمكن للطالبات الانضمام الآن',
+        });
+        setIsLoading(false);
+      } else if (response.type === 'error') {
+        console.error('خطأ في بدء المسابقة:', response.payload.message);
+        toast({
+          title: 'خطأ في بدء المسابقة',
+          description: response.payload.message || 'حدث خطأ أثناء بدء المسابقة',
+          variant: 'destructive'
+        });
+        setIsLoading(false);
+      }
+    };
+    
+    // إضافة المستمع وإرسال الرسالة
+    addMessageListener(tempListener);
+    
+    const message: ClientMessage = {
       type: "start_contest",
       payload: {
         roomId,
         teacherId: 1, // في التطبيق الحقيقي، سيتم أخذ معرف المعلم من المستخدم الحالي
         difficulty: "easy"
       }
-    });
+    };
+    
+    console.log("إرسال طلب بدء مسابقة:", message);
+    sendMessage(message);
+    
+    // إزالة المستمع بعد 5 ثواني لتجنب تراكم المستمعين
+    setTimeout(() => {
+      // إزالة المستمع المؤقت
+      try {
+        // نستخدم طريقة إلغاء تسجيل المستمع يدوياً
+        const allListeners = addMessageListener((msg) => {});
+        for (let i = 0; i < allListeners.length; i++) {
+          if (allListeners[i] === tempListener) {
+            allListeners.splice(i, 1);
+            break;
+          }
+        }
+      } catch (error) {
+        console.error("خطأ في إزالة المستمع:", error);
+      }
+      
+      // إذا لم يتم استلام رد خلال 5 ثواني، نفترض أن هناك مشكلة
+      if (isLoading) {
+        setIsLoading(false);
+        toast({
+          title: 'تعذر بدء المسابقة',
+          description: 'لم يتم استلام رد من الخادم. يرجى المحاولة مرة أخرى',
+          variant: 'destructive'
+        });
+      }
+    }, 5000);
   };
   
   // فتح لوحة تحكم الغرفة
@@ -414,7 +473,7 @@ export default function TeacherDashboard() {
               </Button>
               
               {showNotifications && (
-                <div className="absolute z-50 right-0 mt-2 w-64 bg-slate-950 rounded-lg shadow-lg p-1 border border-purple-800 max-h-60 overflow-y-auto" style={{ maxWidth: 'calc(100vw - 40px)', fontSize: '0.9rem', right: '-10px' }}>
+                <div className="fixed z-50 left-1/2 transform -translate-x-1/2 mt-2 w-64 bg-slate-950 rounded-lg shadow-lg p-1 border border-purple-800 max-h-60 overflow-y-auto" style={{ maxWidth: 'calc(100vw - 40px)', fontSize: '0.9rem', top: '80px' }}>
                   <div className="p-1 border-b border-slate-800">
                     <h3 className="text-sm font-semibold text-white text-right">الإشعارات</h3>
                   </div>
@@ -594,7 +653,7 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="p-3 sm:p-4 pt-0 flex flex-row justify-between gap-2">
+              <CardFooter className="p-3 sm:p-4 pt-0 flex flex-row justify-between gap-2 flex-wrap">
                 <Button 
                   variant="outline" 
                   className="flex-1 rounded-md text-white/90 border border-white/20 bg-black/20 text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
@@ -618,6 +677,27 @@ export default function TeacherDashboard() {
                   }}
                 >
                   بدء مسابقة
+                </Button>
+                {/* زر إلغاء الغرفة */}
+                <Button 
+                  variant="destructive" 
+                  className="w-full mt-2 rounded-md text-white text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
+                  onClick={() => {
+                    if (window.confirm('هل أنت متأكد من إلغاء هذه الغرفة؟')) {
+                      soundService.play('click');
+                      // سيتم إضافة وظيفة إلغاء الغرفة لاحقاً
+                      toast({
+                        title: 'سيتم تطوير هذه الميزة قريباً',
+                        description: 'الميزة قيد التطوير'
+                      });
+                    }
+                  }}
+                  style={{
+                    background: '#ef4444',
+                    border: 'none',
+                  }}
+                >
+                  إلغاء الغرفة
                 </Button>
               </CardFooter>
             </Card>

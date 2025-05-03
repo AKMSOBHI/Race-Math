@@ -42,6 +42,9 @@ export default function JoinRoom() {
       return;
     }
     
+    // التحقق من معرف المستخدم الصحيح
+    console.log("معرف المستخدم الحالي:", currentUser.id, currentUser);
+    
     setError('');
     setIsLoading(true);
     soundService.play('click');
