@@ -120,13 +120,14 @@ export default function JoinRoom() {
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
             <Button 
-              className="w-full" 
+              className="w-full py-3 text-base sm:text-lg font-bold" 
               onClick={handleJoinRoom}
               disabled={isLoading}
               style={{
                 background: 'linear-gradient(45deg, #10b981, #059669)',
                 border: '2px solid #34d399',
-                boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)'
+                boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)',
+                borderRadius: '10px'
               }}
             >
               {isLoading ? 'جاري الانضمام...' : 'انضم للغرفة'}
@@ -134,7 +135,12 @@ export default function JoinRoom() {
             <Button 
               variant="ghost" 
               onClick={goToHome} 
-              className="w-full"
+              className="w-full py-2 text-sm sm:text-base"
+              style={{
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '8px',
+                background: 'rgba(0, 0, 0, 0.2)'
+              }}
             >
               العودة للصفحة الرئيسية
             </Button>

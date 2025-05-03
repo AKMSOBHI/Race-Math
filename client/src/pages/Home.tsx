@@ -116,7 +116,7 @@ export default function Home() {
           <div className="flex flex-col gap-4">
             {/* زر بدء لعبة جديدة */}
             <button 
-              className="w-full space-button hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
+              className="w-full space-button hover:bg-opacity-90 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg text-lg sm:text-xl transition flex items-center justify-center"
               onClick={() => {
                 soundService.play('click');
                 setShowStartModal(true);
@@ -125,6 +125,8 @@ export default function Home() {
               style={{
                 background: 'linear-gradient(45deg, #10b981, #059669)',
                 border: '2px solid #34d399',
+                minHeight: '55px',
+                boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)'
               }}
             >
               {!isConnected ? (
@@ -141,7 +143,7 @@ export default function Home() {
             
             {/* زر الانضمام للغرفة */}
             <button 
-              className="w-full hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
+              className="w-full hover:bg-opacity-90 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg text-lg sm:text-xl transition flex items-center justify-center"
               onClick={() => {
                 soundService.play('click');
                 navigate('/join');
@@ -150,6 +152,8 @@ export default function Home() {
               style={{
                 background: 'linear-gradient(45deg, #7c3aed, #4c1d95)',
                 border: '2px solid #8b5cf6',
+                minHeight: '55px',
+                boxShadow: '0 0 15px rgba(124, 58, 237, 0.4)'
               }}
             >
               <i className="fas fa-users mr-2"></i>
@@ -158,7 +162,7 @@ export default function Home() {
             
             {/* زر صفحة المعلمة */}
             <button 
-              className="w-full hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg text-xl transition flex items-center justify-center"
+              className="w-full hover:bg-opacity-90 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg text-lg sm:text-xl transition flex items-center justify-center"
               onClick={() => {
                 soundService.play('click');
                 navigate('/teacher');
@@ -167,6 +171,8 @@ export default function Home() {
               style={{
                 background: 'linear-gradient(45deg, #3b82f6, #1d4ed8)',
                 border: '2px solid #60a5fa',
+                minHeight: '55px',
+                boxShadow: '0 0 15px rgba(59, 130, 246, 0.4)'
               }}
             >
               <i className="fas fa-chalkboard-teacher mr-2"></i>
