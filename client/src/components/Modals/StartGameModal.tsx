@@ -162,13 +162,20 @@ const StartGameModal: FC = () => {
         }}
       >
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center"
+          <div className="w-24 h-24 rounded-full flex items-center justify-center"
             style={{
               border: '2px solid var(--space-bright)',
               boxShadow: '0 0 15px rgba(0, 245, 212, 0.6)',
+              background: 'rgba(255, 255, 255, 0.95)',
+              padding: '4px',
+              overflow: 'hidden'
             }}
           >
-            <span className="text-3xl font-bold">أ</span>
+            <img 
+              src="/images/logo.png" 
+              alt="شعار المدرسة الابتدائية لعبة الرياضيات"
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
         
@@ -184,9 +191,12 @@ const StartGameModal: FC = () => {
         )}
         
         {/* خيارات أخرى وأزرار التنقل */}
-        <div className="mb-4 flex justify-between items-center">
+        <div className="mb-4 flex flex-col">
+          <h3 className="text-lg text-white font-bold text-center mb-3">
+            اختر نوع اللعبة
+          </h3>
           <button 
-            className="text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1"
+            className="text-gray-300 hover:text-white font-bold rounded-lg transition text-sm px-3 py-1 mx-auto mb-2"
             onClick={() => {
               if (isSoundEnabled) {
                 soundService.play('click');
@@ -200,9 +210,6 @@ const StartGameModal: FC = () => {
           >
             العودة للقائمة الرئيسية
           </button>
-          <h3 className="text-lg text-white font-bold">
-            اختر نوع اللعبة
-          </h3>
         </div>
 
         <div className="mb-4">
@@ -253,7 +260,7 @@ const StartGameModal: FC = () => {
         </div>
         
         <div className="mb-4">
-          <h3 className="text-lg text-white font-bold mb-3 text-right">مستوى الصعوبة:</h3>
+          <h3 className="text-lg text-white font-bold mb-3 text-center">مستوى الصعوبة:</h3>
           <div className="flex space-x-2 rtl:space-x-reverse">
             <button 
               className={`flex-1 py-2 rounded-lg text-sm ${
@@ -319,7 +326,7 @@ const StartGameModal: FC = () => {
         </div>
         
         <div className="mb-5">
-          <h3 className="text-lg text-white font-bold mb-3 text-right">اسم اللاعب:</h3>
+          <h3 className="text-lg text-white font-bold mb-3 text-center">اسم اللاعب:</h3>
           <Input 
             type="text" 
             placeholder="أدخل اسمك هنا" 
