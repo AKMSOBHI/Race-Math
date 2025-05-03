@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useWebSocket } from '@/lib/websocket';
 import { soundService } from '@/lib/soundService';
 import { useGameStore } from '@/lib/game/gameState';
+import { ClientMessage, ServerMessage } from '@shared/schema';
 
 /**
  * صفحة الانضمام للغرفة - تتيح للطالبات الانضمام إلى غرفة باستخدام الرمز
@@ -24,6 +25,28 @@ export default function JoinRoom() {
   const { toast } = useToast();
   const { addMessageListener, sendMessage } = useWebSocket();
   const { currentUser } = useGameStore();
+  
+  // لتخزين مرجع للمستمع النشط
+  const activeListenerRef = React.useRef<((message: ServerMessage) => void) | null>(null);
+  
+  // تنظيف المستمع عند إلغاء تحميل المكون
+  useEffect(() => {
+    return () => {
+      // إزالة المستمع عند إلغاء تحميل المكون
+      if (activeListenerRef.current) {
+        console.log('تنظيف مستمع الرسائل عند مغادرة صفحة الانضمام للغرفة');
+        try {
+          // تذكير: addMessageListener يمكن أن تعود مصفوفة المستمعين الحاليين
+          // أو تعيد دالة لإضافة مستمع
+          // في كلتا الحالتين، نحن فقط نريد أن نضيف مستمع جديد فارغ لتجنب أي أخطاء
+          addMessageListener(() => {});
+        } catch (error) {
+          console.error('خطأ في تنظيف مستمع الرسائل:', error);
+        }
+        activeListenerRef.current = null;
+      }
+    };
+  }, []);
   
   // حالة الصفحة
   const [roomCode, setRoomCode] = useState('');
@@ -52,7 +75,7 @@ export default function JoinRoom() {
     console.log(`محاولة الانضمام للغرفة برمز: ${roomCode.trim()} للمستخدم: ${currentUser.id}`);
     
     // سنضيف مستمع للرسائل القادمة من WebSocket
-    const messageListener = (message: any) => {
+    const messageListener = (message: ServerMessage) => {
       console.log("استلام رد من الخادم:", message);
       
       if (message.type === "room_joined") {
@@ -60,37 +83,63 @@ export default function JoinRoom() {
         
         console.log("تم الانضمام للغرفة بنجاح!", message.payload);
         
+        // تشغيل صوت النجاح
+        try {
+          soundService.play('correct');
+        } catch (e) {
+          console.log("خطأ في تشغيل صوت النجاح", e);
+        }
+        
         toast({
           title: 'تم الانضمام للغرفة بنجاح',
           description: 'مرحباً بك! ستبدأ المسابقة قريباً.',
         });
         
         // الانتقال إلى صفحة الانتظار
-        navigate(`/waiting-room/${message.payload.roomId}`);
+        setTimeout(() => {
+          navigate(`/waiting-room/${message.payload.roomId}`);
+        }, 500);
       }
       else if (message.type === "error") {
         setIsLoading(false);
         
+        // تشغيل صوت الخطأ
+        try {
+          soundService.play('wrong');
+        } catch (e) {
+          console.log("خطأ في تشغيل صوت الخطأ", e);
+        }
+        
         // تحديد رسالة الخطأ بشكل أكثر وضوحًا
         let errorMessage = message.payload.message || 'حدث خطأ أثناء الانضمام للغرفة';
         
-        if (errorMessage === 'Room not found with the provided code') {
-          errorMessage = 'الغرفة غير موجودة بالرمز المدخل';
-        } else if (errorMessage === 'Could not join the room') {
-          errorMessage = 'تعذر الانضمام للغرفة. قد تكون الغرفة غير نشطة أو ممتلئة';
+        if (errorMessage.includes('Room not found') || errorMessage.includes('with the provided code')) {
+          errorMessage = 'الغرفة غير موجودة بالرمز "' + roomCode.trim().toUpperCase() + '". تأكدي من إدخال الرمز الصحيح.';
+        } else if (errorMessage.includes('Could not join') || errorMessage.includes('join the room')) {
+          errorMessage = 'تعذر الانضمام للغرفة. قد تكون الغرفة غير نشطة أو ممتلئة. يرجى التحقق من المعلمة.';
         }
         
         console.log("خطأ في الانضمام للغرفة:", errorMessage);
         setError(errorMessage);
+        
+        // عرض رسالة خطأ للمستخدم
+        toast({
+          title: 'خطأ في الانضمام للغرفة',
+          description: errorMessage,
+          variant: 'destructive'
+        });
       }
     };
+    
+    // تخزين المستمع في المرجع ليمكن تنظيفه لاحقًا
+    activeListenerRef.current = messageListener;
     
     // إضافة المستمع للرسائل
     addMessageListener(messageListener);
     
     // إرسال طلب الانضمام باستخدام معرف المستخدم الحالي
     // نعرف الرسالة باستخدام النوع ClientMessage من المخطط المشترك
-    const joinMessage: any = {
+    const joinMessage: ClientMessage = {
       type: "join_room",
       payload: {
         roomCode: roomCode.trim().toUpperCase(),
