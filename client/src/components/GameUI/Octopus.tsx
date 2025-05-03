@@ -65,8 +65,8 @@ const Octopus: FC<OctopusProps> = ({ mood }) => {
   };
 
   return (
-    <div className="flex justify-center items-center h-full py-2">
-      <div className="mathbot relative scale-85">
+    <div className="flex justify-center items-center h-full">
+      <div className="mathbot relative scale-75 transform-gpu translate-y-1">
         {/* Head */}
         <div 
           className="head w-32 h-32 rounded-3xl relative overflow-hidden"
@@ -93,7 +93,7 @@ const Octopus: FC<OctopusProps> = ({ mood }) => {
         </div>
         
         {/* Antenna */}
-        <div className="antenna absolute -top-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+        <div className="antenna absolute -top-3 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
           <div className="antenna-ball w-3 h-3 rounded-full bg-pink-500" 
             style={{ boxShadow: '0 0 10px #e500a4' }}></div>
           <div className="antenna-stem h-2 w-1 bg-gray-400"></div>

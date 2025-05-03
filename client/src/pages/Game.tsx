@@ -294,7 +294,7 @@ export default function Game() {
           </div>
           
           {/* Character Section */}
-          <div className="relative h-[100px] md:h-[120px] w-full overflow-hidden">
+          <div className="relative h-[120px] md:h-[140px] w-full overflow-visible pt-5 pb-2">
             <Octopus mood={octopusMood} />
           </div>
           
