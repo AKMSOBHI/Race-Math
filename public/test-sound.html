@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>اختبار الصوت</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      background-color: #1a1a2e;
+      color: white;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    h1 {
+      color: #00d0ff;
+      margin-bottom: 30px;
+    }
+    .sound-button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #4a00e0;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .sound-button:hover {
+      background-color: #6a00ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>اختبار الصوت</h1>
+    
+    <button class="sound-button" onclick="playSound('/sounds/click.mp3')">صوت النقر</button>
+    <button class="sound-button" onclick="playSound('/sounds/correct.mp3')">صوت الإجابة الصحيحة</button>
+    <button class="sound-button" onclick="playSound('/sounds/wrong.mp3')">صوت الإجابة الخاطئة</button>
+    <button class="sound-button" onclick="playSound('/sounds/success.mp3')">صوت النجاح</button>
+    <button class="sound-button" onclick="playSound('/sounds/countdown.mp3')">صوت العد التنازلي</button>
+    <button class="sound-button" onclick="playSound('/sounds/game-over.mp3')">صوت انتهاء اللعبة</button>
+    <button class="sound-button" onclick="playSound('/sounds/level-complete.mp3')">صوت اكتمال المرحلة</button>
+    <button class="sound-button" onclick="playBackgroundMusic()">تشغيل الموسيقى الخلفية</button>
+    <button class="sound-button" onclick="stopBackgroundMusic()">إيقاف الموسيقى الخلفية</button>
+  </div>
+
+  <script>
+    let backgroundMusicElement = null;
+    
+    function playSound(soundPath) {
+      const audio = new Audio(soundPath);
+      audio.volume = 0.6;
+      
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('تم تشغيل الصوت بنجاح:', soundPath);
+          })
+          .catch((error) => {
+            console.error('فشل تشغيل الصوت:', soundPath, error);
+          });
+      }
+    }
+    
+    function playBackgroundMusic() {
+      if (!backgroundMusicElement) {
+        backgroundMusicElement = new Audio('/sounds/background-music.mp3');
+        backgroundMusicElement.loop = true;
+        backgroundMusicElement.volume = 0.3;
+      }
+      
+      const playPromise = backgroundMusicElement.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('تم تشغيل الموسيقى الخلفية بنجاح');
+          })
+          .catch((error) => {
+            console.error('فشل تشغيل الموسيقى الخلفية:', error);
+          });
+      }
+    }
+    
+    function stopBackgroundMusic() {
+      if (backgroundMusicElement) {
+        backgroundMusicElement.pause();
+        backgroundMusicElement.currentTime = 0;
+        console.log('تم إيقاف الموسيقى الخلفية');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { Howl, Howler } from 'howler';
+// خدمة الأصوات المبسطة باستخدام HTML5 Audio
 
 // كائن يحمل مسارات الأصوات
 const soundPaths = {
@@ -12,8 +12,11 @@ const soundPaths = {
   backgroundMusic: '/sounds/background-music.mp3' // الموسيقى الخلفية
 };
 
-// تهيئة كائن يحمل جميع الأصوات
-const sounds: Record<string, Howl> = {};
+// مخزن لعناصر الصوت
+const audioElements: Record<string, HTMLAudioElement> = {};
+
+// عنصر الموسيقى الخلفية
+let backgroundMusicElement: HTMLAudioElement | null = null;
 
 // إدارة الأصوات
 class SoundService {
@@ -25,35 +28,23 @@ class SoundService {
   }
   
   private initSounds() {
-    // فقط تهيئة الموسيقى الخلفية مسبقًا - بقية الأصوات يتم تحميلها عند الحاجة
     try {
+      // إعداد الموسيقى الخلفية
       console.log('تهيئة الموسيقى الخلفية');
-      sounds['backgroundMusic'] = new Howl({
-        src: [soundPaths.backgroundMusic],
-        volume: 0.3,
-        loop: true,
-        html5: false,
-        preload: true,
-        onload: () => {
-          console.log('تم تحميل الموسيقى الخلفية');
-          // تشغيل الموسيقى فور تحميلها
-          if (!this.muted) {
-            sounds['backgroundMusic'].play();
-            console.log('تم تشغيل الموسيقى الخلفية فور تحميلها');
-          }
-        },
-        onloaderror: (id, err) => console.error('خطأ في تحميل الموسيقى:', err)
-      });
+      
+      // إنشاء عنصر الموسيقى الخلفية
+      backgroundMusicElement = new Audio(soundPaths.backgroundMusic);
+      backgroundMusicElement.loop = true;
+      backgroundMusicElement.volume = 0.3;
       
       // تجربة تشغيل مباشرة
-      sounds['backgroundMusic']?.play();
+      this.playBackgroundMusic();
       
+      // تجربة تشغيل صوت النقر
+      this.play('click');
     } catch (error) {
-      console.error('خطأ في تهيئة الموسيقى الخلفية:', error);
+      console.error('خطأ في تهيئة الأصوات:', error);
     }
-    
-    // تجربة تشغيل صوت النقر
-    this.play('click');
   }
   
   // تشغيل صوت محدد
@@ -63,25 +54,31 @@ class SoundService {
     try {
       console.log('تشغيل الصوت:', soundName);
       
-      // إعادة إنشاء الصوت في كل مرة
-      const path = soundPaths[soundName];
-      const sound = new Howl({
-        src: [path],
-        volume: soundName === 'click' ? 0.8 : 0.6,
-        html5: false,  // عدم استخدام HTML5 Audio لزيادة التوافق
-        preload: false,  // تحميل الصوت عند الحاجة فقط
-        autoplay: true,  // تشغيل تلقائي
-        onend: () => {
-          // حذف الصوت من الذاكرة بعد الانتهاء
-          if (soundName !== 'backgroundMusic') {
-            sound.unload();
-          }
-        },
-        onplay: () => console.log('تم تشغيل الصوت بنجاح:', soundName),
-        onloaderror: (id, err) => console.error('خطأ في تحميل الصوت:', soundName, err)
-      });
+      // إنشاء عنصر صوت جديد في كل مرة (لتجنب مشكلة تشغيل نفس الصوت مرة أخرى قبل انتهائه)
+      const audio = new Audio(soundPaths[soundName]);
+      audio.volume = soundName === 'click' ? 0.8 : 0.6;
       
-      return sound;
+      // تشغيل الصوت
+      const playPromise = audio.play();
+      
+      // التعامل مع الوعد الذي يعيده التشغيل
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('تم تشغيل الصوت بنجاح:', soundName);
+          })
+          .catch((error) => {
+            console.error('فشل تشغيل الصوت:', soundName, error);
+          });
+      }
+      
+      // إزالة الصوت من الذاكرة بعد الانتهاء
+      audio.onended = () => {
+        // تنظيف المرجع
+        audio.src = '';
+      };
+      
+      return audio;
     } catch (error) {
       console.error('خطأ في تشغيل الصوت:', soundName, error);
       return null;
@@ -95,28 +92,33 @@ class SoundService {
     try {
       console.log('محاولة تشغيل الموسيقى الخلفية');
       
-      // تأكد من إيقاف أي موسيقى سابقة
-      if (sounds.backgroundMusic) {
-        sounds.backgroundMusic.stop();
-        console.log('تم إيقاف الموسيقى الخلفية السابقة');
+      // إنشاء عنصر صوت جديد للموسيقى إذا لم يكن موجودًا
+      if (!backgroundMusicElement) {
+        backgroundMusicElement = new Audio(soundPaths.backgroundMusic);
+        backgroundMusicElement.loop = true;
+        backgroundMusicElement.volume = 0.3;
       }
       
-      // تشغيل الموسيقى الخلفية بشكل مباشر
-      const music = new Howl({
-        src: [soundPaths.backgroundMusic],
-        volume: 0.3,
-        loop: true,
-        html5: false,  // عدم استخدام HTML5 Audio لزيادة التوافق
-        autoplay: true,  // تشغيل تلقائي
-        onplay: () => {
-          console.log('تم تشغيل الموسيقى الخلفية بنجاح');
-        },
-        onloaderror: (id, err) => console.error('خطأ في تحميل الموسيقى الخلفية:', err)
-      });
+      // تشغيل الموسيقى
+      const playPromise = backgroundMusicElement.play();
       
-      // تخزين مرجع الموسيقى الخلفية
-      sounds.backgroundMusic = music;
-      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('تم تشغيل الموسيقى الخلفية بنجاح');
+          })
+          .catch((error) => {
+            console.error('فشل تشغيل الموسيقى الخلفية:', error);
+            
+            // محاولة إعادة إنشاء عنصر الموسيقى وتشغيله مرة أخرى
+            setTimeout(() => {
+              backgroundMusicElement = new Audio(soundPaths.backgroundMusic);
+              backgroundMusicElement.loop = true;
+              backgroundMusicElement.volume = 0.3;
+              backgroundMusicElement.play().catch(err => console.error('فشلت المحاولة الثانية:', err));
+            }, 1000);
+          });
+      }
     } catch (error) {
       console.error('خطأ في تشغيل الموسيقى الخلفية:', error);
     }
@@ -126,8 +128,9 @@ class SoundService {
   stopBackgroundMusic() {
     try {
       console.log('إيقاف الموسيقى الخلفية...');
-      if (sounds.backgroundMusic) {
-        sounds.backgroundMusic.stop();
+      if (backgroundMusicElement) {
+        backgroundMusicElement.pause();
+        backgroundMusicElement.currentTime = 0;
       }
     } catch (error) {
       console.error('خطأ في إيقاف الموسيقى الخلفية:', error);
@@ -137,19 +140,16 @@ class SoundService {
   // التحكم في كتم/تشغيل الصوت
   toggleMute(): boolean {
     this.muted = !this.muted;
-    Howler.mute(this.muted);
     
     try {
-      // إيقاف/تشغيل الموسيقى الخلفية وفقًا لحالة كتم الصوت
-      if (sounds.backgroundMusic) {
-        if (this.muted) {
-          sounds.backgroundMusic.stop();
-        } else if (!sounds.backgroundMusic.playing()) {
-          sounds.backgroundMusic.play();
+      // ضبط كتم الصوت للموسيقى الخلفية
+      if (backgroundMusicElement) {
+        backgroundMusicElement.muted = this.muted;
+        
+        // إذا تم إلغاء كتم الصوت والموسيقى متوقفة، قم بتشغيلها
+        if (!this.muted && backgroundMusicElement.paused) {
+          this.playBackgroundMusic();
         }
-      } else if (!this.muted) {
-        // إذا لم تكن موجودة وتم تشغيل الصوت، قم بتشغيل الموسيقى
-        this.playBackgroundMusic();
       }
     } catch (error) {
       console.error('خطأ في تبديل حالة الصوت:', error);
@@ -161,19 +161,16 @@ class SoundService {
   // ضبط حالة كتم الصوت بشكل محدد
   setMute(muted: boolean) {
     this.muted = muted;
-    Howler.mute(this.muted);
     
     try {
-      // إيقاف/تشغيل الموسيقى الخلفية وفقًا لحالة كتم الصوت
-      if (sounds.backgroundMusic) {
-        if (this.muted) {
-          sounds.backgroundMusic.stop();
-        } else if (!sounds.backgroundMusic.playing()) {
-          sounds.backgroundMusic.play();
+      // ضبط كتم الصوت للموسيقى الخلفية
+      if (backgroundMusicElement) {
+        backgroundMusicElement.muted = this.muted;
+        
+        // إذا تم إلغاء كتم الصوت والموسيقى متوقفة، قم بتشغيلها
+        if (!this.muted && backgroundMusicElement.paused) {
+          this.playBackgroundMusic();
         }
-      } else if (!this.muted) {
-        // إذا لم تكن موجودة وتم تفعيل الصوت، قم بتشغيل الموسيقى
-        this.playBackgroundMusic();
       }
     } catch (error) {
       console.error('خطأ في ضبط حالة كتم الصوت:', error);
@@ -189,10 +186,18 @@ class SoundService {
   stopAll() {
     try {
       console.log('إيقاف جميع الأصوات...');
-      // إيقاف كل صوت بشكل امن باستخدام التحقق من وجوده
-      Object.entries(sounds).forEach(([name, sound]) => {
-        if (sound && typeof sound.stop === 'function') {
-          sound.stop();
+      
+      // إيقاف الموسيقى الخلفية
+      if (backgroundMusicElement) {
+        backgroundMusicElement.pause();
+        backgroundMusicElement.currentTime = 0;
+      }
+      
+      // إيقاف جميع الأصوات الأخرى المخزنة
+      Object.entries(audioElements).forEach(([name, audio]) => {
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
           console.log('تم إيقاف الصوت:', name);
         }
       });

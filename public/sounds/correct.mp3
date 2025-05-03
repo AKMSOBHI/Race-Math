@@ -1,2 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Error><Code>AccessDenied</Code><Message>Access Denied</Message><RequestId>MSB1SPG424A9JV3Y</RequestId><HostId>pXt08u9MXg9ns8UMkEYS/bHw1/fexjmX/KnbG3/pHiEd4og3LIOZorrL0vOEOMHThgdOW//sdwgBAirBt2wDgQI7M5Mx7iFQF5dkxeqDRhY=</HostId></Error>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error</title>
+</head>
+<body>
+    <h1>500 - Internal Server Error</h1>
+    <p>Sorry, something went wrong on our end. Please try again later or contact support if the problem persists.</p>
+    <a href="https://sndup.net/">Go to Homepage</a>
+</body>
+</html>
