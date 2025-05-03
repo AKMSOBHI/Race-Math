@@ -414,9 +414,9 @@ export default function TeacherDashboard() {
               </Button>
               
               {showNotifications && (
-                <div className="absolute z-50 right-0 mt-2 w-72 xs:w-80 md:w-96 bg-slate-950 rounded-lg shadow-lg p-2 border border-purple-800 max-h-80 overflow-y-auto" style={{ maxWidth: 'calc(100vw - 20px)' }}>
-                  <div className="p-2 border-b border-slate-800">
-                    <h3 className="text-base font-semibold text-white text-right">الإشعارات</h3>
+                <div className="absolute z-50 right-0 mt-2 w-64 bg-slate-950 rounded-lg shadow-lg p-1 border border-purple-800 max-h-60 overflow-y-auto" style={{ maxWidth: 'calc(100vw - 40px)', fontSize: '0.9rem', right: '-10px' }}>
+                  <div className="p-1 border-b border-slate-800">
+                    <h3 className="text-sm font-semibold text-white text-right">الإشعارات</h3>
                   </div>
                   
                   {notifications.length === 0 ? (
@@ -573,17 +573,17 @@ export default function TeacherDashboard() {
               <CardContent className="px-3 sm:px-6 py-2 pt-0">
                 <div className="space-y-2">
                   <div className="flex flex-row-reverse justify-between">
-                    <span className="text-white/80 text-sm sm:text-base">الحد الأقصى للطالبات :</span>
+                    <span className="text-white/80 text-sm sm:text-base">الحد الأقصى للطالبات</span><span className="text-white/80">:</span>
                     <span className="font-bold text-white text-right text-sm sm:text-base">{convertToArabicNumerals(room.maxPlayers)}</span>
                   </div>
                   <div className="flex flex-row-reverse justify-between">
-                    <span className="text-white/80 text-sm sm:text-base">نوع المسابقة :</span>
+                    <span className="text-white/80 text-sm sm:text-base">نوع المسابقة</span><span className="text-white/80">:</span>
                     <span className="font-bold text-white text-right text-sm sm:text-base">
                       {room.contestMode === 'synchronized' ? 'متزامنة' : 'غير متزامنة'}
                     </span>
                   </div>
                   <div className="flex flex-row-reverse justify-between">
-                    <span className="text-white/80 text-sm sm:text-base">الحالة :</span>
+                    <span className="text-white/80 text-sm sm:text-base">الحالة</span><span className="text-white/80">:</span>
                     <span className="font-bold text-right text-sm sm:text-base">
                       {room.isActive ? (
                         <span className="text-green-400">نشطة</span>
