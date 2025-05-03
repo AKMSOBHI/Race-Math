@@ -25,12 +25,20 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
   
   // تشغيل صوت انتهاء اللعبة عند ظهور النافذة
   useEffect(() => {
-    if (isSoundEnabled) {
-      if (reason === 'completed') {
-        soundService.play('levelComplete');
-      } else {
-        soundService.play('gameOver');
+    console.log('GameOverModal rendered, reason:', reason);
+    
+    try {
+      if (isSoundEnabled) {
+        if (reason === 'completed') {
+          console.log('تشغيل صوت إكمال اللعبة');
+          soundService.play('levelComplete');
+        } else {
+          console.log('تشغيل صوت انتهاء اللعبة');
+          soundService.play('gameOver');
+        }
       }
+    } catch (error) {
+      console.error('Error playing sound:', error);
     }
     
     // بعد 1 ثانية نظهر اللوحة

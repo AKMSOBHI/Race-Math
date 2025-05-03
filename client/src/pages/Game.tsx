@@ -249,8 +249,12 @@ export default function Game() {
           <Timer 
             duration={20} 
             onTimeEnd={() => {
-              setIsTimeUp(true);
-              setShowGameOverModal(true, 'time');
+              console.log('Timer ended, showing game over modal');
+              // إذا لم تكن نافذة انتهاء اللعبة معروضة بالفعل، نعرضها
+              if (!showGameOverModal) {
+                setIsTimeUp(true);
+                setShowGameOverModal(true, 'time');
+              }
             }} 
           />
         </div>
