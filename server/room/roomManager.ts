@@ -123,10 +123,12 @@ export class RoomManager {
       const userResult = await db.select().from(users).where(eq(users.id, userId));
 
       if (roomResult.length === 0) {
+        log(`Room not found with ID: ${roomId} during join attempt`, 'room');
         return { success: false };
       }
 
       if (userResult.length === 0) {
+        log(`User not found with ID: ${userId} during join attempt`, 'room');
         return { success: false };
       }
 
@@ -135,6 +137,7 @@ export class RoomManager {
 
       // التحقق مما إذا كانت الغرفة نشطة
       if (!room.isActive) {
+        log(`Room is not active: ${roomId}`, 'room');
         return { success: false };
       }
 

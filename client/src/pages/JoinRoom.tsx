@@ -46,10 +46,16 @@ export default function JoinRoom() {
     setIsLoading(true);
     soundService.play('click');
     
+    console.log(`محاولة الانضمام للغرفة برمز: ${roomCode.trim()} للمستخدم: ${currentUser.id}`);
+    
     // سنضيف مستمع للرسائل القادمة من WebSocket
     const messageListener = (message: any) => {
+      console.log("استلام رد من الخادم:", message);
+      
       if (message.type === "room_joined") {
         setIsLoading(false);
+        
+        console.log("تم الانضمام للغرفة بنجاح!", message.payload);
         
         toast({
           title: 'تم الانضمام للغرفة بنجاح',
@@ -61,7 +67,18 @@ export default function JoinRoom() {
       }
       else if (message.type === "error") {
         setIsLoading(false);
-        setError(message.payload.message || 'حدث خطأ أثناء الانضمام للغرفة');
+        
+        // تحديد رسالة الخطأ بشكل أكثر وضوحًا
+        let errorMessage = message.payload.message || 'حدث خطأ أثناء الانضمام للغرفة';
+        
+        if (errorMessage === 'Room not found with the provided code') {
+          errorMessage = 'الغرفة غير موجودة بالرمز المدخل';
+        } else if (errorMessage === 'Could not join the room') {
+          errorMessage = 'تعذر الانضمام للغرفة. قد تكون الغرفة غير نشطة أو ممتلئة';
+        }
+        
+        console.log("خطأ في الانضمام للغرفة:", errorMessage);
+        setError(errorMessage);
       }
     };
     
@@ -69,15 +86,16 @@ export default function JoinRoom() {
     addMessageListener(messageListener);
     
     // إرسال طلب الانضمام باستخدام معرف المستخدم الحالي
-    sendMessage({
+    const joinMessage = {
       type: "join_room",
       payload: {
         roomCode: roomCode.trim(),
         userId: currentUser.id
       }
-    });
+    };
     
-    console.log(`إرسال طلب انضمام للغرفة باستخدام معرف المستخدم: ${currentUser.id}`);
+    console.log(`إرسال طلب انضمام للغرفة:`, joinMessage);
+    sendMessage(joinMessage);
   };
   
   // العودة للصفحة الرئيسية

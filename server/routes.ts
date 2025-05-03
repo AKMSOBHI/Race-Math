@@ -381,9 +381,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId = data.payload.userId;
               connections.set(userId, ws);
               
+              log(`Join room request received with code: ${data.payload.roomCode} by user: ${data.payload.userId}`, 'room');
+              
               const room = await roomManager.getRoomByCode(data.payload.roomCode);
               
               if (!room) {
+                log(`Room not found with code: ${data.payload.roomCode}`, 'room');
                 sendToClient(ws, {
                   type: 'error',
                   payload: { message: 'Room not found with the provided code' }
@@ -391,6 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 break;
               }
               
+              log(`Room found: ${room.name} (ID: ${room.id}) - attempting to join...`, 'room');
               const result = await roomManager.joinRoom(room.id, data.payload.userId);
               
               if (result.success) {
