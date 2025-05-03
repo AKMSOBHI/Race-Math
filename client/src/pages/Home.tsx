@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useGameStore } from '@/lib/game/gameState';
 import StartGameModal from '@/components/Modals/StartGameModal';
+import TeacherLoginModal from '@/components/Modals/TeacherLoginModal';
 import { useToast } from '@/hooks/use-toast';
 import { connectWebSocket, useWebSocket } from '@/lib/websocket';
 import { apiRequest } from '@/lib/queryClient';
@@ -20,6 +21,7 @@ export default function Home() {
   } = useGameStore();
   
   const [isLoading, setIsLoading] = useState(false);
+  const [showTeacherLogin, setShowTeacherLogin] = useState(false);
   const { isConnected, addMessageListener } = useWebSocket();
   
   // Initialize websocket and listeners
@@ -165,7 +167,7 @@ export default function Home() {
               className="w-full hover:bg-opacity-90 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg text-lg sm:text-xl transition flex items-center justify-center"
               onClick={() => {
                 soundService.play('click');
-                navigate('/teacher');
+                setShowTeacherLogin(true);
               }}
               disabled={!currentUser || !isConnected}
               style={{
@@ -188,6 +190,14 @@ export default function Home() {
       
       {/* Start Game Modal */}
       {showStartModal && <StartGameModal />}
+      
+      {/* Teacher Login Modal */}
+      {showTeacherLogin && (
+        <TeacherLoginModal 
+          isOpen={showTeacherLogin} 
+          onClose={() => setShowTeacherLogin(false)}
+        />
+      )}
     </div>
   );
 }

@@ -244,9 +244,9 @@ export default function RoomDashboard() {
               {/* قسم الإحصائيات */}
               <div className="lg:col-span-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>إحصائيات المسابقة</CardTitle>
-                    <CardDescription>إحصائيات عامة عن أداء الطالبات في المسابقة</CardDescription>
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-center">إحصائيات المسابقة</CardTitle>
+                    <CardDescription className="text-center">إحصائيات عامة عن أداء الطالبات في المسابقة</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -306,9 +306,9 @@ export default function RoomDashboard() {
               {/* قائمة الطالبات المشاركات */}
               <div className="lg:col-span-8">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>قائمة الطالبات المشاركات</CardTitle>
-                    <CardDescription>تفاصيل أداء الطالبات في الوقت الحقيقي</CardDescription>
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-center">قائمة الطالبات المشاركات</CardTitle>
+                    <CardDescription className="text-center">تفاصيل أداء الطالبات في الوقت الحقيقي</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {dashboardData.activeStudents.length === 0 ? (

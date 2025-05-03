@@ -283,19 +283,19 @@ export default function TeacherDashboard() {
               </CardHeader>
               <CardContent className="px-3 sm:px-6 py-2 pt-0">
                 <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-white/80 text-sm sm:text-base">الحد الأقصى للطالبات:</span>
-                    <span className="font-bold text-white text-left text-sm sm:text-base">{convertToArabicNumerals(room.maxPlayers)}</span>
+                  <div className="flex flex-row-reverse justify-between">
+                    <span className="text-white/80 text-sm sm:text-base">الحد الأقصى للطالبات :</span>
+                    <span className="font-bold text-white text-right text-sm sm:text-base">{convertToArabicNumerals(room.maxPlayers)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/80 text-sm sm:text-base">نوع المسابقة:</span>
-                    <span className="font-bold text-white text-left text-sm sm:text-base">
+                  <div className="flex flex-row-reverse justify-between">
+                    <span className="text-white/80 text-sm sm:text-base">نوع المسابقة :</span>
+                    <span className="font-bold text-white text-right text-sm sm:text-base">
                       {room.contestMode === 'synchronized' ? 'متزامنة' : 'غير متزامنة'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/80 text-sm sm:text-base">الحالة:</span>
-                    <span className="font-bold text-left text-sm sm:text-base">
+                  <div className="flex flex-row-reverse justify-between">
+                    <span className="text-white/80 text-sm sm:text-base">الحالة :</span>
+                    <span className="font-bold text-right text-sm sm:text-base">
                       {room.isActive ? (
                         <span className="text-green-400">نشطة</span>
                       ) : (
