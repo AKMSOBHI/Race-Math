@@ -5,7 +5,7 @@ import { soundService } from '@/lib/soundService';
 import { convertToArabicNumerals } from '@/lib/utils';
 
 interface GameOverModalProps {
-  reason: 'time' | 'completed' | 'failed';
+  reason: 'time' | 'completed' | 'failed' | 'cancelled';
   finalScore?: number;
 }
 
@@ -87,6 +87,17 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
             </svg>
           ),
           color: '#ef4444'
+        };
+      case 'cancelled':
+        return {
+          title: 'تم إلغاء المهمة',
+          message: 'لقد ألغيت المهمة الحالية. يمكنك العودة للمهام لاحقاً.',
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ),
+          color: '#6366f1' // Indigo color
         };
       default:
         return {

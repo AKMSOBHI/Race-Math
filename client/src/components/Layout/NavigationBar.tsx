@@ -4,7 +4,7 @@ import { soundService } from '@/lib/soundService';
 
 export default function NavigationBar() {
   const [_, navigate] = useLocation();
-  const { toggleSound, isSoundEnabled, resetGameState, currentGame } = useGameStore();
+  const { toggleSound, isSoundEnabled, resetGameState, currentGame, setShowGameOverModal } = useGameStore();
   
   const handleExit = () => {
     // تشغيل صوت النقر
@@ -15,7 +15,37 @@ export default function NavigationBar() {
     // طباعة معلومات إنهاء المهمة
     console.log('تم النقر على زر "إلغاء المهمة"...');
     
-    // إعادة ضبط حالة اللعبة بشكل كامل قبل التوجيه
+    // إذا كنا في صفحة اللعبة، تعامل معها بشكل خاص
+    if (window.location.pathname.includes('/game/')) {
+      if (currentGame) {
+        console.log('إنهاء اللعبة الحالية وإظهار شاشة انتهاء اللعبة...');
+        
+        // إيقاف جميع الأصوات
+        try {
+          soundService.stopBackgroundMusic();
+          soundService.stopAll();
+        } catch (error) {
+          console.error('خطأ في إيقاف الموسيقى:', error);
+        }
+        
+        // إظهار شاشة انتهاء اللعبة بسبب الإلغاء
+        setShowGameOverModal(true, 'cancelled', currentGame.players[0]?.score);
+       
+        // مسح البيانات من التخزين المحلي
+        try {
+          // مسح جميع بيانات اللعبة من التخزين المحلي
+          const gameId = currentGame.id;
+          localStorage.removeItem(`game_answers_${gameId}`);
+        } catch (e) {
+          console.error('خطأ في مسح بيانات اللعبة:', e);
+        }
+        
+        // عدم التنقل مباشرة، السماح للمستخدم برؤية نتيجته أولاً
+        return;
+      }
+    }
+    
+    // إذا لم نكن في صفحة اللعبة، إعادة ضبط الحالة والعودة للصفحة الرئيسية
     resetGameState();
     
     // يتم التوجيه للصفحة الرئيسية بعد مسح البيانات

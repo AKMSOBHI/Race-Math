@@ -28,7 +28,7 @@ interface GameState {
   showIncorrectModal: boolean;
   showStageCompleteModal: boolean;
   showGameOverModal: boolean;
-  gameOverReason: 'time' | 'completed' | 'failed' | null;
+  gameOverReason: 'time' | 'completed' | 'failed' | 'cancelled' | null;
   finalScore: number | null | undefined;
   isTimeUp: boolean;
   
@@ -36,7 +36,7 @@ interface GameState {
   setShowCorrectModal: (show: boolean) => void;
   setShowIncorrectModal: (show: boolean) => void;
   setShowStageCompleteModal: (show: boolean) => void;
-  setShowGameOverModal: (show: boolean, reason?: 'time' | 'completed' | 'failed' | null, finalScore?: number) => void;
+  setShowGameOverModal: (show: boolean, reason?: 'time' | 'completed' | 'failed' | 'cancelled' | null, finalScore?: number) => void;
   setIsTimeUp: (isTimeUp: boolean) => void;
   
   // Game actions
