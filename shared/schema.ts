@@ -178,6 +178,17 @@ export type ServerMessage =
     } 
   }
   
+  // رسائل التواصل من المعلمة إلى الطلاب
+  | { type: "teacher_message"; payload: { 
+      teacherId: number;
+      teacherName: string;
+      message: string;
+      roomId?: number;
+      roomName?: string;
+      timestamp: string;
+    }
+  }
+  
   // رسالة الخطأ
   | { type: "error"; payload: { message: string } };
 
@@ -201,5 +212,8 @@ export type ClientMessage =
   | { type: "start_contest"; payload: { roomId: number; teacherId: number; difficulty?: "easy" | "medium" | "hard" } }
   | { type: "end_contest"; payload: { roomId: number; teacherId: number } }
   | { type: "get_dashboard_data"; payload: { roomId: number; teacherId: number } }
-  | { type: "get_leaderboard"; payload: { roomId: number } };
+  | { type: "get_leaderboard"; payload: { roomId: number } }
+  
+  // رسائل التواصل من المعلمة إلى الطلاب
+  | { type: "send_message"; payload: { type: 'all' | 'room'; roomId?: number; teacherId: number; message: string } };
   

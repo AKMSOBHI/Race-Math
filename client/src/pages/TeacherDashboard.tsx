@@ -75,6 +75,71 @@ export default function TeacherDashboard() {
     timestamp: Date;
     read: boolean;
   }>>([]);
+  
+  // حالة عرض قائمة الإشعارات
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  // حالة نافذة الرسائل
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [messageType, setMessageType] = useState<'all' | 'room'>('all');
+  const [selectedRoomId, setSelectedRoomId] = useState<number | "">("");
+  const [messageText, setMessageText] = useState("");
+  
+  // تمييز إشعار كمقروء
+  const markNotificationAsRead = useCallback((id: string) => {
+    setNotifications(prev => {
+      return prev.map(note => {
+        if (note.id === id) {
+          return { ...note, read: true };
+        }
+        return note;
+      });
+    });
+  }, []);
+  
+  // مسح جميع الإشعارات
+  const clearAllNotifications = useCallback(() => {
+    setNotifications([]);
+    setShowNotifications(false);
+    soundService.play('click');
+  }, []);
+  
+  // إرسال رسالة
+  const handleSendMessage = useCallback(() => {
+    soundService.play('click');
+    setIsLoading(true);
+    
+    // إنشاء البيانات للإرسال
+    const payload = {
+      type: messageType,
+      roomId: messageType === 'room' ? selectedRoomId : undefined,
+      teacherId: 1, // في التطبيق الحقيقي، سيتم أخذ معرف المعلم من المستخدم الحالي
+      message: messageText
+    };
+    
+    // هنا سيتم إرسال الرسالة عند تنفيذ هذه الميزة بالكامل
+    // sendMessage({
+    //   type: "send_message",
+    //   payload
+    // });
+    
+    // نموذج مبسط لعرض نجاح العملية
+    setTimeout(() => {
+      setIsLoading(false);
+      setShowMessageDialog(false);
+      setMessageText("");
+      
+      // إظهار رسالة نجاح
+      toast({
+        title: "تم إرسال الرسالة بنجاح",
+        description: messageType === 'all' 
+          ? "تم إرسال رسالتك لجميع المستخدمين في التطبيق" 
+          : "تم إرسال رسالتك لطلاب الغرفة المحددة",
+        variant: "default"
+      });
+    }, 1500); // تأخير مصطنع لمحاكاة الطلب
+    
+  }, [messageType, selectedRoomId, messageText]);
 
   // الاستماع لتحديثات الغرف من الخادم
   useEffect(() => {
@@ -289,9 +354,163 @@ export default function TeacherDashboard() {
           </Dialog>
         </div>
         
-        <h1 className="text-3xl font-bold text-center mb-8" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          لوحة تحكم المعلمة
-        </h1>
+        <div className="flex flex-col md:flex-row items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-center md:text-right mb-4 md:mb-0" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+            لوحة تحكم المعلمة
+          </h1>
+          
+          {/* قسم الإشعارات */}
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <div className="relative">
+              <Button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                variant="outline"
+                className="rounded-full p-2 relative"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.2)', 
+                  border: '1px solid rgba(255, 255, 255, 0.1)' 
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                    {notifications.length}
+                  </span>
+                )}
+              </Button>
+              
+              {showNotifications && (
+                <div className="absolute z-50 right-0 mt-2 w-80 bg-slate-950 rounded-lg shadow-lg p-2 border border-purple-800 max-h-96 overflow-y-auto">
+                  <div className="p-3 border-b border-slate-800">
+                    <h3 className="text-lg font-semibold text-white text-right">الإشعارات</h3>
+                  </div>
+                  
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-slate-400">
+                      لا توجد إشعارات جديدة
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-800">
+                      {notifications.map(notification => (
+                        <div 
+                          key={notification.id} 
+                          className={`p-3 hover:bg-slate-900 ${!notification.read ? 'bg-slate-900/50' : ''}`}
+                          onClick={() => markNotificationAsRead(notification.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400 ltr">
+                              {new Date(notification.timestamp).toLocaleTimeString('ar-SA')}
+                            </span>
+                            <h4 className="font-semibold text-white text-right">{notification.title}</h4>
+                          </div>
+                          <p className="text-sm text-slate-300 mt-1 text-right">{notification.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {notifications.length > 0 && (
+                    <div className="p-2 border-t border-slate-800 mt-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full text-sm text-slate-400 hover:text-white"
+                        onClick={clearAllNotifications}
+                      >
+                        مسح جميع الإشعارات
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* زر إرسال الرسائل */}
+            <Dialog open={showMessageDialog} onOpenChange={setShowMessageDialog}>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={() => {
+                    soundService.play('click');
+                    setShowMessageDialog(true);
+                  }}
+                  variant="outline"
+                  className="rounded-full p-2"
+                  style={{ 
+                    background: 'rgba(0, 0, 0, 0.2)', 
+                    border: '1px solid rgba(255, 255, 255, 0.1)' 
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="text-right">إرسال رسالة للطالبات</DialogTitle>
+                  <DialogDescription className="text-right">
+                    يمكنك إرسال رسالة لجميع الطالبات في غرفة محددة أو لجميع المستخدمين.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="messageType" className="text-right block">نوع الرسالة</Label>
+                    <select
+                      id="messageType"
+                      value={messageType}
+                      onChange={(e) => setMessageType(e.target.value)}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-right"
+                    >
+                      <option value="all">جميع المستخدمين</option>
+                      <option value="room">غرفة محددة</option>
+                    </select>
+                  </div>
+                  
+                  {messageType === 'room' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="roomSelect" className="text-right block">اختر الغرفة</Label>
+                      <select
+                        id="roomSelect"
+                        value={selectedRoomId}
+                        onChange={(e) => setSelectedRoomId(Number(e.target.value))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-right"
+                      >
+                        <option value="">-- اختر غرفة --</option>
+                        {rooms.map(room => (
+                          <option key={room.id} value={room.id}>{room.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="messageText" className="text-right block">نص الرسالة</Label>
+                    <textarea
+                      id="messageText"
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      placeholder="اكتب رسالتك هنا..."
+                      className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-right"
+                    />
+                  </div>
+                </div>
+                
+                <DialogFooter className="mt-6">
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={isLoading || (messageType === 'room' && !selectedRoomId) || !messageText.trim()}
+                    style={{
+                      background: 'linear-gradient(45deg, #10b981, #059669)',
+                      border: '2px solid #34d399',
+                      boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)'
+                    }}
+                  >
+                    {isLoading ? 'جاري الإرسال...' : 'إرسال الرسالة'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

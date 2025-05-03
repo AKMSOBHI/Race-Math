@@ -22,7 +22,8 @@ const activeSounds: Record<string, HTMLAudioElement[]> = {
   countdown: [],
   gameOver: [],
   levelComplete: [],
-  backgroundMusic: []
+  backgroundMusic: [],
+  notification: []
 };
 
 // عنصر الموسيقى الخلفية
