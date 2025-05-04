@@ -152,6 +152,22 @@ export default function Game() {
       soundService.play('click');
     }
     
+    // أولاً تحقق من أن اللاعب موجود في اللعبة
+    if (!currentUser || !currentGame.players.some(p => p.id === currentUser.id)) {
+      console.log('اللاعب غير موجود في اللعبة - محاولة الانضمام التلقائي');
+      
+      // محاولة الانضمام للعبة تلقائياً
+      if (currentUser) {
+        joinGame(currentGame.id);
+        // إعادة المحاولة بعد فترة زمنية قصيرة
+        setTimeout(() => {
+          console.log('إعادة محاولة الإرسال بعد الانضمام للعبة');
+          submitAnswer(currentGame.id, answer);
+        }, 500);
+      }
+      return;
+    }
+    
     console.log('إرسال الإجابة:', answer);
     submitAnswer(currentGame.id, answer);
   };

@@ -11,15 +11,6 @@ export class GameManager {
 
   async createGame(hostId: number, isMultiplayer: boolean, maxPlayers: number, roomId?: number): Promise<GameSession> {
     try {
-      // Generate unique game ID
-      const gameId = nanoid();
-      
-      // Set initial stage
-      const stage: GameStage = "BASIC_ADDITION_SUBTRACTION";
-      
-      // Generate initial questions (before game starts)
-      const questions = generateQuestionsForStage(stage, "easy");
-      
       // Create the game session with the host as the first player
       const gameSession = await this.storage.createGameSession(hostId, isMultiplayer, maxPlayers, roomId);
       
