@@ -67,9 +67,10 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
       
       // إظهار رسالة
       toast({
-        title: "انتهى الوقت!",
-        description: "جاري الانتقال للسؤال التالي...",
+        title: "! انتهى الوفت",
+        description: "... انتقلنا إلى سؤال جديد",
         variant: "destructive",
+        duration: 7000, // تحديد مدة ظهور الرسالة: 7 ثواني
       });
       
       // استدعاء الدالة الخارجية لإعلام المكون الأب بانتهاء الوقت

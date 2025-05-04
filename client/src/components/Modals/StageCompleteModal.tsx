@@ -167,7 +167,7 @@ const StageCompleteModal: FC = () => {
           </div>
         </div>
         <h2 className="text-3xl space-title mb-2" style={{ color: '#ffd700', textShadow: '0 0 10px #ffd700', fontFamily: 'Orbitron, sans-serif' }}>
-          أكملت المهمة!
+          ! أكملت المهمة
         </h2>
         <div className="text-xl mb-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
           <p className="mb-2">
@@ -180,7 +180,7 @@ const StageCompleteModal: FC = () => {
             <div className="bg-yellow-300 h-2.5 rounded-full" style={{ width: `${stageCompletionPercent}%` }}></div>
           </div>
           <p className="text-sm text-yellow-200">
-            {convertToArabicNumerals(stageProgress)} من 5 أسئلة مكتملة
+            {convertToArabicNumerals(stageProgress)} من ٥ أسئلة مكتملة
           </p>
         </div>
         
