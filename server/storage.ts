@@ -195,7 +195,7 @@ export class MemStorage implements IStorage {
   }
 }
 
-import { db } from './db';
+import { db, pool } from './db';
 import { eq, and, or } from 'drizzle-orm';
 
 export class DatabaseStorage implements IStorage {
