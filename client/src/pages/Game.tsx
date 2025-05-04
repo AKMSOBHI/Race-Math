@@ -150,6 +150,15 @@ export default function Game() {
   
   // Handle bubble click / answer submission
   const handleAnswerSubmit = (answer: number) => {
+    console.log('\n---------- بداية معالجة الإجابة ----------');
+    console.log('الإجابة التي تم اختيارها:', answer);
+    console.log('حالة اللعبة الحالية:', currentGame?.status);
+    console.log('رقم اللعبة:', currentGame?.id);
+    console.log('السؤال الحالي:', currentQuestion?.text);
+    console.log('الإجابة الصحيحة:', currentQuestion?.answer);
+    console.log('نص الإجابة المختارة:', convertToArabicNumerals(answer));
+    
+    // التحقق من صحة اللعبة والوقت
     if (!currentGame || isTimeUp) {
       console.log('لا يمكن إرسال الإجابة: اللعبة غير نشطة أو انتهى الوقت');
       return;
@@ -157,7 +166,12 @@ export default function Game() {
     
     // تشغيل صوت النقر عند الضغط على أي إجابة
     if (isSoundEnabled) {
-      soundService.play('click');
+      try {
+        console.log('تشغيل صوت النقر');
+        soundService.play('click');
+      } catch (e) {
+        console.error('خطأ في تشغيل صوت النقر:', e);
+      }
     }
     
     // نفحص إذا كانت اللعبة في حالة الانتظار ولكن نسمح بالإجابة في أي حالة
@@ -165,14 +179,29 @@ export default function Game() {
       console.log('اللعبة في حالة انتظار ولكن سنقوم بمعالجة الإجابة');
     }
     
+    // التحقق من معلومات اللاعب
+    if (!currentUser) {
+      console.error('لا يوجد مستخدم حالي');
+      return;
+    }
+    
+    console.log('معلومات اللاعب:', {
+      id: currentUser.id,
+      username: currentUser.username,
+      score: currentUser.score
+    });
+    
     // أولاً تحقق من أن اللاعب موجود في اللعبة
     const isPlayerInGame = currentUser && currentGame.players.some(p => p.id === currentUser.id);
+    console.log('اللاعب موجود في اللعبة:', isPlayerInGame);
+    
     if (!isPlayerInGame) {
       console.log('اللاعب غير موجود في اللعبة - محاولة الانضمام التلقائي');
       
       // محاولة الانضمام للعبة تلقائياً
       if (currentUser) {
         // نجرب الانضمام للعبة أولاً
+        console.log('محاولة الانضمام للعبة:', currentGame.id);
         joinGame(currentGame.id);
         
         // نضع رسالة للمستخدم
@@ -192,6 +221,12 @@ export default function Game() {
             // اللاعب أصبح مسجلاً الآن، نرسل الإجابة
             console.log('اللاعب أصبح مسجلاً الآن، نرسل الإجابة:', answer);
             submitAnswer(updatedGame.id, answer);
+            
+            // تطبيق محلي لتجربة أفضل
+            if (currentQuestion) {
+              const correct = answer === currentQuestion.answer;
+              setOctopusMood(correct ? 'happy' : 'sad');
+            }
           } else {
             // لا يزال اللاعب غير مسجل
             console.log('لا يزال اللاعب غير مسجل في اللعبة بعد المحاولة الأولى');
@@ -205,7 +240,14 @@ export default function Game() {
               setTimeout(() => {
                 const { currentGame: finalGame } = useGameStore.getState();
                 if (finalGame) {
+                  console.log('محاولة أخيرة لإرسال الإجابة:', answer);
                   submitAnswer(finalGame.id, answer);
+                  
+                  // تطبيق محلي لتجربة أفضل
+                  if (currentQuestion) {
+                    const correct = answer === currentQuestion.answer;
+                    setOctopusMood(correct ? 'happy' : 'sad');
+                  }
                 }
               }, 500);
             }, 1000);
@@ -216,8 +258,16 @@ export default function Game() {
     }
     
     // إذا كان اللاعب مسجلاً بالفعل، نرسل الإجابة مباشرة
-    console.log('إرسال الإجابة:', answer);
+    console.log('إرسال الإجابة:', answer, 'للعبة:', currentGame.id);
     submitAnswer(currentGame.id, answer);
+    
+    // تطبيق محلي لتجربة أفضل
+    if (currentQuestion) {
+      const correct = answer === currentQuestion.answer;
+      setOctopusMood(correct ? 'happy' : 'sad');
+    }
+    
+    console.log('---------- نهاية معالجة الإجابة ----------\n');
   };
   
   // Get current player from game state

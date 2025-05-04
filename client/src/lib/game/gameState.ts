@@ -256,8 +256,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (state.isSoundEnabled) {
       try {
         const isCorrect = answer === state.currentQuestion.answer;
-        import('../soundService').then(({ default: soundService }) => {
-          soundService.play(isCorrect ? 'success' : 'error');
+        import('../soundService').then((module) => {
+          module.default.play(isCorrect ? 'success' : 'wrong');
         }).catch(err => {
           console.error('خطأ في تشغيل الصوت:', err);
         });
@@ -354,10 +354,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     // إيقاف الموسيقى الخلفية للعبة
     try {
-      const { soundService } = require('../soundService');
-      console.log('إيقاف الموسيقى الخلفية...');
-      soundService.stopBackgroundMusic();
-      soundService.stopAll();
+      // استيراد ديناميكي لخدمة الصوت لإيقاف الموسيقى
+      import('../soundService').then((module) => {
+        console.log('إيقاف الموسيقى الخلفية...');
+        module.default.stopBackgroundMusic();
+        module.default.stopAll();
+      }).catch(err => {
+        console.error('خطأ في استيراد خدمة الصوت:', err);
+      });
     } catch (error) {
       console.error('خطأ في إيقاف الموسيقى:', error);
     }
@@ -468,9 +472,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             showStartModal: true  // Mantenemos el modal abierto para reintentar
           });
           
-          import('../soundService').then(({ soundService }) => {
+          import('../soundService').then((module) => {
             if (get().isSoundEnabled) {
-              soundService.play('wrong'); // cambiado de 'error' a 'wrong'
+              module.default.play('wrong');
             }
           });
           
@@ -503,15 +507,15 @@ export const useGameStore = create<GameState>((set, get) => ({
           });
           
           // إضافة المؤثرات الصوتية
-          import('../soundService').then(({ soundService }) => {
+          import('../soundService').then((module) => {
             // التأكد من تفعيل الصوت
             if (isSoundEnabled) {
               if (message.payload.correct) {
                 console.log('تشغيل صوت الإجابة الصحيحة');
-                soundService.play('correct');
+                module.default.play('correct');
               } else {
                 console.log('تشغيل صوت الإجابة الخاطئة');
-                soundService.play('wrong');
+                module.default.play('wrong');
               }
             }
           });
@@ -532,10 +536,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         });
         
         // إضافة صوت إكمال المرحلة
-        import('../soundService').then(({ soundService }) => {
+        import('../soundService').then((module) => {
           if (get().isSoundEnabled) {
             console.log('تشغيل صوت إكمال المرحلة');
-            soundService.play('levelComplete');
+            module.default.play('levelComplete');
           }
         });
         break;
