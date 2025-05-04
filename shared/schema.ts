@@ -178,7 +178,7 @@ export type ServerMessage =
   
   // رسائل نظام الغرف والمسابقات
   | { type: "room_created"; payload: Room }
-  | { type: "room_joined"; payload: { roomId: number; userId: number; username: string } }
+  | { type: "room_joined"; payload: { roomId: number; userId: number; username: string; currentGameId?: string } }
   | { type: "room_left"; payload: { roomId: number; userId: number } }
   | { type: "room_list"; payload: Room[] }
   | { type: "contest_started"; payload: { roomId: number; gameSession: GameSession } }

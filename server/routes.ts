@@ -668,7 +668,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     payload: {
                       roomId: room.id,
                       userId: data.payload.userId,
-                      username: displayName
+                      username: displayName,
+                      currentGameId: result.currentGameId // إضافة معرف اللعبة النشطة إذا وجد
                     }
                   });
                   

@@ -109,19 +109,31 @@ export default function JoinRoom() {
           description: 'مرحباً بك! ستبدأ المسابقة قريباً.',
         });
         
+        // تخزين معرف اللعبة النشطة في التخزين المحلي إذا وجد
+        if (message.payload.currentGameId) {
+          console.log(`تم استلام معرف لعبة نشطة: ${message.payload.currentGameId}`);
+          localStorage.setItem('currentGameId', message.payload.currentGameId);
+        }
+        
         // الانتقال مباشرة إلى اللعبة (تم إلغاء الانتظار)
         setTimeout(() => {
-          const currentActiveGame = localStorage.getItem('currentGameId');
-          if (currentActiveGame) {
-            navigate(`/game?id=${currentActiveGame}`);
+          // التحقق أولاً من المعرف الذي تم استلامه في الرسالة
+          if (message.payload.currentGameId) {
+            navigate(`/game?id=${message.payload.currentGameId}`);
           } else {
-            // إذا لم يكن هناك لعبة نشطة، ربما تعيد توجيه المستخدم إلى الصفحة الرئيسية
-            navigate('/');
-            toast({
-              title: 'لم يتم العثور على مسابقة نشطة',
-              description: 'يرجى التحقق مع المعلمة لبدء مسابقة جديدة.',
-              variant: 'destructive'
-            });
+            // إذا لم يكن هناك معرف لعبة نشطة في الرسالة، نتحقق من التخزين المحلي
+            const currentActiveGame = localStorage.getItem('currentGameId');
+            if (currentActiveGame) {
+              navigate(`/game?id=${currentActiveGame}`);
+            } else {
+              // إذا لم يكن هناك لعبة نشطة، ربما تعيد توجيه المستخدم إلى الصفحة الرئيسية
+              navigate('/');
+              toast({
+                title: 'لم يتم العثور على مسابقة نشطة',
+                description: 'يرجى التحقق مع المعلمة لبدء مسابقة جديدة.',
+                variant: 'destructive'
+              });
+            }
           }
         }, 500);
       }
