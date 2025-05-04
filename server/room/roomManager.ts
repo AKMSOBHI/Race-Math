@@ -117,14 +117,20 @@ export class RoomManager {
    */
   async getActiveRooms(teacherId?: number): Promise<Room[]> {
     try {
-      let query = db.select().from(rooms).where(eq(rooms.isActive, true));
-      
-      // إذا تم تحديد معرف المعلم، نحصل على غرفه فقط
+      // بناء الاستعلام بناءً على وجود معرف المعلم
+      let result;
       if (teacherId) {
-        query = query.where(eq(rooms.teacherId, teacherId));
+        result = await db.select().from(rooms).where(
+          and(
+            eq(rooms.isActive, true),
+            eq(rooms.teacherId, teacherId)
+          )
+        );
+      } else {
+        result = await db.select().from(rooms).where(eq(rooms.isActive, true));
       }
       
-      return await query;
+      return result;
     } catch (error) {
       log(`Error getting active rooms: ${error instanceof Error ? error.message : String(error)}`, 'room');
       return [];
@@ -179,7 +185,7 @@ export class RoomManager {
       // إذا لم تكن هناك جلسة نشطة، فاللاعب سينتظر بدء المسابقة
       return { success: true, username: user.username };
     } catch (error) {
-      log(`Error joining room: ${error.message}`, 'room');
+      log(`Error joining room: ${error instanceof Error ? error.message : String(error)}`, 'room');
       return { success: false };
     }
   }
@@ -214,7 +220,8 @@ export class RoomManager {
       }
 
       // إنشاء جلسة لعب جديدة
-      const gameSession = await this.gameManager.createGame(teacherId, true, room.maxPlayers, roomId);
+      const maxPlayers: number = room.maxPlayers !== null ? room.maxPlayers : 100; // Use default 100 if null
+      const gameSession = await this.gameManager.createGame(teacherId, true, maxPlayers, roomId);
       
       if (!gameSession) {
         return { success: false };
@@ -229,7 +236,7 @@ export class RoomManager {
 
       return { success: true, gameSession: updatedSession };
     } catch (error) {
-      log(`Error starting contest: ${error.message}`, 'room');
+      log(`Error starting contest: ${error instanceof Error ? error.message : String(error)}`, 'room');
       return { success: false };
     }
   }

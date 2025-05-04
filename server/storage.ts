@@ -40,9 +40,12 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
     const user: User = { 
-      ...insertUser, 
-      id, 
+      id,
+      username: insertUser.username,
+      password: insertUser.password,
       score: 0,
+      isGuest: insertUser.isGuest ?? null,
+      isTeacher: insertUser.isTeacher ?? null,
       createdAt: new Date() 
     };
     this.users.set(id, user);
@@ -234,7 +237,7 @@ export class DatabaseStorage implements IStorage {
     
     const session: GameSession = {
       id: nanoid(),
-      stage: 'waiting',
+      stage: 'BASIC_ADDITION_SUBTRACTION', // Initial stage is BASIC_ADDITION_SUBTRACTION
       hostId,
       players: [player],
       currentQuestionIndex: 0,
