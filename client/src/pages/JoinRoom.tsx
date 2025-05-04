@@ -226,7 +226,7 @@ export default function JoinRoom() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="roomCode">: رمز الغرفة</Label>
+              <Label htmlFor="roomCode" className="text-center w-full block">: رمز الغرفة</Label>
               <Input
                 id="roomCode"
                 placeholder="أدخل رمز الغرفة هنا (مثل: ABC123)"
@@ -244,22 +244,22 @@ export default function JoinRoom() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="fullName">: الاسم الثنائي أو الثلاثي</Label>
+              <Label htmlFor="fullName" className="text-center w-full block">: الاسم الثنائي أو الثلاثي</Label>
               <Input
                 id="fullName"
                 placeholder="أدخل اسمك الثنائي أو الثلاثي بالكامل"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="text-right"
+                className="text-center"
                 style={{
                   background: 'rgba(20, 20, 40, 0.8)',
                   border: '2px solid var(--space-bright)',
                   color: 'white'
                 }}
               />
-              <p className="text-xs text-gray-300">يجب إدخال الاسم الأول والعائلة على الأقل</p>
+              <p className="text-xs text-gray-300 text-center">يجب إدخال الاسم الأول والعائلة على الأقل</p>
               
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+              {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
