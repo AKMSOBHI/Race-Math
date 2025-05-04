@@ -507,6 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // الحصول على جميع الطلاب المعتمدين في الغرفة
                 // الحصول على المشاركين المعتمدين من قاعدة البيانات
+                log(`Getting approved students for room ${data.payload.roomId}`, 'contest');
                 const roomParticipantsResult = await db.select().from(roomParticipants)
                   .where(and(
                     eq(roomParticipants.roomId, data.payload.roomId),

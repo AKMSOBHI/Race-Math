@@ -335,6 +335,7 @@ export class RoomManager {
         const user = usersData.find(u => u.id === participant.userId);
         return {
           id: participant.userId,
+          // إظهار اسم المستخدم (يكون قد تم تحديثه بالاسم الكامل من joinRoom)
           username: user ? user.username : 'Unknown',
           isApproved: participant.isApproved === null ? false : participant.isApproved, // Convert null to false
           joinedAt: participant.joinedAt ? participant.joinedAt.toISOString() : new Date().toISOString()
