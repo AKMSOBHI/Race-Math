@@ -298,18 +298,23 @@ export class RoomManager {
         log(`Found active game session ${currentGameId} in room ${roomId}`, 'room');
         
         try {
-          // Intentamos unir al estudiante a la sesión activa
-          const result = await this.gameManager.joinGame(gameSession.id, userId);
+          // التحقق من الاسم الذي سيتم عرضه للطالب - نستخدم الاسم الكامل إذا كان متوفرًا
+          // أو اسم المستخدم إذا لم يكن الاسم الكامل متوفرًا
+          const displayName = fullNameValue || user.username;
+          log(`Using display name for game: ${displayName}`, 'room');
+          
+          // نرسل الاسم المعروض إلى مدير اللعبة لاستخدامه بدلاً من اسم المستخدم الافتراضي
+          const result = await this.gameManager.joinGameWithCustomName(gameSession.id, userId, displayName);
           
           if (result.joined) {
-            log(`Student ${userId} joined active game ${gameSession.id} in room ${roomId} successfully`, 'room');
+            log(`Student ${userId} joined active game ${gameSession.id} in room ${roomId} successfully with name: ${displayName}`, 'room');
           } else {
             log(`Player ${userId} was already in game ${gameSession.id}`, 'room');
           }
           
           // Siempre devolvemos éxito con el ID de juego, incluso si hay algún problema en la unión
           // Esto permitirá que el estudiante navegue a la página del juego 
-          return { success: true, username: user.username, currentGameId: gameSession.id };
+          return { success: true, username: displayName, currentGameId: gameSession.id };
         } catch (error) {
           // Si hay algún error, lo registramos pero aún devolvemos el ID del juego
           log(`Error joining game, but will still return gameId: ${error instanceof Error ? error.message : String(error)}`, 'room');

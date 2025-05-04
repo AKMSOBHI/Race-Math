@@ -37,6 +37,19 @@ export class GameManager {
   }
 
   async joinGame(gameId: string, playerId: number): Promise<{ game: GameSession | undefined; joined: boolean }> {
+    const user = await this.storage.getUser(playerId);
+    if (!user) {
+      throw new Error("Player not found");
+    }
+    
+    return this.joinGameWithCustomName(gameId, playerId, user.username);
+  }
+  
+  /**
+   * انضمام اللاعب إلى اللعبة مع اسم مخصص
+   * يسمح هذا باستخدام الاسم الكامل للطالب بدلاً من اسم المستخدم الافتراضي
+   */
+  async joinGameWithCustomName(gameId: string, playerId: number, displayName: string): Promise<{ game: GameSession | undefined; joined: boolean }> {
     const game = await this.storage.getGameSession(gameId);
     
     if (!game) {
@@ -50,6 +63,7 @@ export class GameManager {
       throw new Error("Game is full");
     }
     
+    // التحقق من وجود المستخدم
     const user = await this.storage.getUser(playerId);
     if (!user) {
       throw new Error("Player not found");
@@ -57,12 +71,24 @@ export class GameManager {
     
     // Check if player is already in the game
     if (game.players.some(p => p.id === playerId)) {
-      return { game, joined: false };
+      // تحديث اسم اللاعب إذا كان موجوداً بالفعل في اللعبة
+      const updatedPlayers = game.players.map(p => {
+        if (p.id === playerId) {
+          return { ...p, username: displayName };
+        }
+        return p;
+      });
+      
+      // تحديث اللعبة بقائمة اللاعبين المحدثة
+      const gameWithUpdatedNames = { ...game, players: updatedPlayers };
+      const updatedGame = await this.storage.updateGameSession(gameId, gameWithUpdatedNames);
+      return { game: updatedGame, joined: false };
     }
     
+    // إنشاء اللاعب مع الاسم المخصص
     const player: Player = {
       id: playerId,
-      username: user.username,
+      username: displayName, // استخدام الاسم المخصص بدلاً من اسم المستخدم
       score: 0,
       progress: 0,
       attemptsLeft: 3
