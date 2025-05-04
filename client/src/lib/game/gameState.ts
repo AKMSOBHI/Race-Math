@@ -14,6 +14,10 @@ interface GameState {
   // Current question
   currentQuestion: Question | null;
   
+  // Loading state
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  
   // Sound settings
   isSoundEnabled: boolean;
   toggleSound: () => void;
@@ -50,10 +54,6 @@ interface GameState {
   // Last answer result
   lastAnswerResult: { correct: boolean; points: number } | null;
   setLastAnswerResult: (result: { correct: boolean; points: number } | null) => void;
-  
-  // Loading state
-  isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({

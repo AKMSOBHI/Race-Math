@@ -652,8 +652,8 @@ export default function Game() {
                   }
                   
                   // عرض مؤشر التحميل
-                  const { setIsLoading } = useGameStore.getState();
-                  setIsLoading(true);
+                  const gameState = useGameStore.getState();
+                  gameState.setIsLoading(true);
                   
                   // الانتقال للسؤال التالي
                   setTimeout(() => {
