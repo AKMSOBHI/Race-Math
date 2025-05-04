@@ -10,7 +10,39 @@ export class GameManager {
   }
 
   async createGame(hostId: number, isMultiplayer: boolean, maxPlayers: number, roomId?: number): Promise<GameSession> {
-    return this.storage.createGameSession(hostId, isMultiplayer, maxPlayers, roomId);
+    try {
+      // Generate unique game ID
+      const gameId = nanoid();
+      
+      // Set initial stage
+      const stage: GameStage = "BASIC_ADDITION_SUBTRACTION";
+      
+      // Generate initial questions (before game starts)
+      const questions = generateQuestionsForStage(stage, "easy");
+      
+      // Create the game session with the host as the first player
+      const gameSession = await this.storage.createGameSession(hostId, isMultiplayer, maxPlayers, roomId);
+      
+      // Asegurarnos de que el anfitrión (creador) está añadido como jugador
+      const user = await this.storage.getUser(hostId);
+      if (user && !gameSession.players.some(p => p.id === hostId)) {
+        console.log(`Automatically adding host (${hostId}) as player to newly created game ${gameSession.id}`);
+        const player = {
+          id: hostId,
+          username: user.username,
+          score: 0,
+          progress: 0,
+          attemptsLeft: 3
+        };
+        await this.storage.addPlayerToGame(gameSession.id, player);
+      }
+      
+      // Recuperar la sesión actualizada con el jugador ya añadido
+      return await this.storage.getGameSession(gameSession.id) || gameSession;
+    } catch (error) {
+      console.error("Error creating game:", error);
+      throw error; // Re-throw to be handled by the caller
+    }
   }
 
   async joinGame(gameId: string, playerId: number): Promise<{ game: GameSession | undefined; joined: boolean }> {

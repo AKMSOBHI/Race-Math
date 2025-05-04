@@ -148,6 +148,20 @@ export const useGameStore = create<GameState>((set, get) => ({
         playerId: currentUser.id
       }
     });
+    
+    // Explicitly join the game after a short delay to ensure we're added as a player
+    setTimeout(() => {
+      if (get().currentGame) {
+        console.log('Automatically joining newly created game:', get().currentGame.id);
+        sendMessage({
+          type: 'join_game',
+          payload: {
+            gameId: get().currentGame.id,
+            playerId: currentUser.id
+          }
+        });
+      }
+    }, 1000);
   },
   
   startGame: (gameId, difficulty = "easy") => {
