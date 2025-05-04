@@ -273,7 +273,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     switch (message.type) {
       case 'game_state_update':
         // تحديث حالة اللعبة وإعادة ضبط حالة المؤقت عند الحاجة
+        console.log('Recibido mensaje game_state_update:', message.payload);
+        
         const payload = message.payload;
+        if (!payload) {
+          console.error('Error: game_state_update recibido con payload nulo');
+          set({ isLoading: false });
+          break;
+        }
+        
+        // Verificar que hay preguntas válidas
+        if (!Array.isArray(payload.questions) || payload.questions.length === 0) {
+          console.error('Error: juego recibido sin preguntas válidas', payload);
+          set({ isLoading: false });
+          break;
+        }
+        
         const currentGameState = get().currentGame;
         
         // إذا انتقلنا إلى مرحلة جديدة أو سؤال جديد
@@ -281,9 +296,15 @@ export const useGameStore = create<GameState>((set, get) => ({
         const isNewQuestion = currentGameState && payload && 
                              (currentGameState.currentQuestionIndex !== payload.currentQuestionIndex);
         
+        // Obtener el índice seguro
+        const safeQuestionIndex = Math.min(payload.currentQuestionIndex || 0, payload.questions.length - 1);
+        const updateQuestionData = payload.questions[safeQuestionIndex];
+        
+        console.log('Actualizando estado con pregunta:', updateQuestionData);
+        
         set({ 
           currentGame: payload,
-          currentQuestion: payload.questions[payload.currentQuestionIndex],
+          currentQuestion: updateQuestionData,
           isLoading: false,
           // إعادة ضبط مؤقت الوقت عند الانتقال إلى مرحلة أو سؤال جديد
           isTimeUp: isNewStage || isNewQuestion ? false : get().isTimeUp
@@ -291,9 +312,24 @@ export const useGameStore = create<GameState>((set, get) => ({
         break;
         
       case 'game_started':
+        console.log('Recibido mensaje game_started:', message.payload);
+        
+        // Verificar que los datos son válidos
+        const gameData = message.payload;
+        if (!gameData || !Array.isArray(gameData.questions) || gameData.questions.length === 0) {
+          console.error('Error: game_started recibido con datos inválidos', gameData);
+          set({ isLoading: false });
+          break;
+        }
+        
+        const gameQuestionIndex = gameData.currentQuestionIndex || 0;
+        const gameQuestionData = gameData.questions[gameQuestionIndex];
+        
+        console.log('Juego iniciado con pregunta:', gameQuestionData);
+        
         set({ 
-          currentGame: message.payload,
-          currentQuestion: message.payload.questions[message.payload.currentQuestionIndex],
+          currentGame: gameData,
+          currentQuestion: gameQuestionData,
           isLoading: false,
           showStartModal: false
         });
