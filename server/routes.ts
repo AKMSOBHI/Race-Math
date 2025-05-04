@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { GameManager } from "./game/gameManager";
 import { RoomManager } from "./room/roomManager";
 import { z } from "zod";
-import { insertUserSchema, type ServerMessage, type ClientMessage, roomParticipants, users, type Room, type User, type GameSession, type Player, gameSessions } from "@shared/schema";
+import { insertUserSchema, type ServerMessage, type ClientMessage, roomParticipants, users, type Room, type User, type GameSession, type Player, gameSessions, type RoomParticipant } from "@shared/schema";
 import { log } from "./vite";
 import { db } from "./db";
 import { and, eq } from "drizzle-orm";
@@ -244,12 +244,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               if (participants && participants.length > 0) {
                 // الحصول على آخر مشاركة للمستخدم لاستخدام الاسم الكامل
-                const latestParticipation = participants.reduce((latest, current) => {
-                  return !latest || (current.joinedAt > latest.joinedAt) ? current : latest;
-                }, null);
+                // نقوم بفرز المشاركات بحسب وقت الانضمام للحصول على الأحدث
+                participants.sort((a, b) => {
+                  if (!a.joinedAt || !b.joinedAt) return 0;
+                  return b.joinedAt.getTime() - a.joinedAt.getTime();
+                });
                 
-                if (latestParticipation && latestParticipation.full_name) {
-                  customName = latestParticipation.full_name;
+                // الحصول على أحدث مشاركة
+                const latestParticipation = participants[0];
+                
+                if (latestParticipation && latestParticipation.fullName) {
+                  customName = latestParticipation.fullName;
                   log(`استخدام الاسم الكامل من صفحة الانضمام: ${customName}`, 'ws-info');
                 }
               }
