@@ -98,12 +98,18 @@ export default function WaitingRoom() {
       }
       else if (message.type === "student_approval_updated") {
         // تحديث حالة الموافقة على الطالبة
+        console.log(`Received student_approval_updated message: `, message);
+        
         if (message.payload.roomId.toString() === roomId?.toString()) {
           // التحقق من أن الرسالة تخص المستخدم الحالي
           const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+          console.log(`Current user: `, currentUser, `checking against message student ID: ${message.payload.studentId}`);
 
           if (currentUser && currentUser.id === message.payload.studentId) {
+            console.log(`Message is for current user, approved: ${message.payload.isApproved}`);
+            
             if (message.payload.isApproved) {
+              console.log(`Setting isApproved state to TRUE`);
               soundService.play('correct');
               setIsApproved(true);
               
@@ -112,8 +118,11 @@ export default function WaitingRoom() {
                 description: 'لقد تمت الموافقة على مشاركتك في المسابقة!',
                 variant: 'default',
               });
+              
+              console.log(`After approval, isApproved state should be true`);
             } else {
               // إذا تم رفض الطالبة
+              console.log(`Student was rejected`);
               toast({
                 title: 'تم رفض الطلب',
                 description: 'لم تتم الموافقة على مشاركتك في هذه المسابقة.',
@@ -121,44 +130,59 @@ export default function WaitingRoom() {
               });
               
               // العودة للصفحة الرئيسية
+              console.log(`Redirecting to home page in 2 seconds`);
               setTimeout(() => {
                 navigate('/');
               }, 2000);
             }
+          } else {
+            console.log(`Message is not for current user`);
           }
+        } else {
+          console.log(`Message room ID ${message.payload.roomId} doesn't match current room ID ${roomId}`);
         }
       }
       else if (message.type === "contest_countdown") {
         // تحديث العد التنازلي لبدء المسابقة
+        console.log(`Received contest_countdown message: `, message);
+        
         if (message.payload.roomId.toString() === roomId?.toString()) {
           const seconds = message.payload.countdown;
-          console.log(`العد التنازلي: ${seconds} ثوانٍ`);
+          console.log(`Countdown received: ${seconds} seconds remaining`);
           
           // تشغيل صوت للعد التنازلي
           if (seconds <= 5) { // صوت للعد التنازلي النهائي
             soundService.play('correct');
+            console.log(`Playing 'correct' sound for final countdown: ${seconds}`);
           } else if (seconds === 10 || seconds === 15 || seconds === 20) {
             soundService.play('click'); // صوت للإشارات الرئيسية في العد
+            console.log(`Playing 'click' sound for major countdown point: ${seconds}`);
           }
           
           // تحديث حالة العد التنازلي
+          console.log(`Setting countdown state to ${seconds}`);
           setCountdown(seconds);
           
           // تفعيل تأثير الرسوم المتحركة للعد التنازلي
+          console.log(`Activating countdown animation`);
           setCountdownAnimationActive(true);
           
           // إيقاف التأثير بعد فترة قصيرة
           setTimeout(() => {
+            console.log(`Deactivating countdown animation`);
             setCountdownAnimationActive(false);
           }, 500);
           
           // إظهار رسالة بدء المسابقة قريباً
           if (seconds === 20) {
+            console.log(`Showing initial countdown toast message`);
             toast({
               title: 'ستبدأ المسابقة قريباً!',
               description: 'المسابقة ستبدأ خلال 20 ثانية. كوني مستعدة!',
             });
           }
+        } else {
+          console.log(`Message room ID ${message.payload.roomId} doesn't match current room ID ${roomId}`);
         }
       }
       else if (message.type === "game_started") {

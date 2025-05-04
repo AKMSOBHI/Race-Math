@@ -28,6 +28,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store pending notifications for users not currently connected
   const pendingNotifications = new Map<number, ServerMessage[]>();
   
+  // Registro de todas las conexiones activas para depuración
+  setInterval(() => {
+    log(`Active WebSocket connections: ${connections.size}`, 'ws-info');
+    connections.forEach((_, userId) => {
+      log(`- User ${userId} is connected`, 'ws-info');
+    });
+  }, 30000); // Cada 30 segundos
+  
   // Function to store notification for later delivery
   const storeNotificationForUser = (userId: number, notification: ServerMessage) => {
     const userNotifications = pendingNotifications.get(userId) || [];
@@ -736,7 +744,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // إرسال إشعار للطالب المعني بالموافقة أو الرفض
                 const studentConnection = connections.get(data.payload.studentId);
+                log(`Sending approval update to student ${data.payload.studentId}, connection exists: ${!!studentConnection}, status: ${studentConnection ? studentConnection.readyState : 'N/A'}`, 'approval');
+                
                 if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
+                  log(`Sending 'student_approval_updated' message to student ${data.payload.studentId}`, 'approval');
                   sendToClient(studentConnection, {
                     type: 'student_approval_updated',
                     payload: {
@@ -745,6 +756,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       isApproved: data.payload.approve
                     }
                   });
+                  log(`Message sent to student ${data.payload.studentId}`, 'approval');
+                } else {
+                  log(`Could not send approval update to student ${data.payload.studentId} - connection not available or not open`, 'approval');
                 }
                 
                 // إذا تمت الموافقة، سنعيد إرسال قائمة الطلاب المنتظرين لتحديثها

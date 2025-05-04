@@ -6,8 +6,12 @@ import { ClientMessage, ServerMessage } from '@shared/schema';
 let socket: WebSocket | null = null;
 const listeners: ((message: ServerMessage) => void)[] = [];
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_DELAY = 3000;
+const MAX_RECONNECT_ATTEMPTS = 10; // Aumentado para mayor tolerancia
+const RECONNECT_DELAY = 2000; // Reducido para reconectar más rápido
+
+// Estado global de conexión
+let isConnected = false;
+let lastUserIdSet: number | null = null;
 
 export function connectWebSocket() {
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
@@ -27,6 +31,28 @@ export function connectWebSocket() {
       console.log('WebSocket connection established');
       // Reset reconnect attempts on successful connection
       reconnectAttempts = 0;
+      isConnected = true;
+      
+      // Si teníamos un userId almacenado, vamos a usarlo para re-identificarnos con el servidor
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      if (currentUser && currentUser.id) {
+        console.log(`Re-identifying as user ${currentUser.id} after reconnection`);
+        
+        // Vamos a enviar un mensaje específico para identificar al usuario en la reconexión
+        // Este mensaje dependerá de si el usuario es profesor o estudiante regular
+        if (currentUser.isTeacher) {
+          // Si es profesor, usamos get_room_list para volver a establecer la conexión
+          setTimeout(() => {
+            sendMessage({
+              type: 'get_room_list',
+              payload: { teacherId: currentUser.id }
+            });
+          }, 500);
+        } else {
+          // Para estudiantes regulares, simplemente registramos la reconexión
+          lastUserIdSet = currentUser.id;
+        }
+      }
       
       // Notify all listeners about connection
       document.dispatchEvent(new CustomEvent('websocket-connected'));
