@@ -36,6 +36,7 @@ export const gameSessions = pgTable("game_sessions", {
   hostId: integer("host_id").notNull().references(() => users.id), // المضيف أو المعلم
   currentQuestionIndex: integer("current_question_index").default(0),
   questions: jsonb("questions").notNull().$type<Question[]>(), // الأسئلة كـ JSON
+  players: jsonb("players").default([]).$type<Player[]>(), // اللاعبين كـ JSON
   maxPlayers: integer("max_players").default(100),
   isMultiplayer: boolean("is_multiplayer").default(true),
   status: varchar("status", { length: 20 }).default("waiting"),

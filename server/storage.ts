@@ -300,9 +300,9 @@ export class DatabaseStorage implements IStorage {
       // مسار بديل لإدراج البيانات
       const queryText = `
         INSERT INTO game_sessions 
-        (id, host_id, room_id, max_players, is_multiplayer, status, stage, current_question_index, questions, difficulty, created_at) 
+        (id, host_id, room_id, max_players, is_multiplayer, status, stage, current_question_index, questions, players, difficulty, created_at) 
         VALUES 
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       `;
       
       const values = [
@@ -315,6 +315,7 @@ export class DatabaseStorage implements IStorage {
         session.stage,
         session.currentQuestionIndex,
         JSON.stringify(session.questions),
+        JSON.stringify(session.players),
         session.difficulty || 'easy',
         new Date()
       ];
@@ -416,20 +417,43 @@ export class DatabaseStorage implements IStorage {
       // Como no tenemos tabla para jugadores todavía, obtenemos la sesión
       // actualizamos en memoria y luego guardamos de nuevo
       const session = await this.getGameSession(gameId);
-      if (!session) return undefined;
+      if (!session) {
+        console.error(`Game session ${gameId} not found when trying to add player ${player.id}`);
+        return undefined;
+      }
       
       // Check if player already exists in the session
       if (session.players.some(p => p.id === player.id)) {
+        console.log(`Player ${player.id} already in game ${gameId}, returning existing session`);
         return session;
       }
       
       // Check if game is full
       if (session.players.length >= session.maxPlayers) {
+        console.error(`Game session ${gameId} is full, can't add player ${player.id}`);
         return undefined;
       }
       
       // Add player to session in memory
       session.players.push(player);
+      console.log(`Successfully added player ${player.id} to game ${gameId}, now has ${session.players.length} players`);
+      
+      // Guardar session en la base de datos
+      const updateQuery = `
+        UPDATE game_sessions 
+        SET players = players || $1::jsonb 
+        WHERE id = $2
+      `;
+      
+      try {
+        // Serializamos el jugador nuevo como JSON
+        await pool.query(updateQuery, [JSON.stringify([player]), gameId]);
+        console.log(`Updated game session ${gameId} in database with new player ${player.id}`);
+      } catch (dbError) {
+        console.error('Error updating game session with new player:', dbError);
+        // Aún si hay error en la actualización, devolvemos la sesión actualizada en memoria
+      }
+      
       return session;
     } catch (error) {
       console.error('Error adding player to game:', error);

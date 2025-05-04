@@ -58,8 +58,26 @@ export default function Game() {
   
   // Join the game when component mounts
   useEffect(() => {
-    if (!currentGame && gameId && currentUser) {
-      joinGame(gameId);
+    if (gameId && currentUser) {
+      // تحقق مما إذا كان اللاعب مسجلاً بالفعل في اللعبة
+      const isPlayerInGame = currentGame && currentGame.players && 
+        currentGame.players.some(p => p.id === currentUser.id);
+      
+      if (!isPlayerInGame) {
+        console.log('محاولة الانضمام للعبة:', gameId);
+        joinGame(gameId);
+        
+        // محاولة انضمام إضافية بعد فترة قصيرة للتأكد من نجاح العملية
+        setTimeout(() => {
+          const currentPlayerInGame = useGameStore.getState().currentGame?.players.some(p => p.id === currentUser.id);
+          if (!currentPlayerInGame) {
+            console.log('محاولة انضمام ثانية للعبة للتأكد');
+            joinGame(gameId);
+          }
+        }, 1000);
+      } else {
+        console.log('اللاعب مسجل بالفعل في اللعبة');
+      }
     }
     
     // تشغيل الموسيقى الخلفية عند بدء اللعبة
