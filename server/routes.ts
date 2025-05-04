@@ -137,6 +137,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // الحصول على حالة مشارك في غرفة
+  app.get("/api/rooms/:roomId/participants/:userId", async (req, res) => {
+    try {
+      const roomId = parseInt(req.params.roomId);
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(roomId) || isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid room ID or user ID" });
+      }
+      
+      log(`Checking participant status for user ${userId} in room ${roomId}`, 'room');
+      
+      const participantData = await db.select().from(roomParticipants)
+        .where(and(
+          eq(roomParticipants.roomId, roomId),
+          eq(roomParticipants.userId, userId)
+        ));
+      
+      log(`Found participant data: ${JSON.stringify(participantData)}`, 'room');
+      
+      if (participantData && participantData.length > 0) {
+        res.status(200).json(participantData[0]);
+      } else {
+        res.status(404).json({ message: "Participant not found" });
+      }
+    } catch (error) {
+      log(`Error getting participant: ${error instanceof Error ? error.message : String(error)}`, 'room-error');
+      res.status(500).json({ message: "Failed to get participant data" });
+    }
+  });
+  
   app.get("/api/games", async (req, res) => {
     try {
       const sessions = await storage.getAllActiveSessions();

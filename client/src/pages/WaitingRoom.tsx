@@ -67,6 +67,38 @@ export default function WaitingRoom() {
     }
   }, []);
   
+  // التحقق من حالة الموافقة من قاعدة البيانات
+  useEffect(() => {
+    const checkApprovalStatus = async () => {
+      if (!roomId) return;
+      
+      try {
+        // نحاول الحصول على المستخدم الحالي
+        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        if (!currentUser?.id) return;
+        
+        // نطلب معلومات المشاركين من المعلمة
+        console.log(`Checking approval status for student ${currentUser.id} in room ${roomId}`);
+        
+        const response = await fetch(`/api/rooms/${roomId}/participants/${currentUser.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Received participant data:`, data);
+          
+          if (data && data.isApproved) {
+            console.log(`Student ${currentUser.id} is approved according to DB, setting approved state to TRUE`);
+            setIsApproved(true);
+          }
+        }
+      } catch (error) {
+        console.error(`Error checking approval status:`, error);
+      }
+    };
+    
+    // التحقق من حالة الموافقة عند تحميل المكون
+    checkApprovalStatus();
+  }, [roomId]);
+  
   // الاستماع لسيرفر WebSocket لتحديثات الغرفة
   useEffect(() => {
     if (!roomId) {
