@@ -532,7 +532,7 @@ export default function Game() {
                   boxShadow: '0 0 10px var(--space-bright)',
                   fontFamily: 'Orbitron, sans-serif'
                 }}>
-                المرحلة: {stageTranslation[currentGame.stage]}
+                المرحلة: {stageTranslation[currentGame.stage]} 
               </div>
               <div className="game-progress p-2 rounded-lg font-bold text-xs md:text-sm flex items-center space-x-1"
                 style={{ 
@@ -553,7 +553,7 @@ export default function Game() {
                 boxShadow: '0 0 10px var(--space-bright)',
                 fontFamily: 'Orbitron, sans-serif'
               }}>
-              النقاط: {convertToArabicNumerals(currentPlayer?.score)}
+              النقاط: {convertToArabicNumerals(currentPlayer?.score)} 
             </div>
           </div>
           
