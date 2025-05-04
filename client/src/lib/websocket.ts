@@ -6,8 +6,8 @@ import { ClientMessage, ServerMessage } from '@shared/schema';
 let socket: WebSocket | null = null;
 const listeners: ((message: ServerMessage) => void)[] = [];
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 10; // Aumentado para mayor tolerancia
-const RECONNECT_DELAY = 2000; // Reducido para reconectar más rápido
+const MAX_RECONNECT_ATTEMPTS = 20; // زيادة المحاولات لضمان الاتصال حتى بعد فترات طويلة
+const RECONNECT_DELAY = 1500; // تقليل وقت الانتظار بين المحاولات
 
 // Estado global de conexión
 let isConnected = false;

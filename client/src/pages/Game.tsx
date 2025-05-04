@@ -168,10 +168,9 @@ export default function Game() {
           console.log('إعادة محاولة الإرسال بعد الانضمام للعبة');
           
           // نتحقق مرة أخرى إذا كان اللاعب قد أصبح مسجلاً في اللعبة
-          const updatedGame = get().currentGame;
-          const updatedUser = get().currentUser;
+          const { currentGame: updatedGame, currentUser: updatedUser } = useGameStore.getState();
           
-          if (updatedGame && updatedUser && updatedGame.players.some(p => p.id === updatedUser.id)) {
+          if (updatedGame && updatedUser && updatedGame.players.some((p: any) => p.id === updatedUser.id)) {
             // اللاعب أصبح مسجلاً الآن، نرسل الإجابة
             console.log('اللاعب أصبح مسجلاً الآن، نرسل الإجابة:', answer);
             submitAnswer(updatedGame.id, answer);
@@ -186,7 +185,7 @@ export default function Game() {
               
               // بعد الانضمام الثاني، نحاول إرسال الإجابة مرة أخرى
               setTimeout(() => {
-                const finalGame = get().currentGame;
+                const { currentGame: finalGame } = useGameStore.getState();
                 if (finalGame) {
                   submitAnswer(finalGame.id, answer);
                 }

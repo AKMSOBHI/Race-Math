@@ -297,19 +297,29 @@ export class DatabaseStorage implements IStorage {
       };
       
       // Guardar en la base de datos - necesitamos serializar manualmente las preguntas
-      await db.insert(gameSessions).values({
-        id: sessionId,
-        hostId: session.hostId,
-        roomId: session.roomId || null,
-        maxPlayers: session.maxPlayers,
-        isMultiplayer: session.isMultiplayer, 
-        status: session.status,
-        stage: session.stage,
-        currentQuestionIndex: session.currentQuestionIndex,
-        questions: JSON.stringify(session.questions),
-        difficulty: session.difficulty || 'easy',
-        createdAt: new Date()
-      });
+      // مسار بديل لإدراج البيانات
+      const queryText = `
+        INSERT INTO game_sessions 
+        (id, host_id, room_id, max_players, is_multiplayer, status, stage, current_question_index, questions, difficulty, created_at) 
+        VALUES 
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `;
+      
+      const values = [
+        sessionId,
+        session.hostId,
+        session.roomId || null,
+        session.maxPlayers,
+        session.isMultiplayer,
+        session.status,
+        session.stage,
+        session.currentQuestionIndex,
+        JSON.stringify(session.questions),
+        session.difficulty || 'easy',
+        new Date()
+      ];
+      
+      await pool.query(queryText, values);
       
       console.log(`Game session ${sessionId} created with ${session.questions.length} questions and saved to database`);
       return session;
