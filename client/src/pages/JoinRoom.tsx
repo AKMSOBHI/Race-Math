@@ -119,23 +119,26 @@ export default function JoinRoom() {
         setTimeout(() => {
           // التحقق أولاً من المعرف الذي تم استلامه في الرسالة
           if (message.payload.currentGameId) {
+            console.log(`الانتقال إلى اللعبة مباشرة باستخدام المعرف المستلم: ${message.payload.currentGameId}`);
             navigate(`/game?id=${message.payload.currentGameId}`);
           } else {
             // إذا لم يكن هناك معرف لعبة نشطة في الرسالة، نتحقق من التخزين المحلي
             const currentActiveGame = localStorage.getItem('currentGameId');
             if (currentActiveGame) {
+              console.log(`الانتقال إلى اللعبة باستخدام المعرف المخزن محلياً: ${currentActiveGame}`);
               navigate(`/game?id=${currentActiveGame}`);
             } else {
-              // إذا لم يكن هناك لعبة نشطة، ربما تعيد توجيه المستخدم إلى الصفحة الرئيسية
+              console.log('لا توجد مسابقة نشطة حالياً، يتم التوجيه للصفحة الرئيسية');
+              // إذا لم يكن هناك لعبة نشطة، نوجه المستخدم إلى الصفحة الرئيسية مع رسالة توضيحية
               navigate('/');
               toast({
                 title: 'لم يتم العثور على مسابقة نشطة',
-                description: 'يرجى التحقق مع المعلمة لبدء مسابقة جديدة.',
+                description: 'يرجى الانتظار حتى تبدأ المعلمة المسابقة.',
                 variant: 'destructive'
               });
             }
           }
-        }, 500);
+        }, 1000); // زيادة التأخير قليلاً لضمان معالجة جميع الرسائل
       }
       else if (message.type === "error") {
         setIsLoading(false);
