@@ -20,9 +20,8 @@ export class GameManager {
       throw new Error("Game not found");
     }
     
-    if (game.status !== "waiting") {
-      throw new Error("Cannot join a game that has already started");
-    }
+    // Eliminamos la restricción para permitir que los estudiantes se unan en cualquier momento
+    // Nota: Es posible que desees agregar lógica especial cuando los estudiantes se unen a un juego en curso
     
     if (game.players.length >= game.maxPlayers) {
       throw new Error("Game is full");

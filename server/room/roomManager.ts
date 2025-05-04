@@ -247,14 +247,22 @@ export class RoomManager {
         currentGameId = gameSession.id;
         log(`Found active game session ${currentGameId} in room ${roomId}`, 'room');
         
-        const result = await this.gameManager.joinGame(gameSession.id, userId);
-        
-        if (result.joined) {
-          log(`Student ${userId} joined active game ${gameSession.id} in room ${roomId} successfully`, 'room');
+        try {
+          // Intentamos unir al estudiante a la sesión activa
+          const result = await this.gameManager.joinGame(gameSession.id, userId);
+          
+          if (result.joined) {
+            log(`Student ${userId} joined active game ${gameSession.id} in room ${roomId} successfully`, 'room');
+          } else {
+            log(`Player ${userId} was already in game ${gameSession.id}`, 'room');
+          }
+          
+          // Siempre devolvemos éxito con el ID de juego, incluso si hay algún problema en la unión
+          // Esto permitirá que el estudiante navegue a la página del juego 
           return { success: true, username: user.username, currentGameId: gameSession.id };
-        } else {
-          log(`Failed to add student ${userId} to active game ${gameSession.id}, but will still return the gameId`, 'room');
-          // نُرجع معرف اللعبة حتى لو فشلت عملية الإضافة، لأن اللاعب قد يحاول الانضمام مرة أخرى
+        } catch (error) {
+          // Si hay algún error, lo registramos pero aún devolvemos el ID del juego
+          log(`Error joining game, but will still return gameId: ${error instanceof Error ? error.message : String(error)}`, 'room');
           return { success: true, username: user.username, currentGameId: gameSession.id };
         }
       } else {
