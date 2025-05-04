@@ -56,9 +56,12 @@ export class MemStorage implements IStorage {
     const user = await this.getUser(userId);
     if (!user) return undefined;
     
+    // Handle null scores by treating them as 0
+    const currentScore = user.score || 0;
+    
     const updatedUser = {
       ...user,
-      score: user.score + score
+      score: currentScore + score
     };
     
     this.users.set(userId, updatedUser);
