@@ -756,7 +756,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const countdownSeconds = 20;
                 let secondsRemaining = countdownSeconds;
                 
-                // Store contest state to help students who reconnect
+                // خزن حالة المسابقة لمساعدة الطلاب الذين سيعيدون الاتصال
                 activeContests.set(data.payload.roomId, {
                   countdownStarted: true,
                   approvedStudents: students,
@@ -764,8 +764,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   gameSession: result.gameSession
                 });
                 
+                // إرسال رسالة العد التنازلي الأولية للطلاب المتصلين
+                // هذا سيساعد في عرض العد التنازلي فوراً
+                log(`Sending initial countdown message to approved students in room ${data.payload.roomId}`, 'contest');
+                
+                students.forEach(studentId => {
+                  const studentConnection = connections.get(studentId);
+                  if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
+                    log(`Sending countdown to student ${studentId}`, 'contest');
+                    sendToClient(studentConnection, {
+                      type: 'contest_countdown',
+                      payload: {
+                        roomId: data.payload.roomId,
+                        countdown: countdownSeconds
+                      }
+                    });
+                  } else {
+                    log(`Student ${studentId} is not connected, cannot send countdown`, 'contest');
+                  }
+                });
+                
+                // إرسال تحديث العد التنازلي الأولي للمعلمة
+                sendToClient(ws, {
+                  type: 'contest_countdown',
+                  payload: {
+                    roomId: data.payload.roomId,
+                    countdown: countdownSeconds
+                  }
+                });
+                
                 const countdownInterval = setInterval(() => {
-                  // إرسال تحديث العد التنازلي لجميع اللاعبين
+                  // تناقص العداد أولاً
+                  secondsRemaining--;
+                  
+                  // تحديث الوقت المتبقي في خريطة المسابقات النشطة
+                  const contest = activeContests.get(data.payload.roomId);
+                  if (contest) {
+                    contest.secondsRemaining = secondsRemaining;
+                    activeContests.set(data.payload.roomId, contest);
+                    log(`Updated contest state for room ${data.payload.roomId}: ${secondsRemaining}s remaining`, 'contest');
+                  }
+                  
+                  // إرسال تحديث العد التنازلي لجميع الطلاب المتواجدين حالياً
+                  let connectedStudents = 0;
                   students.forEach(studentId => {
                     const studentConnection = connections.get(studentId);
                     if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
@@ -776,8 +817,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           countdown: secondsRemaining
                         }
                       });
+                      connectedStudents++;
                     }
                   });
+                  
+                  log(`Sent countdown update (${secondsRemaining}s) to ${connectedStudents} students`, 'contest');
                   
                   // إرسال تحديث للمعلمة أيضاً
                   sendToClient(ws, {
@@ -788,21 +832,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     }
                   });
                   
-                  secondsRemaining--;
-                  
-                  // Update the remaining time in active contests map
-                  const contest = activeContests.get(data.payload.roomId);
-                  if (contest) {
-                    contest.secondsRemaining = secondsRemaining;
-                    activeContests.set(data.payload.roomId, contest);
-                  }
-                  
                   // إذا انتهى العد التنازلي، نوقف المؤقت ونرسل رسالة بدء اللعبة
-                  if (secondsRemaining < 0) {
+                  if (secondsRemaining <= 0) {
                     clearInterval(countdownInterval);
                     log(`Countdown complete, starting game for room ${data.payload.roomId}`, 'contest');
                     
-                    // Update active contests map to indicate countdown is complete
+                    // تحديث خريطة المسابقات النشطة للإشارة إلى اكتمال العد التنازلي
                     const contest = activeContests.get(data.payload.roomId);
                     if (contest) {
                       contest.secondsRemaining = null;
@@ -810,18 +845,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       log(`Updated active contest state for room ${data.payload.roomId} - countdown complete`, 'contest');
                     }
                     
-                    // إرسال رسالة بدء اللعبة لجميع الطلاب
+                    // إرسال رسالة بدء اللعبة لجميع الطلاب المتصلين
+                    let startedCount = 0;
                     students.forEach(studentId => {
                       const studentConnection = connections.get(studentId);
                       if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
                         if (result.gameSession) {
+                          log(`Sending game_started to student ${studentId}`, 'contest');
                           sendToClient(studentConnection, {
                             type: 'game_started',
                             payload: result.gameSession
                           });
+                          startedCount++;
                         }
                       }
                     });
+                    log(`Sent game_started to ${startedCount} students`, 'contest');
                   }
                 }, 1000); // تحديث كل ثانية
               } else {
