@@ -521,7 +521,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           payload: {
                             roomId: room.id,
                             userId: userId as number,
-                            username: room.name
+                            username: room.name,
+                            currentGameId: contestState.gameSession?.id // إضافة معرف اللعبة النشطة
                           }
                         });
                         
@@ -571,7 +572,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   payload: {
                     roomId: room.id,
                     userId: data.payload.userId,
-                    username: displayName // استخدام نفس الاسم المعروض في الإشعار
+                    username: displayName, // استخدام نفس الاسم المعروض في الإشعار
+                    currentGameId: result.currentGameId // إضافة معرف اللعبة النشطة إذا وجد
                   }
                 });
                 

@@ -163,7 +163,7 @@ export class RoomManager {
   /**
    * انضمام طالب إلى غرفة
    */
-  async joinRoom(roomId: number, userId: number, fullName?: string): Promise<{ success: boolean; username?: string }> {
+  async joinRoom(roomId: number, userId: number, fullName?: string): Promise<{ success: boolean; username?: string; currentGameId?: string; }> {
     try {
       // التحقق من وجود الغرفة والطالب
       const roomResult = await db.select().from(rooms).where(eq(rooms.id, roomId));
@@ -205,17 +205,27 @@ export class RoomManager {
       
       if (existingParticipant.length === 0) {
         // إضافة الطالب كمشارك جديد في الغرفة
-        // الطلاب غير معتمدين بشكل افتراضي
+        // تعديل: الطلاب معتمدين بشكل تلقائي بعد إلغاء غرفة الانتظار
         await db.insert(roomParticipants).values({
           roomId: roomId,
           userId: userId,
           fullName: fullNameValue, // تخزين الاسم الكامل في قاعدة البيانات
-          isApproved: false, // الطالب بحاجة إلى موافقة المعلم
+          isApproved: true, // تعديل: الطالب معتمد تلقائياً بعد إلغاء غرفة الانتظار
         });
         
-        log(`Added user ${userId} (${user.username}) to room ${roomId} participants`, 'room');
+        log(`Added user ${userId} (${user.username}) to room ${roomId} participants with automatic approval`, 'room');
       } else {
-        // الطالب موجود بالفعل في الغرفة
+        // الطالب موجود بالفعل في الغرفة، تأكد من أنه معتمد
+        if (existingParticipant[0].isApproved !== true) {
+          // تحديث حالة الموافقة إذا لم يكن معتمداً بعد
+          await db.update(roomParticipants)
+            .set({ isApproved: true })
+            .where(and(
+              eq(roomParticipants.roomId, roomId),
+              eq(roomParticipants.userId, userId)
+            ));
+          log(`Updated approval status for existing participant ${userId} in room ${roomId}`, 'room');
+        }
         log(`User ${userId} (${user.username}) already in room ${roomId}`, 'room');
       }
 
@@ -226,23 +236,22 @@ export class RoomManager {
           eq(gameSessions.status, 'active')
         ));
 
+      let currentGameId: string | undefined;
+
       if (activeSessions.length > 0) {
-        // إذا كانت هناك جلسة نشطة، نقوم بإضافة اللاعب إليها
-        // لكن فقط إذا كان معتمدًا من قبل المعلم
-        const isApproved = existingParticipant.length > 0 ? existingParticipant[0].isApproved : false;
+        // إذا كانت هناك جلسة نشطة، نقوم بإضافة اللاعب إليها مباشرة
+        const gameSession = activeSessions[0];
+        currentGameId = gameSession.id;
+        const result = await this.gameManager.joinGame(gameSession.id, userId);
         
-        if (isApproved) {
-          const gameSession = activeSessions[0];
-          const result = await this.gameManager.joinGame(gameSession.id, userId);
-          
-          if (result.joined) {
-            return { success: true, username: user.username };
-          }
+        if (result.joined) {
+          log(`Student ${userId} joined active game ${gameSession.id} in room ${roomId}`, 'room');
+          return { success: true, username: user.username, currentGameId: gameSession.id };
         }
       }
 
-      // إذا لم تكن هناك جلسة نشطة، فاللاعب سينتظر بدء المسابقة
-      return { success: true, username: user.username };
+      // إذا لم تكن هناك جلسة نشطة، فسنعيد نجاح العملية ولكن بدون معرف جلسة لعب
+      return { success: true, username: user.username, currentGameId };
     } catch (error) {
       log(`Error joining room: ${error instanceof Error ? error.message : String(error)}`, 'room');
       return { success: false };
