@@ -301,9 +301,22 @@ export class RoomManager {
           eq(gameSessions.status, 'active')
         ));
 
+      // Si hay sesiones activas, las finalizamos
       if (activeSessions.length > 0) {
-        log(`Room ${roomId} already has an active contest`, 'room');
-        return { success: false };
+        log(`Room ${roomId} already has ${activeSessions.length} active contest(s), finalizing them...`, 'room');
+        
+        // Actualizar todas las sesiones activas a completed
+        for (const session of activeSessions) {
+          try {
+            await db.update(gameSessions)
+              .set({ status: 'completed' })
+              .where(eq(gameSessions.id, session.id));
+            log(`Game session ${session.id} marked as completed`, 'room');
+          } catch (updateError) {
+            log(`Error updating game session status: ${updateError instanceof Error ? updateError.message : String(updateError)}`, 'room');
+            // Continuamos con las demás sesiones aunque haya un error
+          }
+        }
       }
 
       // إنشاء جلسة لعب جديدة
