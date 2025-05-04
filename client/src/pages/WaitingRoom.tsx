@@ -212,18 +212,46 @@ export default function WaitingRoom() {
           const seconds = message.payload.countdown;
           console.log(`Countdown received: ${seconds} seconds remaining`);
           
-          // تشغيل صوت للعد التنازلي
-          if (seconds <= 5) { // صوت للعد التنازلي النهائي
-            soundService.play('correct');
-            console.log(`Playing 'correct' sound for final countdown: ${seconds}`);
-          } else if (seconds === 10 || seconds === 15 || seconds === 20) {
-            soundService.play('click'); // صوت للإشارات الرئيسية في العد
-            console.log(`Playing 'click' sound for major countdown point: ${seconds}`);
-          }
-          
-          // تحديث حالة العد التنازلي
-          console.log(`Setting countdown state to ${seconds}`);
+          // تحديث حالة العد التنازلي أولاً
           setCountdown(seconds);
+          
+          // إظهار إشعار ببدء العد التنازلي (للتقليل من الإشعارات المتكررة)
+          if (seconds === 20) {
+            console.log(`Showing initial countdown toast message (20s)`);
+            toast({
+              title: 'ستبدأ المسابقة قريباً!',
+              description: 'المسابقة ستبدأ خلال 20 ثانية. كوني مستعدة!',
+              duration: 10000 // مدة أطول للإشعار المهم
+            });
+            
+            // تشغيل صوت مميز لبدء العد التنازلي
+            soundService.play('correct');
+          }
+          // إشعارات للنقاط الرئيسية في العد التنازلي
+          else if (seconds === 10) {
+            console.log(`Showing 10 seconds remaining toast`);
+            soundService.play('click');
+            toast({
+              title: 'العد التنازلي',
+              description: 'متبقي 10 ثواني على بدء المسابقة!',
+              duration: 5000
+            });
+          }
+          else if (seconds === 5) {
+            console.log(`Showing 5 seconds remaining toast`);
+            soundService.play('correct');
+            toast({
+              title: 'استعداد!',
+              description: 'متبقي 5 ثواني على بدء المسابقة!',
+              variant: 'destructive',
+              duration: 4000
+            });
+          }
+          else if (seconds <= 3 && seconds > 0) {
+            // تشغيل صوت للثواني الأخيرة
+            console.log(`Playing sound for final seconds: ${seconds}`);
+            soundService.play('click');
+          }
           
           // تفعيل تأثير الرسوم المتحركة للعد التنازلي
           console.log(`Activating countdown animation`);
@@ -234,15 +262,6 @@ export default function WaitingRoom() {
             console.log(`Deactivating countdown animation`);
             setCountdownAnimationActive(false);
           }, 500);
-          
-          // إظهار رسالة بدء المسابقة قريباً
-          if (seconds === 20) {
-            console.log(`Showing initial countdown toast message`);
-            toast({
-              title: 'ستبدأ المسابقة قريباً!',
-              description: 'المسابقة ستبدأ خلال 20 ثانية. كوني مستعدة!',
-            });
-          }
         } else {
           console.log(`Message room ID ${message.payload.roomId} doesn't match current room ID ${roomId}`);
         }
