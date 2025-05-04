@@ -99,7 +99,13 @@ export class GameManager {
       throw new Error("Game not found");
     }
     
-    if (game.status !== "active") {
+    // Si el juego está en estado 'waiting', activarlo automáticamente
+    if (game.status === "waiting") {
+      console.log(`Game ${gameId} was in 'waiting' state, automatically changing to 'active'`);
+      await this.storage.updateGameSession(gameId, { status: "active" });
+      // Actualizamos la copia local del juego para continuar con el procesamiento
+      game.status = "active";
+    } else if (game.status !== "active") {
       throw new Error("Game is not active");
     }
     
