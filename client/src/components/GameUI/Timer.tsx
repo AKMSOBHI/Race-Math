@@ -1,8 +1,8 @@
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState, useRef } from 'react';
 import { useGameStore } from '@/lib/game/gameState';
-import { useToast } from '@/hooks/use-toast';
 import { soundService } from '@/lib/soundService';
 import { convertToArabicNumerals } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface TimerProps {
   duration?: number; // مدة العد التنازلي بالثواني
@@ -10,43 +10,77 @@ interface TimerProps {
 }
 
 /**
- * مكون مؤقت العد التنازلي للعبة مع منطق الانتقال التلقائي
- * تم تحسينه للتعامل مع مشكلة الشاشة السوداء وضمان الانتقال الموثوق
+ * مكون مؤقت العد التنازلي للعبة - إصدار مبسط ينفذ مهمة واحدة فقط
  */
 const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   // حالة الوقت المتبقي
   const [timeLeft, setTimeLeft] = useState(duration);
   
-  // استخراج ما نحتاجه من حالة اللعبة
-  const { 
-    currentGame, 
-    currentUser, 
-    submitAnswer, 
-    nextQuestion,
-    setIsTimeUp, 
-    isTimeUp,
-    setIsLoading,
-    isSoundEnabled,
-    setShowCorrectModal,
-    setShowIncorrectModal,
-    setShowStageCompleteModal,
-    setShowGameOverModal
-  } = useGameStore();
+  // مرجع لتجنب الاستدعاءات المتكررة
+  const hasEndedRef = useRef(false);
   
-  // نظام التنبيهات
+  // للتنبيهات
   const { toast } = useToast();
   
-  // مؤشرات لمنع تكرار الإجراءات
-  const [hasNotified, setHasNotified] = useState(false);
-  const [lastPlayedTime, setLastPlayedTime] = useState(duration);
+  // استخراج ما نحتاجه من حالة اللعبة
+  const { 
+    currentGame,
+    setIsTimeUp,
+    isSoundEnabled
+  } = useGameStore();
   
   // إعادة ضبط المؤقت عندما يتغير السؤال أو المرحلة
   useEffect(() => {
     console.log('⏱️ إعادة ضبط المؤقت - سؤال/مرحلة جديدة');
     setTimeLeft(duration);
-    setHasNotified(false);
-    setLastPlayedTime(duration);
+    hasEndedRef.current = false;
   }, [currentGame?.currentQuestionIndex, currentGame?.stage, duration]);
+  
+  // مؤقت للعد التنازلي
+  useEffect(() => {
+    // إذا كان الوقت لم ينتهي، نستمر في العد التنازلي
+    if (timeLeft > 0) {
+      // تشغيل صوت العد التنازلي عند الثواني الخمسة الأخيرة
+      if (timeLeft <= 5 && isSoundEnabled) {
+        soundService.play('countdown');
+      }
+      
+      // استمرار العد التنازلي
+      const timer = setTimeout(() => {
+        setTimeLeft(prev => prev - 1);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    } 
+    // إذا وصل الوقت للصفر ولم يتم استدعاء الدالة من قبل
+    else if (!hasEndedRef.current) {
+      console.log('⛔ انتهى الوقت في مكون Timer');
+      hasEndedRef.current = true;
+      
+      // تعيين حالة انتهاء الوقت
+      setIsTimeUp(true);
+      
+      // تشغيل صوت انتهاء الوقت
+      if (isSoundEnabled) {
+        soundService.play('wrong');
+      }
+      
+      // إظهار رسالة
+      toast({
+        title: "انتهى الوقت!",
+        description: "جاري الانتقال للسؤال التالي...",
+        variant: "destructive",
+      });
+      
+      // استدعاء الدالة الخارجية لإعلام المكون الأب بانتهاء الوقت
+      if (onTimeEnd) {
+        console.log('♻️ استدعاء دالة onTimeEnd الخارجية');
+        setTimeout(() => {
+          onTimeEnd();
+        }, 100);
+      }
+    }
+  }, [timeLeft, isSoundEnabled, setIsTimeUp, onTimeEnd, toast]);
 
   // مؤقت العد التنازلي مع الانتقال التلقائي
   useEffect(() => {

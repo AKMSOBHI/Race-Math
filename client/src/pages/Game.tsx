@@ -38,6 +38,7 @@ export default function Game() {
     submitAnswer,
     handleServerMessage,
     showCorrectModal,
+    isLoading,
     showIncorrectModal,
     showStageCompleteModal,
     showGameOverModal,
