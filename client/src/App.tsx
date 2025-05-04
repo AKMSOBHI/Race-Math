@@ -6,6 +6,7 @@ import Game from "@/pages/Game";
 import TeacherDashboard from "@/pages/TeacherDashboard";
 import RoomDashboard from "@/pages/RoomDashboard";
 import JoinRoom from "@/pages/JoinRoom";
+import WaitingRoom from "@/pages/WaitingRoom";
 import { useEffect } from "react";
 import { soundService } from "@/lib/soundService";
 
@@ -20,6 +21,7 @@ function Router() {
       {/* صفحات الغرف والانضمام للطالبات */}
       <Route path="/join" component={JoinRoom} />
       <Route path="/join-room" component={JoinRoom} />
+      <Route path="/waiting" component={WaitingRoom} />
       
       {/* صفحات المعلمة */}
       <Route path="/teacher" component={TeacherDashboard} />
