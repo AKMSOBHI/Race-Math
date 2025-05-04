@@ -169,24 +169,12 @@ export class RoomManager {
       const room = roomResult[0];
       const user = userResult[0];
       
-      // إعداد fullNameValue لاستخدامه سواء للتحديث أو للإضافة
+      // إعداد fullNameValue لاستخدامه للإضافة
       const fullNameValue = fullName && fullName.trim() !== '' ? fullName.trim() : undefined;
       
-      // إذا تم توفير اسم كامل، فسنقوم بتحديث اسم المستخدم
-      if (fullNameValue) {
-        try {
-          // تحديث اسم المستخدم بالاسم الكامل المقدم
-          await db.update(users)
-            .set({ username: fullNameValue })
-            .where(eq(users.id, userId));
-          
-          log(`Updated username for user ${userId} to "${fullNameValue}"`, 'room');
-          user.username = fullNameValue; // تحديث الاسم في الكائن المحلي أيضاً
-        } catch (error) {
-          log(`Error updating username: ${error instanceof Error ? error.message : String(error)}`, 'room');
-          // نستمر في السير حتى لو فشل تحديث الاسم
-        }
-      }
+      // نحافظ على اسم المستخدم الحالي، ونستخدم fullName فقط لعرض الاسم الكامل
+      // لا نقوم بتحديث اسم المستخدم لتجنب مشكلة تكرار الاسم
+      log(`Using fullName value: ${fullNameValue || 'None'} for user ${userId}`, 'room');
 
       // التحقق مما إذا كانت الغرفة نشطة
       if (!room.isActive) {
@@ -337,8 +325,15 @@ export class RoomManager {
       // تجميع البيانات
       const students = participants.map(participant => {
         const user = usersData.find(u => u.id === participant.userId);
-        // استخدام الاسم من قاعدة البيانات (يكون قد تم تحديثه للاسم الكامل)
-        const displayName = user ? user.username : 'Unknown';
+        
+        // استخدام fullName من جدول roomParticipants إذا كان متاحاً
+        // وإلا استخدام اسم المستخدم من جدول users
+        let displayName = 'Unknown';
+        if (participant.fullName) {
+          displayName = participant.fullName;
+        } else if (user) {
+          displayName = user.username;
+        }
         
         return {
           id: participant.userId,
