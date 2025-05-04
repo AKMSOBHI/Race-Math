@@ -165,6 +165,21 @@ export default function TeacherDashboard() {
         });
       } else if (message.type === "room_list") {
         setRooms(message.payload);
+      } else if (message.type === "room_cancelled") {
+        // تحديث قائمة الغرف عند إلغاء غرفة
+        console.log('تم إلغاء الغرفة بنجاح:', message.payload.roomId);
+
+        // نقوم باستبعاد الغرفة التي تم إلغاؤها من القائمة
+        setRooms(prevRooms => prevRooms.filter(room => room.id !== message.payload.roomId));
+        
+        // عرض رسالة تأكيد للمعلمة
+        toast({
+          title: "تم إلغاء الغرفة بنجاح",
+          description: "تم إزالة الغرفة من قائمة الغرف النشطة",
+        });
+        
+        // تشغيل صوت نجاح العملية
+        soundService.play('success');
       } else if (message.type === "student_joined_room") {
         // معالجة إشعار انضمام طالبة
         console.log('✓ معالجة إشعار انضمام طالبة:', message.payload);
@@ -706,7 +721,7 @@ export default function TeacherDashboard() {
                         type: "cancel_room",
                         payload: {
                           roomId: room.id,
-                          teacherId: userId
+                          teacherId: 1 // في التطبيق الحقيقي، سيتم أخذ معرف المعلم من المستخدم الحالي
                         }
                       };
                       
