@@ -557,45 +557,61 @@ export class RoomManager {
 
       const activeSession = activeSessions[0];
 
-      // الحصول على بيانات اللاعبين النشطين
-      const playerSessionsData = await db.select()
-        .from(playerSessions)
-        .where(eq(playerSessions.sessionId, activeSession.id));
+      // الحصول على المشاركين في الغرفة
+      const roomParticipantsData = await db.select()
+        .from(roomParticipants)
+        .where(and(
+          eq(roomParticipants.roomId, roomId),
+          eq(roomParticipants.isApproved, true)
+        ));
 
       // الحصول على معلومات المستخدمين
-      const userIds = playerSessionsData.map(ps => ps.userId);
+      const userIds = roomParticipantsData.map(rp => rp.userId);
       let usersData: any[] = [];
       
       if (userIds.length > 0) {
-        // تحسين الاستعلام للحصول على معلومات المستخدمين
-        usersData = await db.select().from(users).where(eq(users.id, userIds[0]));
-        // للحصول على معلومات باقي المستخدمين، يمكن إضافة استعلامات أخرى هنا
+        // الحصول على معلومات جميع المستخدمين في الغرفة
+        usersData = await db.select().from(users).where(inArray(users.id, userIds));
       }
 
       // إنشاء قائمة الطلاب النشطين
-      const activeStudents = playerSessionsData.map(ps => {
-        const user = usersData.find(u => u?.id === ps.userId);
+      const activeStudents = roomParticipantsData.map(rp => {
+        const user = usersData.find(u => u?.id === rp.userId);
         return {
-          id: ps.userId,
-          username: user ? user.username : 'Unknown',
-          status: ps.completedAt ? 'completed' : 'playing',
-          score: ps.score || 0,
-          progress: ps.progress || 0
+          id: rp.userId,
+          username: user ? user.username : (rp.fullName || 'Unknown'),
+          status: 'playing', // نفترض أن جميع المشاركين يلعبون
+          score: user ? user.score || 0 : 0,
+          progress: 0 // لا توجد معلومات تقدم محددة
         };
       });
 
-      // حساب إحصائيات اللعبة
-      const questionsLength = Array.isArray(activeSession.questions) ? activeSession.questions.length : 0;
-      const totalQuestions = questionsLength * playerSessionsData.length;
-      const questionsAnswered = playerSessionsData.reduce((total, ps) => total + (ps.progress || 0), 0);
-      const totalScore = playerSessionsData.reduce((total, ps) => total + (ps.score || 0), 0);
-      const averageScore = playerSessionsData.length > 0 ? totalScore / playerSessionsData.length : 0;
+      // حساب إحصائيات اللعبة بناءً على بيانات المستخدمين
+      let questionsLength = 0;
+      try {
+        // محاولة الحصول على عدد الأسئلة
+        let questions = [];
+        if (typeof activeSession.questions === 'string') {
+          questions = JSON.parse(activeSession.questions);
+        } else {
+          questions = activeSession.questions || [];
+        }
+        questionsLength = questions.length;
+      } catch (e) {
+        console.error('Error parsing questions:', e);
+        questionsLength = 5; // افتراضي
+      }
 
+      const totalQuestions = questionsLength * activeStudents.length;
+      const totalScore = usersData.reduce((total, user) => total + (user.score || 0), 0);
+      const averageScore = usersData.length > 0 ? totalScore / usersData.length : 0;
+      
       // تقدير عدد الإجابات الصحيحة بناءً على متوسط النقاط لكل سؤال
-      const pointsPerQuestion = 10; // افتراضي
+      const pointsPerQuestion = 2; // افتراضي - متوسط النقاط لكل سؤال
       const estimatedCorrectAnswers = Math.round(totalScore / pointsPerQuestion);
+      const questionsAnswered = Math.max(estimatedCorrectAnswers, 0);
 
-      log(`Successfully retrieved dashboard data for room: ${roomId}`, 'room');
+      log(`Successfully retrieved dashboard data for room: ${roomId} with ${activeStudents.length} active students`, 'room');
       return {
         success: true,
         dashboard: {
