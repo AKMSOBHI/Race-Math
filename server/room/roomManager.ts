@@ -140,7 +140,7 @@ export class RoomManager {
   /**
    * انضمام طالب إلى غرفة
    */
-  async joinRoom(roomId: number, userId: number): Promise<{ success: boolean; username?: string }> {
+  async joinRoom(roomId: number, userId: number, fullName?: string): Promise<{ success: boolean; username?: string }> {
     try {
       // التحقق من وجود الغرفة والطالب
       const roomResult = await db.select().from(rooms).where(eq(rooms.id, roomId));
@@ -158,6 +158,22 @@ export class RoomManager {
 
       const room = roomResult[0];
       const user = userResult[0];
+      
+      // إذا تم توفير اسم كامل، فسنقوم بتحديث اسم المستخدم
+      if (fullName && fullName.trim() !== '') {
+        try {
+          // تحديث اسم المستخدم بالاسم الكامل المقدم
+          await db.update(users)
+            .set({ username: fullName.trim() })
+            .where(eq(users.id, userId));
+          
+          log(`Updated username for user ${userId} to "${fullName.trim()}"`, 'room');
+          user.username = fullName.trim(); // تحديث الاسم في الكائن المحلي أيضاً
+        } catch (error) {
+          log(`Error updating username: ${error instanceof Error ? error.message : String(error)}`, 'room');
+          // نستمر في السير حتى لو فشل تحديث الاسم
+        }
+      }
 
       // التحقق مما إذا كانت الغرفة نشطة
       if (!room.isActive) {

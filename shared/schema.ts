@@ -148,6 +148,7 @@ export type ServerMessage =
   | { type: "player_left"; payload: { playerId: number; gameId: string } }
   | { type: "answer_result"; payload: { correct: boolean; playerId: number; points: number; gameId: string } }
   | { type: "game_started"; payload: GameSession }
+  | { type: "contest_countdown"; payload: { roomId: number; countdown: number } }
   | { type: "stage_completed"; payload: { gameId: string; nextStage: GameStage | null } }
   | { type: "game_completed"; payload: { gameId: string; leaderboard: Player[] } }
   
@@ -203,7 +204,7 @@ export type ClientMessage =
   
   // رسائل نظام الغرف
   | { type: "create_room"; payload: { name: string; teacherId: number; maxPlayers?: number; contestMode?: string; endTime?: Date } }
-  | { type: "join_room"; payload: { roomCode: string; userId: number } }
+  | { type: "join_room"; payload: { roomCode: string; userId: number; fullName?: string } }
   | { type: "join_room_by_id"; payload: { roomId: number; userId: number } }
   | { type: "leave_room"; payload: { roomId: number; userId: number } }
   | { type: "get_room_list"; payload: { teacherId?: number } } // إذا تم تحديد teacherId سيتم الحصول على غرف المعلم فقط

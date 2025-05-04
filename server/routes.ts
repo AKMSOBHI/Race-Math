@@ -431,7 +431,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               
               log(`Room found: ${room.name} (ID: ${room.id}, Code: ${room.code}) - attempting to join...`, 'room');
-              const result = await roomManager.joinRoom(room.id, data.payload.userId);
+              // الحصول على الاسم الكامل من طلب الانضمام
+              const fullName = data.payload.fullName || '';
+              const result = await roomManager.joinRoom(room.id, data.payload.userId, fullName);
               
               if (result.success) {
                 // إرسال إشعار للطالب المنضم
