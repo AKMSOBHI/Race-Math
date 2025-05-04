@@ -513,11 +513,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // إرسال أي إشعارات معلقة للمعلمة
               sendPendingNotifications(userId, ws);
               
+              log(`Teacher ${data.payload.teacherId} is starting contest for room ${data.payload.roomId} with difficulty ${data.payload.difficulty || 'easy'}`, 'contest');
+              
               const result = await roomManager.startContest(
                 data.payload.roomId,
                 data.payload.teacherId,
                 data.payload.difficulty || 'easy'
               );
+              
+              log(`Start contest result: ${JSON.stringify(result)}`, 'contest');
               
               if (result.success && result.gameSession) {
                 // نبدأ العد التنازلي قبل بدء المسابقة
@@ -708,12 +712,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // إرسال أي إشعارات معلقة للمعلمة
               sendPendingNotifications(userId, ws);
               
+              log(`Teacher ${data.payload.teacherId} is approving student ${data.payload.studentId} for room ${data.payload.roomId}, approve=${data.payload.approve}`, 'approval');
+              
               const result = await roomManager.approveStudent(
                 data.payload.roomId,
                 data.payload.teacherId,
                 data.payload.studentId,
                 data.payload.approve
               );
+              
+              log(`Approval result: ${JSON.stringify(result)}`, 'approval');
               
               if (result.success) {
                 // إرسال تحديث للمعلم بأن الطالب تمت الموافقة عليه
