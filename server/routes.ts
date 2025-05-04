@@ -503,9 +503,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 // نبدأ العد التنازلي قبل بدء المسابقة
                 log(`Starting countdown for room ${data.payload.roomId}...`, 'contest');
                 
-                // الحصول على جميع الطلاب في الغرفة
-                const students = result.gameSession.players.map(player => player.id);
-                log(`Found ${students.length} students in room`, 'contest');
+                // الحصول على جميع الطلاب المعتمدين في الغرفة
+                // الحصول على المشاركين المعتمدين من قاعدة البيانات
+                const roomParticipantsResult = await db.select().from(roomParticipants)
+                  .where(and(
+                    eq(roomParticipants.roomId, data.payload.roomId),
+                    eq(roomParticipants.isApproved, true)
+                  ));
+                
+                const students = roomParticipantsResult.map(participant => participant.userId);
+                log(`Found ${students.length} approved students in room`, 'contest');
                 
                 // نرسل إشعار للمعلمة بأن المسابقة ستبدأ بعد عد تنازلي
                 sendToClient(ws, {
