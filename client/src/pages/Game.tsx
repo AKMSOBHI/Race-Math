@@ -561,20 +561,38 @@ export default function Game() {
           <Timer 
             duration={30} 
             onTimeEnd={() => {
-              console.log('Timer ended, moving to next question instead of showing game over');
-              // بدلاً من إظهار نافذة انتهاء اللعبة، ننتقل إلى السؤال التالي
+              console.log('➕ أحداث انتهاء الوقت: الانتقال للسؤال التالي');
+              // الطريقة الجديدة المبسطة
               if (currentGame && currentGame.id) {
-                // إرسال إشارة للانتقال إلى السؤال التالي
-                const { nextQuestion } = useGameStore.getState();
-                nextQuestion(currentGame.id);
+                // وضع علم انتهاء الوقت وإعداد حالة التحميل لتجنب الشاشة السوداء
+                setIsLoading(true);
                 
-                // تعيين التايمر كمنتهي مؤقتاً لتجنب الإجابة
-                setIsTimeUp(true);
+                // إغلاق جميع نوافذ التبليغ
+                setShowCorrectModal(false);
+                setShowIncorrectModal(false);
+                setShowStageCompleteModal(false);
+                setShowGameOverModal(false);
                 
-                // إعادة تعيين التايمر بعد فترة قصيرة للسماح بالإجابة على السؤال التالي
-                setTimeout(() => {
-                  setIsTimeUp(false);
-                }, 1000);
+                try {
+                  // الحصول على معرف اللعبة
+                  const gameId = currentGame.id;
+                  
+                  // محاولة الانتقال للسؤال التالي
+                  const store = useGameStore.getState();
+                  store.nextQuestion(gameId);
+                  
+                  // تأجيل إعادة ضبط حالة اللعبة
+                  setTimeout(() => {
+                    // إعادة ضبط الحالة
+                    const updatedStore = useGameStore.getState();
+                    updatedStore.setIsLoading(false);
+                    updatedStore.setIsTimeUp(false);
+                  }, 1000);
+                } catch (error) {
+                  console.error('⚠️ خطأ في الانتقال للسؤال التالي:', error);               
+                  // إعادة ضبط الحالة في حالة الخطأ
+                  setIsLoading(false);
+                }
               } else {
                 console.error('لا توجد لعبة حالية للانتقال إلى السؤال التالي');
               }
