@@ -532,7 +532,7 @@ export default function Game() {
                   boxShadow: '0 0 10px var(--space-bright)',
                   fontFamily: 'Orbitron, sans-serif'
                 }}>
-                المرحلة :{stageTranslation[currentGame.stage]}
+                : المرحلة {stageTranslation[currentGame.stage]}
               </div>
               <div className="game-progress p-2 rounded-lg font-bold text-xs md:text-sm flex items-center space-x-1"
                 style={{ 
@@ -553,7 +553,7 @@ export default function Game() {
                 boxShadow: '0 0 10px var(--space-bright)',
                 fontFamily: 'Orbitron, sans-serif'
               }}>
-              النقاط :{convertToArabicNumerals(currentPlayer?.score)}
+              : النقاط {convertToArabicNumerals(currentPlayer?.score)}
             </div>
           </div>
           
@@ -609,7 +609,7 @@ export default function Game() {
           {/* Question Section */}
           <div className="w-full p-3 rounded-xl text-center">
             <h3 className="text-md md:text-lg font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              أجب على السؤال التالي :
+              : أجب على السؤال التالي
             </h3>
             <div 
               className="text-xl md:text-3xl font-bold p-4 rounded-xl flex justify-center items-center"
