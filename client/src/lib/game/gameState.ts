@@ -231,21 +231,68 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   submitAnswer: (gameId, answer) => {
-    const { currentUser } = get();
+    console.log(`محاولة إرسال الإجابة ${answer} للعبة ${gameId}`);
     
-    if (!currentUser) {
-      console.error("No current user");
+    const state = get();
+    console.log('حالة المستخدم:', !!state.currentUser);
+    console.log('حالة اللعبة:', state.currentGame?.status);
+    
+    if (!state.currentUser) {
+      console.error("لا يوجد مستخدم حالي");
       return;
     }
     
+    // فحص السؤال الحالي
+    if (!state.currentQuestion) {
+      console.error("لا يوجد سؤال حالي");
+      return;
+    }
+
+    console.log('معرف اللاعب:', state.currentUser.id);
+    console.log('الإجابة المرسلة:', answer);
+    console.log('الإجابة الصحيحة:', state.currentQuestion.answer);
+    
+    // تفعيل الصوت قبل إرسال الإجابة
+    if (state.isSoundEnabled) {
+      try {
+        const isCorrect = answer === state.currentQuestion.answer;
+        import('../soundService').then(({ default: soundService }) => {
+          soundService.play(isCorrect ? 'success' : 'error');
+        }).catch(err => {
+          console.error('خطأ في تشغيل الصوت:', err);
+        });
+      } catch (e) {
+        console.error('خطأ في محاولة تشغيل الصوت:', e);
+      }
+    }
+    
+    // إرسال الإجابة إلى الخادم
     sendMessage({
       type: 'submit_answer',
       payload: {
         gameId,
-        playerId: currentUser.id,
+        playerId: state.currentUser.id,
         answer
       }
     });
+    
+    console.log('تم إرسال رسالة الإجابة بنجاح');
+    
+    // تطبيق محلي لتجربة أفضل - سيتم تحديثه لاحقًا بواسطة رسالة WebSocket
+    const correct = answer === state.currentQuestion.answer;
+    set({
+      showCorrectModal: correct,
+      showIncorrectModal: !correct
+    });
+    
+    // إذا كانت الإجابة صحيحة، نخفي النافذة بعد فترة قصيرة
+    if (correct) {
+      setTimeout(() => {
+        set({
+          showCorrectModal: false
+        });
+      }, 2000);
+    }
   },
   
   nextQuestion: (gameId) => {

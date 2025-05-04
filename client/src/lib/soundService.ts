@@ -292,4 +292,8 @@ class SoundService {
 }
 
 // إنشاء نسخة واحدة من خدمة الصوت
-export const soundService = new SoundService();
+const soundService = new SoundService();
+
+// تصدير خدمة الصوت كافتراضية لتسهيل الاستيراد
+export default soundService;
+export { soundService }; // للحفاظ على التوافق مع الكود الحالي
