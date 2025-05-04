@@ -56,7 +56,7 @@ const IncorrectAnswerModal: FC = () => {
           </div>
         </div>
         <h2 className="text-2xl font-bold mb-2 text-red-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          إجابة خاطئة!
+          إجابة خاطئة !
         </h2>
         <p className="text-lg mb-4">
           محاولات متبقية :<span className="font-bold text-red-300">{attemptsLeft}</span>

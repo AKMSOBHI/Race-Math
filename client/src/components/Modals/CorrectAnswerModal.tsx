@@ -56,10 +56,10 @@ const CorrectAnswerModal: FC = () => {
           </div>
         </div>
         <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          إجابة صحيحة!
+          إجابة صحيحة !
         </h2>
         <p className="text-lg mb-4">
-          تم إضافة <span className="font-bold text-green-300">{points}</span> نقطة إلى مجموعك!
+          تم إضافة <span className="font-bold text-green-300">{points}</span> نقطة إلى مجموعك !
         </p>
         <button 
           className="font-bold py-3 px-6 rounded-lg transition w-full"

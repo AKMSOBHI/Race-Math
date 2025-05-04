@@ -205,8 +205,8 @@ const StageCompleteModal: FC = () => {
               boxShadow: '0 0 15px rgba(0, 200, 83, 0.4)'
             }}
           >
-            <h3 className="font-bold mb-2 text-green-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>تهانينا!</h3>
-            <p className="text-2xl space-title text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>لقد أكملت جميع المهام بنجاح!</p>
+            <h3 className="font-bold mb-2 text-green-300" style={{ fontFamily: 'Orbitron, sans-serif' }}>تهانينا !</h3>
+            <p className="text-2xl space-title text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>لقد أكملت جميع المهام بنجاح !</p>
           </div>
         )}
         
