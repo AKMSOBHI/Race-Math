@@ -109,9 +109,20 @@ export default function JoinRoom() {
           description: 'مرحباً بك! ستبدأ المسابقة قريباً.',
         });
         
-        // الانتقال إلى صفحة الانتظار
+        // الانتقال مباشرة إلى اللعبة (تم إلغاء الانتظار)
         setTimeout(() => {
-          navigate(`/waiting-room/${message.payload.roomId}`);
+          const currentActiveGame = localStorage.getItem('currentGameId');
+          if (currentActiveGame) {
+            navigate(`/game?id=${currentActiveGame}`);
+          } else {
+            // إذا لم يكن هناك لعبة نشطة، ربما تعيد توجيه المستخدم إلى الصفحة الرئيسية
+            navigate('/');
+            toast({
+              title: 'لم يتم العثور على مسابقة نشطة',
+              description: 'يرجى التحقق مع المعلمة لبدء مسابقة جديدة.',
+              variant: 'destructive'
+            });
+          }
         }, 500);
       }
       else if (message.type === "error") {
