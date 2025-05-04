@@ -23,37 +23,50 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
     setLastPlayedTime(duration);
   }, [currentGame?.currentQuestionIndex, currentGame?.stage, duration]);
   
+  // استيراد المزيد من الوظائف من gameState
+  const { nextQuestion, setIsTimeUp, isTimeUp } = useGameStore();
+
   // Timer countdown
   useEffect(() => {
     if (timeLeft <= 0) {
       console.log('Timer reached zero, hasNotified:', hasNotified);
       
-      if (!hasNotified && onTimeEnd) {
-        console.log('Notifying time end and playing game over sound');
+      if (!hasNotified && currentGame && currentGame.status === 'active') {
+        console.log('Notifying time end and taking action');
         setHasNotified(true); // تعيين التنبيه أولاً لمنع التكرار
         
         try {
+          // وضع علم انتهاء الوقت
+          setIsTimeUp(true);
+          
           // تشغيل صوت انتهاء الوقت
           if (isSoundEnabled) {
             console.log('تشغيل صوت انتهاء الوقت');
-            soundService.play('gameOver');
+            soundService.play('countdown');
+            // استخدام صوت التنبيه بدلاً من صوت نهاية اللعبة
           }
           
-          // إرسال إجابة خاطئة تلقائياً عند انتهاء الوقت
-          if (currentGame && currentUser && currentGame.status === 'active') {
-            console.log('إرسال إجابة خاطئة تلقائياً');
-            submitAnswer(currentGame.id, -1); // -1 is invalid answer
+          // إظهار رسالة انتهاء الوقت
+          toast({
+            title: "انتهى الوقت!",
+            description: "انتقال للسؤال التالي...",
+            variant: "destructive",
+          });
+          
+          // إعطاء وقت للتوست للظهور
+          setTimeout(() => {
+            // الانتقال للسؤال التالي تلقائياً
+            console.log('الانتقال للسؤال التالي بعد انتهاء الوقت');
+            if (currentGame) {
+              nextQuestion(currentGame.id);
+            }
             
-            toast({
-              title: "انتهى الوقت!",
-              description: "انتهى وقت الإجابة على السؤال",
-              variant: "destructive",
-            });
-          }
-          
-          // استدعاء دالة انتهاء الوقت
-          console.log('Calling onTimeEnd callback');
-          onTimeEnd();
+            // استدعاء دالة انتهاء الوقت إذا كانت موجودة
+            if (onTimeEnd) {
+              console.log('Calling onTimeEnd callback');
+              onTimeEnd();
+            }
+          }, 1500);
           
         } catch (error) {
           console.error('Error in timer end handling:', error);

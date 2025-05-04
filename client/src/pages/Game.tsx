@@ -276,10 +276,9 @@ export default function Game() {
                     setOctopusMood(correct ? 'happy' : 'sad');
                     
                     // إظهار النافذة المناسبة محليًا
-                    set({
-                      showCorrectModal: correct,
-                      showIncorrectModal: !correct
-                    });
+                    const { setShowCorrectModal, setShowIncorrectModal } = useGameStore.getState();
+                    setShowCorrectModal(correct);
+                    setShowIncorrectModal(!correct);
                   }
                 } else {
                   // اللعبة غير متوفرة بعد المحاولات
@@ -308,10 +307,9 @@ export default function Game() {
       setOctopusMood(correct ? 'happy' : 'sad');
       
       // إظهار النافذة المناسبة محليًا لإعطاء تجربة أسرع
-      set({
-        showCorrectModal: correct,
-        showIncorrectModal: !correct
-      });
+      const { setShowCorrectModal, setShowIncorrectModal } = useGameStore.getState();
+      setShowCorrectModal(correct);
+      setShowIncorrectModal(!correct);
     }
     
     console.log('---------- نهاية معالجة الإجابة ----------\n');

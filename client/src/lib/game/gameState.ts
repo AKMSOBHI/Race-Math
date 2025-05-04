@@ -318,10 +318,24 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   nextQuestion: (gameId) => {
+    console.log('إرسال طلب الانتقال للسؤال التالي، gameId:', gameId);
+    
+    // إظهار رسالة تحميل مؤقتة أثناء الانتقال
+    set({ isLoading: true });
+    
+    // إرسال الطلب للخادم
     sendMessage({
       type: 'next_question',
       payload: { gameId }
     });
+    
+    // ننتظر فترة قصيرة ثم نعيد تعيين isLoading إلى false في حالة عدم استلام رد
+    setTimeout(() => {
+      const { isLoading } = get();
+      if (isLoading) {
+        set({ isLoading: false });
+      }
+    }, 5000);
   },
   
   nextStage: (gameId) => {
