@@ -434,14 +434,23 @@ export const useGameStore = create<GameState>((set, get) => ({
     console.log('تمت إعادة ضبط حالة اللعبة بنجاح!');
   },
   
-  // WebSocket message handler
+  // معالج رسائل WebSocket
   handleServerMessage: (message) => {
-    const { currentUser } = get();
+    // هنا نبدأ معالجة الرسائل الواردة من WebSocket
+    console.log('استلام رسالة من الخادم:', message.type);
     
-    // التحقق من وجود اسم كامل محفوظ للاستخدام في لوحة النتائج
-    const savedFullName = localStorage.getItem('playerFullName');
-    
-    switch (message.type) {
+    try {
+      // التأكد من استجابة الواجهة
+      document.body.style.background = 'rgba(25, 25, 60, 1)';
+      
+      // الحصول على المستخدم الحالي
+      const { currentUser } = get();
+      
+      // التحقق من وجود اسم كامل محفوظ للاستخدام في لوحة النتائج
+      const savedFullName = localStorage.getItem('playerFullName');
+      
+      // معالجة الرسالة حسب نوعها
+      switch (message.type) {
       case 'game_state_update':
         // تحديث حالة اللعبة وإعادة ضبط حالة المؤقت عند الحاجة
         console.log('Recibido mensaje game_state_update:', message.payload);
@@ -609,36 +618,65 @@ export const useGameStore = create<GameState>((set, get) => ({
       case 'stage_completed':
         console.log('تم استلام رسالة استكمال المرحلة:', message.payload);
         
-        // إعادة ضبط حالة اللعبة لمنع ظهور الشاشة السوداء
-        set({ 
-          showStageCompleteModal: true,
-          isTimeUp: false,  // إعادة ضبط مؤقت الوقت
-          isLoading: false, // التأكد من إخفاء مؤشر التحميل
-          showCorrectModal: false,
-          showIncorrectModal: false
-        });
+        // التأكد من استجابة الواجهة مرة أخرى
+        document.body.style.background = 'rgba(25, 25, 60, 1)';
         
-        // إضافة صوت إكمال المرحلة
-        import('../soundService').then((module) => {
-          if (get().isSoundEnabled) {
-            console.log('تشغيل صوت إكمال المرحلة');
-            module.default.play('levelComplete');
-          }
-        });
-        
-        // إعادة ضبط الدولة بعد فترة للتأكد من عدم ظهور الشاشة السوداء
-        setTimeout(() => {
-          const state = get();
-          // التحقق من أن المرحلة ما زالت مكتملة (لم يتم تغييرها من مكان آخر)
-          if (state.showStageCompleteModal) {
-            // إذا كانت هناك مرحلة تالية، نقوم بالتحضير لها
-            const nextStage = message.payload.nextStage;
-            if (nextStage) {
-              console.log('التحضير للمرحلة التالية:', nextStage);
-              // لا نقوم بأي إجراء هنا، فقط نتأكد من أن الواجهة تستجيب
+        try {
+          // إعادة ضبط جميع الحالات على الفور لمنع ظهور الشاشة السوداء
+          set({ 
+            showStageCompleteModal: true,
+            isTimeUp: false,          // إعادة ضبط مؤقت الوقت
+            isLoading: false,         // التأكد من إخفاء مؤشر التحميل
+            showCorrectModal: false,  // إخفاء نوافذ التغذية الراجعة
+            showIncorrectModal: false,
+            showGameOverModal: false   // التأكد من أن نافذة نهاية اللعبة غير معروضة
+          });
+          
+          // إضافة صوت إكمال المرحلة
+          import('../soundService').then((module) => {
+            if (get().isSoundEnabled) {
+              console.log('تشغيل صوت إكمال المرحلة');
+              module.default.play('levelComplete');
             }
-          }
-        }, 1000);
+          }).catch(error => {
+            console.error('خطأ في تشغيل صوت إكمال المرحلة:', error);
+          });
+          
+          // إعادة ضبط الدولة بعد فترة للتأكد من عدم ظهور الشاشة السوداء
+          setTimeout(() => {
+            try {
+              const state = get();
+              // التحقق من أن المرحلة ما زالت مكتملة (لم يتم تغييرها من مكان آخر)
+              if (state.showStageCompleteModal) {
+                // إذا كانت هناك مرحلة تالية، نقوم بالتحضير لها
+                const nextStage = message.payload.nextStage;
+                if (nextStage) {
+                  console.log('التحضير للمرحلة التالية:', nextStage);
+                  
+                  // مؤقت أمان إضافي للتأكد من عدم تجمد الواجهة
+                  setTimeout(() => {
+                    // التأكد مرة أخرى من استجابة الواجهة
+                    document.body.style.background = 'rgba(25, 25, 60, 1)';
+                    
+                    // في حال استمرار عرض مودال المرحلة المكتملة لفترة طويلة
+                    if (useGameStore.getState().showStageCompleteModal) {
+                      console.log('مؤقت أمان - التأكد من عدم تجمد الواجهة');
+                      
+                      // في حالة التجمد، نقوم بإعادة تحميل الصفحة كملاذ أخير
+                      // window.location.reload();
+                    }
+                  }, 5000); // بعد 5 ثواني من استلام رسالة المرحلة المكتملة
+                }
+              }
+            } catch (error) {
+              console.error('خطأ في المؤقت الزمني لاستكمال المرحلة:', error);
+            }
+          }, 1000);
+        } catch (stageCompletedError) {
+          console.error('خطأ في معالجة رسالة استكمال المرحلة:', stageCompletedError);
+          // إعادة تعيين حالة التحميل للتأكد
+          set({ isLoading: false });
+        }
         break;
         
       case 'error':
@@ -646,6 +684,19 @@ export const useGameStore = create<GameState>((set, get) => ({
         // Reset loading state when error occurs
         set({ isLoading: false });
         break;
+      }
+    } catch (error) {
+      console.error('خطأ أثناء معالجة رسالة WebSocket:', error);
+      // في حالة حدوث خطأ، نحاول إلغاء حالة التحميل على الأقل
+      set({ isLoading: false });
+      
+      // في حالات الأخطاء الخطيرة التي قد تسبب في تجمد اللعبة، نقوم بإعادة تحميل الصفحة بعد فترة
+      setTimeout(() => {
+        if (get().isLoading) { // إذا كانت حالة التحميل ما زالت نشطة بعد ثانيتين
+          console.log('إعادة تحميل الصفحة بسبب حالة خطأ غير متوقعة');
+          window.location.reload();
+        }
+      }, 2000);
     }
-  }
+  },
 }));

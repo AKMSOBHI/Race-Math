@@ -36,11 +36,21 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
         setHasNotified(true); // تعيين التنبيه أولاً لمنع التكرار
         
         try {
+          console.log('انتهى وقت السؤال - بدء منطق الانتقال للسؤال التالي');
+
+          // التأكد من استجابة الواجهة
+          document.body.style.background = 'rgba(25, 25, 60, 1)';
+          
           // وضع علم انتهاء الوقت وعرض مؤشر التحميل
           setIsTimeUp(true);
           
           // الحصول على الحالة الحالية وتعيين حالة التحميل
           const gameState = useGameStore.getState();
+          
+          // إخفاء جميع النوافذ المنبثقة قبل الانتقال
+          gameState.setShowCorrectModal(false);
+          gameState.setShowIncorrectModal(false);
+          gameState.setShowStageCompleteModal(false);
           gameState.setIsLoading(true); // لمنع ظهور الشاشة السوداء
           
           // تشغيل صوت انتهاء الوقت
@@ -60,25 +70,61 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
           // الانتقال للسؤال التالي فوراً لتجنب الشاشة السوداء
           if (currentGame) {
             console.log('الانتقال الفوري للسؤال التالي بعد انتهاء الوقت');
-            nextQuestion(currentGame.id);
             
-            // تأخير بسيط للسماح بعملية الانتقال
+            // التأكد من استجابة الواجهة
+            const gameId = currentGame.id;
+            
+            // بدلاً من استدعاء nextQuestion مباشرة، نستخدم تأخيرًا زمنيًا قصيرًا
             setTimeout(() => {
-              // إعادة تعيين حالة التحميل إلى false في حال لم يتم ذلك بالفعل
-              const currentState = useGameStore.getState();
-              if (currentState.isLoading) {
-                currentState.setIsLoading(false);
+              try {
+                // نحصل على الحالة المحدثة ونستدعي الدالة بشكل منفصل
+                const { nextQuestion: nextQ } = useGameStore.getState();
+                console.log('إرسال طلب الانتقال للسؤال التالي:', gameId);
+                nextQ(gameId);
+                
+                // مجموعة من المؤقتات للتأكد من الاستجابة
+                setTimeout(() => {
+                  try {
+                    // إعادة تعيين حالة التحميل إلى false في حال لم يتم ذلك بالفعل
+                    const currentState = useGameStore.getState();
+                    if (currentState.isLoading) {
+                      console.log('إعادة تعيين حالة التحميل إلى false بعد الانتقال');
+                      currentState.setIsLoading(false);
+                    }
+                    
+                    // إعادة تعيين حالة انتهاء الوقت بعد الانتقال للسؤال التالي
+                    currentState.setIsTimeUp(false);
+                    
+                    // استدعاء دالة انتهاء الوقت إذا كانت موجودة
+                    if (onTimeEnd) {
+                      console.log('Calling onTimeEnd callback');
+                      onTimeEnd();
+                    }
+                    
+                    // مؤقت أمان إضافي للتأكد من إعادة تعيين الحالة
+                    setTimeout(() => {
+                      try {
+                        const finalState = useGameStore.getState();
+                        if (finalState.isLoading) {
+                          console.log('مؤقت الأمان النهائي - إعادة تعيين حالة التحميل');
+                          finalState.setIsLoading(false);
+                          window.location.reload(); // إعادة تحميل الصفحة كإجراء أخير
+                        }
+                      } catch (e) {
+                        console.error('خطأ في مؤقت الأمان النهائي:', e);
+                      }
+                    }, 2000); // مؤقت إضافي بعد سنتين
+                  } catch (timeoutError) {
+                    console.error('خطأ في مؤقت الاستجابة:', timeoutError);
+                  }
+                }, 800);
+              } catch (error) {
+                console.error('خطأ في استدعاء nextQuestion:', error);
+                // إعادة تعيين حالة التحميل في حالة حدوث خطأ
+                const errorState = useGameStore.getState();
+                errorState.setIsLoading(false);
               }
-              
-              // إعادة تعيين حالة انتهاء الوقت بعد الانتقال للسؤال التالي
-              currentState.setIsTimeUp(false);
-              
-              // استدعاء دالة انتهاء الوقت إذا كانت موجودة
-              if (onTimeEnd) {
-                console.log('Calling onTimeEnd callback');
-                onTimeEnd();
-              }
-            }, 800);
+            }, 100);
           }
         } catch (error) {
           console.error('Error in timer end handling:', error);
