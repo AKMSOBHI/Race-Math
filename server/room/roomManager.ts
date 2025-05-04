@@ -92,6 +92,19 @@ export class RoomManager {
   }
 
   /**
+   * الحصول على غرفة بواسطة المعرف
+   */
+  async getRoomById(id: number): Promise<Room | null> {
+    try {
+      const [room] = await db.select().from(rooms).where(eq(rooms.id, id));
+      return room || null;
+    } catch (error) {
+      console.error('Error getting room by ID:', error);
+      return null;
+    }
+  }
+
+  /**
    * الحصول على غرفة باستخدام الرمز
    */
   async getRoomByCode(code: string): Promise<Room | null> {

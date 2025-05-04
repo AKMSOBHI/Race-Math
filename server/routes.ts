@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { GameManager } from "./game/gameManager";
 import { RoomManager } from "./room/roomManager";
 import { z } from "zod";
-import { insertUserSchema, type ServerMessage, type ClientMessage, roomParticipants, users } from "@shared/schema";
+import { insertUserSchema, type ServerMessage, type ClientMessage, roomParticipants, users, type Room, type User, type GameSession, type Player } from "@shared/schema";
 import { log } from "./vite";
 import { db } from "./db";
 import { and, eq } from "drizzle-orm";
@@ -27,6 +27,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Store pending notifications for users not currently connected
   const pendingNotifications = new Map<number, ServerMessage[]>();
+  
+  // Store active contest state for rooms
+  const activeContests = new Map<number, {
+    countdownStarted: boolean;
+    approvedStudents: number[];
+    secondsRemaining: number | null;
+    gameSession: GameSession;
+  }>();
   
   // Registro de todas las conexiones activas para depuración
   setInterval(() => {
@@ -143,6 +151,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let userId: number | null = null;
     
     // سنحمل الإشعارات غير المستلمة عندما يحدد المستخدم هويته
+    
+    // Check if this is a student reconnection during an active contest
+    const checkActiveContests = (studentId: number) => {
+      if (!studentId) return;
+      
+      // Check each active contest to see if this student is participating
+      activeContests.forEach((contestState, roomId) => {
+        if (contestState.approvedStudents.includes(studentId)) {
+          log(`Student ${studentId} reconnected during active contest in room ${roomId}`, 'contest');
+          
+          // If countdown is still in progress, send the current countdown
+          if (contestState.secondsRemaining !== null && contestState.secondsRemaining > 0) {
+            log(`Sending current countdown (${contestState.secondsRemaining}s) to reconnected student ${studentId}`, 'contest');
+            sendToClient(ws, {
+              type: 'contest_countdown',
+              payload: {
+                roomId: roomId,
+                countdown: contestState.secondsRemaining
+              }
+            });
+          } 
+          // If countdown is complete but game session exists, send game_started
+          else if (contestState.gameSession) {
+            log(`Sending game_started to reconnected student ${studentId}`, 'contest');
+            sendToClient(ws, {
+              type: 'game_started',
+              payload: contestState.gameSession
+            });
+          }
+        }
+      });
+    };
     
     ws.on('message', async (message) => {
       try {
@@ -430,6 +470,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId = data.payload.userId;
               connections.set(userId, ws);
               
+              // Check if this student is part of an active contest
+              checkActiveContests(userId);
+              
+              // Check if there's an active contest in any room
+              if (userId) { // Only proceed if userId is not null
+                let isInActiveContest = false;
+                activeContests.forEach((contestState, roomId) => {
+                  if (contestState.approvedStudents.includes(userId as number)) {
+                    isInActiveContest = true;
+                    log(`Student ${userId} is reconnecting during active contest in room ${roomId}`, 'room');
+                    
+                    // Retrieve room details
+                    roomManager.getRoomById(roomId).then((room: Room | null) => {
+                      if (room) {
+                        // Send student directly to room_joined, bypassing the normal flow
+                        sendToClient(ws, {
+                          type: 'room_joined',
+                          payload: {
+                            roomId: room.id,
+                            userId: userId as number,
+                            username: room.name
+                          }
+                        });
+                        
+                        log(`Sent room_joined to reconnecting student ${userId} for room ${roomId}`, 'room');
+                      }
+                    }).catch((err: Error) => {
+                      log(`Error getting room details for rejoining: ${err.message}`, 'ws-error');
+                    });
+                  }
+                });
+              }
+              
               log(`Join room request received with code: ${data.payload.roomCode} by user: ${data.payload.userId}`, 'room');
               
               // التحقق من صحة رمز الغرفة (تحويله للأحرف الكبيرة وإزالة المسافات)
@@ -579,6 +652,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const countdownSeconds = 20;
                 let secondsRemaining = countdownSeconds;
                 
+                // Store contest state to help students who reconnect
+                activeContests.set(data.payload.roomId, {
+                  countdownStarted: true,
+                  approvedStudents: students,
+                  secondsRemaining: countdownSeconds,
+                  gameSession: result.gameSession
+                });
+                
                 const countdownInterval = setInterval(() => {
                   // إرسال تحديث العد التنازلي لجميع اللاعبين
                   students.forEach(studentId => {
@@ -605,10 +686,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   
                   secondsRemaining--;
                   
+                  // Update the remaining time in active contests map
+                  const contest = activeContests.get(data.payload.roomId);
+                  if (contest) {
+                    contest.secondsRemaining = secondsRemaining;
+                    activeContests.set(data.payload.roomId, contest);
+                  }
+                  
                   // إذا انتهى العد التنازلي، نوقف المؤقت ونرسل رسالة بدء اللعبة
                   if (secondsRemaining < 0) {
                     clearInterval(countdownInterval);
                     log(`Countdown complete, starting game for room ${data.payload.roomId}`, 'contest');
+                    
+                    // Update active contests map to indicate countdown is complete
+                    const contest = activeContests.get(data.payload.roomId);
+                    if (contest) {
+                      contest.secondsRemaining = null;
+                      activeContests.set(data.payload.roomId, contest);
+                      log(`Updated active contest state for room ${data.payload.roomId} - countdown complete`, 'contest');
+                    }
                     
                     // إرسال رسالة بدء اللعبة لجميع الطلاب
                     students.forEach(studentId => {
