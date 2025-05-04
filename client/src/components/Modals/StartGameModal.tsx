@@ -115,12 +115,29 @@ const StartGameModal: FC = () => {
     setIsProcessing(true);
     
     try {
-      // Update name if changed
+      // Actualizar el nombre del jugador antes de crear el juego
       if (playerName !== currentUser.username) {
+        // Actualizamos primero el estado local para uso inmediato
         setCurrentUser({
           ...currentUser,
           username: playerName
         });
+        
+        // También intentamos actualizar el nombre en el servidor
+        try {
+          fetch('/api/users/update-name', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              userId: currentUser.id,
+              username: playerName 
+            })
+          });
+          console.log('Solicitud de actualización de nombre enviada al servidor');
+        } catch (err) {
+          console.error('Error al actualizar el nombre en el servidor:', err);
+          // Continuamos de todos modos ya que actualizamos localmente
+        }
       }
       
       // Create new game
