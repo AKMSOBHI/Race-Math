@@ -5,6 +5,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserName(userId: number, username: string): Promise<User | undefined>;
   updateUserScore(userId: number, score: number): Promise<User | undefined>;
   
   // Game session methods
@@ -50,6 +51,19 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUserName(userId: number, username: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = {
+      ...user,
+      username: username
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
   }
 
   async updateUserScore(userId: number, score: number): Promise<User | undefined> {
@@ -209,6 +223,19 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
+  async updateUserName(userId: number, username: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    const result = await db
+      .update(users)
+      .set({ username: username })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+
   async updateUserScore(userId: number, score: number): Promise<User | undefined> {
     const user = await this.getUser(userId);
     if (!user) return undefined;
