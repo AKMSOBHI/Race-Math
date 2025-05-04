@@ -24,7 +24,7 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   }, [currentGame?.currentQuestionIndex, currentGame?.stage, duration]);
   
   // استيراد المزيد من الوظائف من gameState
-  const { nextQuestion, setIsTimeUp, isTimeUp, setIsLoading } = useGameStore();
+  const { nextQuestion, setIsTimeUp, isTimeUp } = useGameStore();
 
   // Timer countdown
   useEffect(() => {
@@ -38,7 +38,10 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
         try {
           // وضع علم انتهاء الوقت وعرض مؤشر التحميل
           setIsTimeUp(true);
-          setIsLoading(true); // لمنع ظهور الشاشة السوداء
+          
+          // الحصول على الحالة الحالية وتعيين حالة التحميل
+          const gameState = useGameStore.getState();
+          gameState.setIsLoading(true); // لمنع ظهور الشاشة السوداء
           
           // تشغيل صوت انتهاء الوقت
           if (isSoundEnabled) {
@@ -82,7 +85,8 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
           
           // في حالة حدوث خطأ، نحاول إلغاء حالة التحميل بعد فترة
           setTimeout(() => {
-            setIsLoading(false);
+            const errorState = useGameStore.getState();
+            errorState.setIsLoading(false);
             setIsTimeUp(false);
           }, 2000);
         }

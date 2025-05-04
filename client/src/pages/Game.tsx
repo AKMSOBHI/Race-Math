@@ -637,7 +637,8 @@ export default function Game() {
               className="next-question-button bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center gap-2"
               style={{
                 border: '2px solid var(--space-bright)',
-                boxShadow: '0 0 10px var(--space-bright)'
+                boxShadow: '0 0 10px var(--space-bright)',
+                direction: 'rtl' // للترتيب الصحيح في العربية
               }}
               onClick={() => {
                 console.log('تم النقر على زر التالي');
