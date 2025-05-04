@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { GameManager } from "./game/gameManager";
 import { RoomManager } from "./room/roomManager";
 import { z } from "zod";
-import { insertUserSchema, type ServerMessage, type ClientMessage, roomParticipants, users, type Room, type User, type GameSession, type Player } from "@shared/schema";
+import { insertUserSchema, type ServerMessage, type ClientMessage, roomParticipants, users, type Room, type User, type GameSession, type Player, gameSessions } from "@shared/schema";
 import { log } from "./vite";
 import { db } from "./db";
 import { and, eq } from "drizzle-orm";
@@ -796,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   }
                 });
                 
-                const countdownInterval = setInterval(() => {
+                const countdownInterval = setInterval(async () => {
                   // تناقص العداد أولاً
                   secondsRemaining--;
                   
@@ -846,6 +846,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       contest.secondsRemaining = null;
                       activeContests.set(data.payload.roomId, contest);
                       log(`Updated active contest state for room ${data.payload.roomId} - countdown complete`, 'contest');
+                    }
+                    
+                    // التأكد من حفظ معلومات جلسة اللعبة في قاعدة البيانات
+                    if (result.gameSession) {
+                      try {
+                        // تحديث حالة اللعبة في قاعدة البيانات إلى 'active'
+                        const updateResult = await storage.updateGameSession(result.gameSession.id, { status: 'active' });
+                        
+                        if (updateResult) {
+                          log(`Game session ${result.gameSession.id} status updated to 'active' in database`, 'contest');
+                        } else {
+                          log(`Failed to update game session status in database`, 'contest');
+                        }
+                      } catch (dbError) {
+                        log(`Error saving game session to database: ${dbError instanceof Error ? dbError.message : String(dbError)}`, 'contest');
+                      }
                     }
                     
                     // إرسال رسالة بدء اللعبة لجميع الطلاب المتصلين

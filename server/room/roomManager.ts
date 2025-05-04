@@ -229,25 +229,36 @@ export class RoomManager {
         log(`User ${userId} (${user.username}) already in room ${roomId}`, 'room');
       }
 
-      // التحقق من عدد اللاعبين الحاليين في الغرفة
+      // البحث عن جلسات لعب نشطة في الغرفة
+      log(`Looking for active game sessions in room ${roomId}`, 'room');
       const activeSessions = await db.select().from(gameSessions)
         .where(and(
           eq(gameSessions.roomId, roomId),
           eq(gameSessions.status, 'active')
         ));
 
+      log(`Found ${activeSessions.length} active game sessions in room ${roomId}`, 'room');
+      
       let currentGameId: string | undefined;
 
       if (activeSessions.length > 0) {
         // إذا كانت هناك جلسة نشطة، نقوم بإضافة اللاعب إليها مباشرة
         const gameSession = activeSessions[0];
         currentGameId = gameSession.id;
+        log(`Found active game session ${currentGameId} in room ${roomId}`, 'room');
+        
         const result = await this.gameManager.joinGame(gameSession.id, userId);
         
         if (result.joined) {
-          log(`Student ${userId} joined active game ${gameSession.id} in room ${roomId}`, 'room');
+          log(`Student ${userId} joined active game ${gameSession.id} in room ${roomId} successfully`, 'room');
+          return { success: true, username: user.username, currentGameId: gameSession.id };
+        } else {
+          log(`Failed to add student ${userId} to active game ${gameSession.id}, but will still return the gameId`, 'room');
+          // نُرجع معرف اللعبة حتى لو فشلت عملية الإضافة، لأن اللاعب قد يحاول الانضمام مرة أخرى
           return { success: true, username: user.username, currentGameId: gameSession.id };
         }
+      } else {
+        log(`No active game sessions found in room ${roomId}`, 'room');
       }
 
       // إذا لم تكن هناك جلسة نشطة، فسنعيد نجاح العملية ولكن بدون معرف جلسة لعب
