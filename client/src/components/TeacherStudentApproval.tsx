@@ -39,8 +39,12 @@ export function TeacherStudentApproval({ roomId, teacherId }: StudentApprovalPro
   const [expandedSection, setExpandedSection] = useState(true);
 
   // جلب قائمة الطالبات في الانتظار
-  const fetchWaitingStudents = () => {
-    setIsLoading(true);
+  const fetchWaitingStudents = (showLoading = false) => {
+    // نعرض حالة التحميل فقط عند التحميل الأولي
+    if (showLoading) {
+      setIsLoading(true);
+    }
+    
     sendMessage({
       type: "get_waiting_students",
       payload: { roomId, teacherId }
@@ -67,10 +71,11 @@ export function TeacherStudentApproval({ roomId, teacherId }: StudentApprovalPro
     };
 
     addMessageListener(handleMessage);
-    fetchWaitingStudents();
+    // تحميل البيانات للمرة الأولى مع عرض مؤشر التحميل
+    fetchWaitingStudents(true);
 
-    // إعداد تحديث دوري للقائمة كل 30 ثانية
-    const interval = setInterval(fetchWaitingStudents, 30000);
+    // إعداد تحديث دوري للقائمة كل 30 ثانية بدون عرض مؤشر التحميل
+    const interval = setInterval(() => fetchWaitingStudents(false), 30000);
     
     return () => {
       clearInterval(interval);

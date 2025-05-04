@@ -36,10 +36,14 @@ export default function RoomDashboard() {
   const roomId = match && params ? parseInt(params.id) : null;
   
   // طلب بيانات لوحة التحكم
-  const fetchDashboardData = () => {
+  const fetchDashboardData = (showLoading = false) => {
     if (!roomId) return;
     
-    setIsLoading(true);
+    // نظهر مؤشر التحميل فقط عند التحميل الأولي
+    if (showLoading) {
+      setIsLoading(true);
+    }
+    
     sendMessage({
       type: "get_dashboard_data",
       payload: {
@@ -105,10 +109,11 @@ export default function RoomDashboard() {
       payload: { teacherId: 1 }
     });
     
-    fetchDashboardData();
+    // التحميل الأولي مع عرض مؤشر التحميل
+    fetchDashboardData(true);
     
-    // إعداد تحديث دوري للوحة التحكم كل 5 ثوانٍ
-    const interval = setInterval(fetchDashboardData, 5000);
+    // إعداد تحديث دوري للوحة التحكم كل 30 ثانية بدلاً من 5 ثوانٍ
+    const interval = setInterval(() => fetchDashboardData(false), 30000);
     setRefreshInterval(interval);
     
     return () => {
