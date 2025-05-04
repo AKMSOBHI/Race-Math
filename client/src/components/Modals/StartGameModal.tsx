@@ -232,7 +232,7 @@ const StartGameModal: FC = () => {
         {/* خيارات أخرى وأزرار التنقل */}
         <div className="mb-4">
           <h3 className="text-lg text-white font-bold text-center mb-3">
-            اختر نوع اللعبة
+            : اختر نوع اللعبة
           </h3>
         </div>
 
@@ -284,7 +284,7 @@ const StartGameModal: FC = () => {
         </div>
         
         <div className="mb-4">
-          <h3 className="text-lg text-white font-bold mb-3 text-center">مستوى الصعوبة:</h3>
+          <h3 className="text-lg text-white font-bold mb-3 text-center">: مستوى الصعوبة</h3>
           <div className="flex space-x-2 rtl:space-x-reverse">
             <button 
               className={`flex-1 py-2 rounded-lg text-sm ${
@@ -350,7 +350,7 @@ const StartGameModal: FC = () => {
         </div>
         
         <div className="mb-5">
-          <h3 className="text-lg text-white font-bold mb-3 text-center">اسم اللاعب:</h3>
+          <h3 className="text-lg text-white font-bold mb-3 text-center">: اسم اللاعب</h3>
           <Input 
             type="text" 
             placeholder="أدخل اسمك هنا" 
