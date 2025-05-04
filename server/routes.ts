@@ -1087,6 +1087,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
           }
 
+          case 'cancel_room': {
+            try {
+              userId = data.payload.teacherId;
+              connections.set(userId, ws);
+              
+              // إرسال أي إشعارات معلقة للمعلمة
+              sendPendingNotifications(userId, ws);
+              
+              log(`Teacher ${data.payload.teacherId} is cancelling room ${data.payload.roomId}`, 'room');
+              
+              const result = await roomManager.cancelRoom(
+                data.payload.roomId,
+                data.payload.teacherId
+              );
+              
+              if (result) {
+                log(`Room ${data.payload.roomId} cancelled successfully`, 'room');
+                
+                // إرسال رسالة تأكيد الإلغاء للمعلم
+                sendToClient(ws, {
+                  type: 'room_cancelled',
+                  payload: {
+                    roomId: data.payload.roomId
+                  }
+                });
+                
+                // إعادة إرسال قائمة الغرف المحدثة
+                const teacherRooms = await roomManager.getActiveRooms(data.payload.teacherId);
+                sendToClient(ws, {
+                  type: 'room_list',
+                  payload: teacherRooms
+                });
+                
+                // إرسال الإشعار لجميع الطلاب في الغرفة أن الغرفة قد تم إلغاؤها
+                // الحصول على جميع المشاركين في الغرفة
+                const participants = await db.select()
+                  .from(roomParticipants)
+                  .where(eq(roomParticipants.roomId, data.payload.roomId));
+                
+                if (participants.length > 0) {
+                  log(`Notifying ${participants.length} students about room cancellation`, 'room');
+                  
+                  // إرسال الإشعار لكل طالب
+                  for (const participant of participants) {
+                    const studentConnection = connections.get(participant.userId);
+                    if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
+                      sendToClient(studentConnection, {
+                        type: 'room_cancelled',
+                        payload: {
+                          roomId: data.payload.roomId
+                        }
+                      });
+                      log(`Notified student ${participant.userId} about room cancellation`, 'room');
+                    } else {
+                      log(`Student ${participant.userId} not connected or connection not open`, 'room');
+                      // يمكن تخزين الإشعار لإرساله لاحقاً عندما يتصل الطالب
+                    }
+                  }
+                }
+              } else {
+                log(`Failed to cancel room ${data.payload.roomId}`, 'room');
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'فشل في إلغاء الغرفة' }
+                });
+              }
+            } catch (error) {
+              log(`Error cancelling room: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'خطأ في إلغاء الغرفة'
+                }
+              });
+            }
+            break;
+          }
+
           case 'send_message': {
             try {
               userId = data.payload.teacherId;

@@ -698,12 +698,24 @@ export default function TeacherDashboard() {
                   variant="destructive" 
                   className="w-full mt-2 rounded-md text-white text-xs sm:text-sm px-2 sm:px-4 py-1 sm:py-2"
                   onClick={() => {
-                    if (window.confirm('هل أنت متأكد من إلغاء هذه الغرفة؟')) {
+                    if (window.confirm('هل أنت متأكد من إلغاء هذه الغرفة؟ لن يتمكن الطلاب من الانضمام إليها بعد ذلك.')) {
                       soundService.play('click');
-                      // سيتم إضافة وظيفة إلغاء الغرفة لاحقاً
+                      
+                      // إرسال طلب إلغاء الغرفة إلى الخادم
+                      const cancelMessage: ClientMessage = {
+                        type: "cancel_room",
+                        payload: {
+                          roomId: room.id,
+                          teacherId: userId
+                        }
+                      };
+                      
+                      sendMessage(cancelMessage);
+                      
+                      // عرض رسالة تأكيد مؤقتة للمستخدم
                       toast({
-                        title: 'سيتم تطوير هذه الميزة قريباً',
-                        description: 'الميزة قيد التطوير'
+                        title: 'جاري إلغاء الغرفة...',
+                        description: 'سيتم إخطار جميع الطلاب المشاركين'
                       });
                     }
                   }}
