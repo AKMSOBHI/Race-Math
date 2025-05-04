@@ -307,7 +307,7 @@ export class DatabaseStorage implements IStorage {
         stage: session.stage,
         currentQuestionIndex: session.currentQuestionIndex,
         questions: JSON.stringify(session.questions),
-        difficulty: 'easy',
+        difficulty: session.difficulty || 'easy',
         createdAt: new Date()
       });
       

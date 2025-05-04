@@ -4,10 +4,35 @@ import { setupVite, serveStatic, log } from "./vite";
 import { runMigrations } from "./migrations";
 import { db } from "./db";
 import { seedDefaultTeacher } from "./migrations";
+import { storage } from "./storage";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Endpoint para actualizar el nombre de usuario
+app.post('/api/users/update-name', async (req: Request, res: Response) => {
+  try {
+    const { userId, username } = req.body;
+    
+    if (!userId || !username) {
+      return res.status(400).json({ error: 'User ID and username are required' });
+    }
+    
+    const updatedUser = await storage.updateUserName(userId, username);
+    
+    if (!updatedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    log(`Updated user name from user ${userId} to: ${username}`, 'user');
+    
+    return res.status(200).json(updatedUser);
+  } catch (error: any) {
+    log(`Error updating user name: ${error.message}`, 'user');
+    return res.status(500).json({ error: 'Failed to update user name' });
+  }
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

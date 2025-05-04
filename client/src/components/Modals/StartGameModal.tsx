@@ -77,7 +77,7 @@ const StartGameModal: FC = () => {
     };
   }, [currentGame, isProcessing, difficulty, startGame, toast]);
   
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     if (!currentUser) {
       toast({
         title: "Error",
@@ -117,15 +117,14 @@ const StartGameModal: FC = () => {
     try {
       // Actualizar el nombre del jugador antes de crear el juego
       if (playerName !== currentUser.username) {
-        // Actualizamos primero el estado local para uso inmediato
-        setCurrentUser({
-          ...currentUser,
-          username: playerName
-        });
-        
-        // También intentamos actualizar el nombre en el servidor
         try {
-          fetch('/api/users/update-name', {
+          // Intentamos actualizar el nombre en el servidor primero
+          console.log('Enviando actualización de nombre al servidor:', {
+            userId: currentUser.id,
+            username: playerName
+          });
+          
+          const response = await fetch('/api/users/update-name', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -133,10 +132,27 @@ const StartGameModal: FC = () => {
               username: playerName 
             })
           });
-          console.log('Solicitud de actualización de nombre enviada al servidor');
+          
+          if (response.ok) {
+            const updatedUser = await response.json();
+            console.log('Nombre actualizado correctamente en el servidor:', updatedUser);
+            // Actualizamos el estado local con la respuesta del servidor
+            setCurrentUser(updatedUser);
+          } else {
+            // Si hay un error, seguimos usando la actualización local
+            console.warn('Error al actualizar nombre en servidor, usando local:', response.statusText);
+            setCurrentUser({
+              ...currentUser,
+              username: playerName
+            });
+          }
         } catch (err) {
           console.error('Error al actualizar el nombre en el servidor:', err);
-          // Continuamos de todos modos ya que actualizamos localmente
+          // Continuamos con actualización local si falla el servidor
+          setCurrentUser({
+            ...currentUser,
+            username: playerName
+          });
         }
       }
       
