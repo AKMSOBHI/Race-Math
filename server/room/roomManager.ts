@@ -300,12 +300,12 @@ export class RoomManager {
    */
   async getWaitingStudents(roomId: number, teacherId: number): Promise<{
     success: boolean;
-    students?: {
+    students?: Array<{
       id: number;
       username: string;
       isApproved: boolean;
       joinedAt: string;
-    }[];
+    }>;
   }> {
     try {
       // التحقق من وجود الغرفة وأن المعلم هو المالك لها
@@ -336,7 +336,7 @@ export class RoomManager {
         return {
           id: participant.userId,
           username: user ? user.username : 'Unknown',
-          isApproved: participant.isApproved,
+          isApproved: participant.isApproved === null ? false : participant.isApproved, // Convert null to false
           joinedAt: participant.joinedAt ? participant.joinedAt.toISOString() : new Date().toISOString()
         };
       });

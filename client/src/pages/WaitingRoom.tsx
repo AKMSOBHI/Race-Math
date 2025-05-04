@@ -191,11 +191,14 @@ export default function WaitingRoom() {
     
     // إرسال رسالة مغادرة الغرفة
     if (roomId) {
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const userId = currentUser?.id || 0;
+      
       sendMessage({
         type: "leave_room",
         payload: {
           roomId,
-          userId: 1 // في التطبيق الحقيقي، سيتم استخدام معرف المستخدم الحالي
+          userId: userId
         }
       });
     }
