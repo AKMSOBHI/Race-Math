@@ -106,8 +106,33 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
                         const question = game.questions[newIndex];
                         game.currentQuestionIndex = newIndex;
                         
+                        // تحديث اللعبة والسؤال الحالي في نفس الوقت
                         currentState.setCurrentGame({ ...game });
-                        currentState.setCurrentQuestion(question);
+                        // نستخدم الطريقة غير المباشرة لتحديث currentQuestion
+                        setTimeout(() => {
+                          // التحقق من أن السؤال قد تم تحديثه بالفعل
+                          const latestGame = useGameStore.getState().currentGame;
+                          if (latestGame && latestGame.currentQuestionIndex === newIndex) {
+                            console.log('✅ تم تحديث مؤشر السؤال بنجاح');
+                          } else {
+                            console.log('⚠️ فشل تحديث مؤشر السؤال، محاولة أخرى...');
+                            // التحقق من وجود جلسة لعب صالحة
+                            const latestGameState = useGameStore.getState().currentGame;
+                            if (latestGameState && latestGameState.id) {
+                              // إنشاء نسخة من اللعبة مع تحديث مؤشر السؤال
+                              const updatedGame = {
+                                ...latestGameState,
+                                currentQuestionIndex: newIndex
+                              };
+                              
+                              // تحديث اللعبة والسؤال الحالي
+                              useGameStore.setState({
+                                currentGame: updatedGame,
+                                currentQuestion: updatedGame.questions[newIndex]
+                              });
+                            }
+                          }
+                        }, 100);
                         currentState.setIsLoading(false);
                       }
                     }

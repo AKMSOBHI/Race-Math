@@ -13,6 +13,7 @@ interface GameState {
   
   // Current question
   currentQuestion: Question | null;
+  setCurrentQuestion: (question: Question | null) => void;
   
   // Loading state
   isLoading: boolean;
@@ -76,6 +77,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   // Current question
   currentQuestion: null,
+  setCurrentQuestion: (question) => set({ currentQuestion: question }),
   
   // Sound settings
   isSoundEnabled: true,
