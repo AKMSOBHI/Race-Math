@@ -175,4 +175,129 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { db } from './db';
+import { eq } from 'drizzle-orm';
+
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    // Ensure nullable fields have explicit values
+    const userToInsert = {
+      ...insertUser,
+      score: 0,
+      isGuest: insertUser.isGuest ?? null,
+      isTeacher: insertUser.isTeacher ?? null,
+      createdAt: new Date()
+    };
+    
+    const result = await db.insert(users).values(userToInsert).returning();
+    return result[0];
+  }
+  
+  async updateUserScore(userId: number, score: number): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+    
+    // Handle null scores by treating them as 0
+    const currentScore = user.score || 0;
+    const newScore = currentScore + score;
+    
+    const result = await db
+      .update(users)
+      .set({ score: newScore })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+  
+  // Game session methods are still in memory for now - will implement in database later
+  private gameSessions: Map<string, GameSession> = new Map();
+  
+  async createGameSession(hostId: number, isMultiplayer: boolean, maxPlayers: number, roomId?: number): Promise<GameSession> {
+    const player: Player = {
+      id: hostId,
+      username: (await this.getUser(hostId))?.username || 'Unknown',
+      score: 0,
+      progress: 0,
+      attemptsLeft: 3
+    };
+    
+    const session: GameSession = {
+      id: nanoid(),
+      stage: 'waiting',
+      hostId,
+      players: [player],
+      currentQuestionIndex: 0,
+      questions: [],
+      maxPlayers,
+      isMultiplayer,
+      status: 'waiting',
+      roomId
+    };
+    
+    this.gameSessions.set(session.id, session);
+    return session;
+  }
+  
+  async getGameSession(id: string): Promise<GameSession | undefined> {
+    return this.gameSessions.get(id);
+  }
+  
+  async updateGameSession(id: string, updates: Partial<GameSession>): Promise<GameSession | undefined> {
+    const session = this.gameSessions.get(id);
+    if (!session) return undefined;
+    
+    const updatedSession = { ...session, ...updates };
+    this.gameSessions.set(id, updatedSession);
+    return updatedSession;
+  }
+  
+  async addPlayerToGame(gameId: string, player: Player): Promise<GameSession | undefined> {
+    const session = this.gameSessions.get(gameId);
+    if (!session) return undefined;
+    
+    // Check if player already exists in the session
+    if (session.players.some(p => p.id === player.id)) {
+      return session;
+    }
+    
+    // Add player to session
+    const updatedSession = { 
+      ...session, 
+      players: [...session.players, player] 
+    };
+    
+    this.gameSessions.set(gameId, updatedSession);
+    return updatedSession;
+  }
+  
+  async removePlayerFromGame(gameId: string, playerId: number): Promise<GameSession | undefined> {
+    const session = this.gameSessions.get(gameId);
+    if (!session) return undefined;
+    
+    const updatedSession = { 
+      ...session, 
+      players: session.players.filter(p => p.id !== playerId) 
+    };
+    
+    this.gameSessions.set(gameId, updatedSession);
+    return updatedSession;
+  }
+  
+  async getAllActiveSessions(): Promise<GameSession[]> {
+    return Array.from(this.gameSessions.values())
+      .filter(session => session.status !== 'completed');
+  }
+}
+
+export const storage = new DatabaseStorage();

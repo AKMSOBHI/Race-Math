@@ -76,7 +76,7 @@ export class RoomManager {
       log(`Room created: ${newRoom.name} with code ${newRoom.code}`, 'room');
       return newRoom;
     } catch (error) {
-      log(`Error creating room: ${error.message}`, 'room');
+      log(`Error creating room: ${error instanceof Error ? error.message : String(error)}`, 'room');
       return null;
     }
   }
@@ -126,7 +126,7 @@ export class RoomManager {
       
       return await query;
     } catch (error) {
-      log(`Error getting active rooms: ${error.message}`, 'room');
+      log(`Error getting active rooms: ${error instanceof Error ? error.message : String(error)}`, 'room');
       return [];
     }
   }
