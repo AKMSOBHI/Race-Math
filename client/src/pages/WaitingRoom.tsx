@@ -28,6 +28,7 @@ export default function WaitingRoom() {
   const [isLoading, setIsLoading] = useState(true);
   const [countdown, setCountdown] = useState<number | null>(null); // للعد التنازلي قبل بدء المسابقة
   const [countdownAnimationActive, setCountdownAnimationActive] = useState(false); // لتأثيرات العد التنازلي
+  const [isApproved, setIsApproved] = useState<boolean>(false); // حالة الموافقة على الطالبة
   
   // الحصول على معرف الغرفة من عنوان URL
   const roomId = match && params ? parseInt(params.id) : null;
@@ -93,6 +94,38 @@ export default function WaitingRoom() {
           });
           
           setPlayers(prev => [...prev, message.payload.player]);
+        }
+      }
+      else if (message.type === "student_approval_updated") {
+        // تحديث حالة الموافقة على الطالبة
+        if (message.payload.roomId.toString() === roomId?.toString()) {
+          // التحقق من أن الرسالة تخص المستخدم الحالي
+          const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+
+          if (currentUser && currentUser.id === message.payload.studentId) {
+            if (message.payload.isApproved) {
+              soundService.play('correct');
+              setIsApproved(true);
+              
+              toast({
+                title: 'تمت الموافقة!',
+                description: 'لقد تمت الموافقة على مشاركتك في المسابقة!',
+                variant: 'default',
+              });
+            } else {
+              // إذا تم رفض الطالبة
+              toast({
+                title: 'تم رفض الطلب',
+                description: 'لم تتم الموافقة على مشاركتك في هذه المسابقة.',
+                variant: 'destructive',
+              });
+              
+              // العودة للصفحة الرئيسية
+              setTimeout(() => {
+                navigate('/');
+              }, 2000);
+            }
+          }
         }
       }
       else if (message.type === "contest_countdown") {
@@ -254,8 +287,29 @@ export default function WaitingRoom() {
                 ) : (
                   <div className="p-4 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
                     <h3 className="text-lg font-semibold mb-2 text-center">انتظري بدء المسابقة...</h3>
+                    {!isApproved ? (
+                      <div className="mb-3 p-3 rounded-lg" style={{ background: 'rgba(255, 100, 100, 0.2)', border: '1px solid rgba(255, 100, 100, 0.5)' }}>
+                        <div className="flex items-center justify-center mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-300 mr-2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                          <span className="font-semibold text-orange-300">في انتظار موافقة المعلمة</span>
+                        </div>
+                        <p className="text-sm text-center">
+                          يجب أن توافق المعلمة على مشاركتك قبل أن تتمكني من المشاركة في المسابقة.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-3 p-3 rounded-lg" style={{ background: 'rgba(100, 255, 100, 0.2)', border: '1px solid rgba(100, 255, 100, 0.5)' }}>
+                        <div className="flex items-center justify-center mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-300 mr-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                          <span className="font-semibold text-green-300">تمت الموافقة!</span>
+                        </div>
+                        <p className="text-sm text-center">
+                          لقد تمت الموافقة على مشاركتك! ستبدأ المسابقة عندما تقوم المعلمة ببدء المسابقة.
+                        </p>
+                      </div>
+                    )}
                     <p className="text-sm text-center">
-                      ستبدأ المسابقة عندما تقوم المعلمة ببدء المسابقة. كوني مستعدة!
+                      كوني مستعدة للمشاركة في المسابقة!
                     </p>
                   </div>
                 )}
