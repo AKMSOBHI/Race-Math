@@ -195,7 +195,7 @@ export function TeacherStudentApproval({ roomId, teacherId }: StudentApprovalPro
                   <div>
                     <div className="font-medium">{student.username}</div>
                     <div className="text-xs text-slate-400">
-                      انضمت {new Date(student.joinedAt).toLocaleTimeString('ar-SA')}
+                      انضمت : {new Date(student.joinedAt).toLocaleTimeString('ar-SA')}
                     </div>
                   </div>
                   

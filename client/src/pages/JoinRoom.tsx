@@ -226,7 +226,7 @@ export default function JoinRoom() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="roomCode">رمز الغرفة</Label>
+              <Label htmlFor="roomCode">رمز الغرفة :</Label>
               <Input
                 id="roomCode"
                 placeholder="أدخل رمز الغرفة هنا (مثل: ABC123)"
@@ -244,7 +244,7 @@ export default function JoinRoom() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="fullName">الاسم الثنائي أو الثلاثي</Label>
+              <Label htmlFor="fullName">الاسم الثنائي أو الثلاثي :</Label>
               <Input
                 id="fullName"
                 placeholder="أدخل اسمك الثنائي أو الثلاثي بالكامل"
