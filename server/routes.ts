@@ -438,25 +438,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const result = await roomManager.joinRoom(room.id, data.payload.userId, fullName);
               
               if (result.success) {
+                // استخدام الاسم الكامل في الإشعارات إذا كان متاحًا
+                let displayName = result.username || 'Unknown';
+                
+                // نحاول الحصول على الاسم الكامل من قاعدة البيانات
+                if (fullName && fullName.trim() !== '') {
+                  displayName = fullName.trim();
+                }
+                
                 // إرسال إشعار للطالب المنضم
                 sendToClient(ws, {
                   type: 'room_joined',
                   payload: {
                     roomId: room.id,
                     userId: data.payload.userId,
-                    username: result.username || 'Unknown'
+                    username: displayName // استخدام نفس الاسم المعروض في الإشعار
                   }
                 });
                 
                 // إرسال إشعار للمعلمة (صاحبة الغرفة)
                 const teacherConnection = connections.get(room.teacherId);
+                
                 const notification: ServerMessage = {
                   type: 'student_joined_room',
                   payload: {
                     roomId: room.id,
                     roomName: room.name,
                     studentId: data.payload.userId,
-                    studentName: result.username || 'Unknown',
+                    studentName: displayName,
                     timestamp: new Date().toISOString()
                   }
                 };
