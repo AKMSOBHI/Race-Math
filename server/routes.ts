@@ -23,6 +23,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store active connections with user IDs
   const connections = new Map<number, WebSocket>();
   
+  // Store pending notifications for users not currently connected
+  const pendingNotifications = new Map<number, ServerMessage[]>();
+  
+  // Function to store notification for later delivery
+  const storeNotificationForUser = (userId: number, notification: ServerMessage) => {
+    const userNotifications = pendingNotifications.get(userId) || [];
+    userNotifications.push(notification);
+    pendingNotifications.set(userId, userNotifications);
+    log(`Stored notification for user ${userId} for later delivery`, 'notifications');
+  };
+  
+  // Function to send pending notifications to user when they connect
+  const sendPendingNotifications = (userId: number, ws: WebSocket) => {
+    const notifications = pendingNotifications.get(userId);
+    if (notifications && notifications.length > 0) {
+      log(`Sending ${notifications.length} pending notifications to user ${userId}`, 'notifications');
+      notifications.forEach(notification => {
+        sendToClient(ws, notification);
+      });
+      // Clear the pending notifications after sending
+      pendingNotifications.delete(userId);
+    }
+  };
+  
   // User API Routes
   app.post("/api/users/register", async (req, res) => {
     try {
@@ -100,6 +124,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // WebSocket Connection Handling
   wss.on('connection', (ws) => {
     let userId: number | null = null;
+    
+    // سنحمل الإشعارات غير المستلمة عندما يحدد المستخدم هويته
     
     ws.on('message', async (message) => {
       try {
@@ -311,6 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId = data.payload.teacherId;
               connections.set(userId, ws);
               
+              // إرسال أي إشعارات معلقة للمعلمة
+              sendPendingNotifications(userId, ws);
+              
               log(`Creating room: ${data.payload.name} by teacher ${userId}`, 'room');
               
               const room = await roomManager.createRoom(
@@ -356,6 +385,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (data.payload.teacherId) {
                 userId = data.payload.teacherId;
                 connections.set(userId, ws);
+                
+                // إرسال أي إشعارات معلقة للمعلمة
+                sendPendingNotifications(userId, ws);
               }
               
               const rooms = await roomManager.getActiveRooms(data.payload.teacherId);
@@ -414,21 +446,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // إرسال إشعار للمعلمة (صاحبة الغرفة)
                 const teacherConnection = connections.get(room.teacherId);
+                const notification: ServerMessage = {
+                  type: 'student_joined_room',
+                  payload: {
+                    roomId: room.id,
+                    roomName: room.name,
+                    studentId: data.payload.userId,
+                    studentName: result.username || 'Unknown',
+                    timestamp: new Date().toISOString()
+                  }
+                };
+                
                 if (teacherConnection && teacherConnection.readyState === WebSocket.OPEN) {
                   log(`Notifying teacher ${room.teacherId} about new student ${data.payload.userId} joining room ${room.id}`, 'room');
-                  sendToClient(teacherConnection, {
-                    type: 'student_joined_room',
-                    payload: {
-                      roomId: room.id,
-                      roomName: room.name,
-                      studentId: data.payload.userId,
-                      studentName: result.username || 'Unknown',
-                      timestamp: new Date().toISOString()
-                    }
-                  });
+                  sendToClient(teacherConnection, notification);
                 } else {
                   log(`Teacher ${room.teacherId} is not connected to receive notification about student joining`, 'room');
-                  // هنا يمكن إضافة آلية حفظ الإشعارات غير المستلمة لعرضها لاحقًا
+                  // تخزين الإشعار لإرساله لاحقًا عندما تتصل المعلمة
+                  storeNotificationForUser(room.teacherId, notification);
                 }
               } else {
                 sendToClient(ws, {
@@ -452,6 +487,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               userId = data.payload.teacherId;
               connections.set(userId, ws);
+              
+              // إرسال أي إشعارات معلقة للمعلمة
+              sendPendingNotifications(userId, ws);
               
               const result = await roomManager.startContest(
                 data.payload.roomId,
@@ -490,6 +528,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               userId = data.payload.teacherId;
               connections.set(userId, ws);
+              
+              // إرسال أي إشعارات معلقة للمعلمة
+              sendPendingNotifications(userId, ws);
               
               const result = await roomManager.getTeacherDashboardData(
                 data.payload.roomId,
@@ -537,6 +578,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             try {
               userId = data.payload.teacherId;
               connections.set(userId, ws);
+              
+              // إرسال أي إشعارات معلقة للمعلمة
+              sendPendingNotifications(userId, ws);
               
               log(`Teacher ${userId} sending message: ${data.payload.type}`, 'message');
               
