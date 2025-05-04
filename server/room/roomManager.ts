@@ -649,9 +649,10 @@ export class RoomManager {
       // إنشاء قائمة الطلاب النشطين
       const activeStudents = roomParticipantsData.map(rp => {
         const user = usersData.find(u => u?.id === rp.userId);
+        // استخدام الاسم الكامل بدلاً من اسم المستخدم إذا كان متوفرًا
         return {
           id: rp.userId,
-          username: user ? user.username : (rp.fullName || 'Unknown'),
+          username: rp.fullName || (user ? user.username : 'Unknown'),
           status: 'playing', // نفترض أن جميع المشاركين يلعبون
           score: user ? user.score || 0 : 0,
           progress: 0 // لا توجد معلومات تقدم محددة
