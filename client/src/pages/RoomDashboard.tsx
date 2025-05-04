@@ -15,6 +15,7 @@ import { BadgeCheck, X, Clock, Award } from "lucide-react";
 import { useWebSocket } from '@/lib/websocket';
 import { soundService } from '@/lib/soundService';
 import { convertToArabicNumerals } from '@/lib/utils';
+import { TeacherStudentApproval } from '@/components/TeacherStudentApproval';
 
 /**
  * لوحة تحكم الغرفة - تعرض تفاصيل مسابقة محددة وأداء الطالبات
@@ -371,10 +372,18 @@ export default function RoomDashboard() {
                   </CardContent>
                 </Card>
               </div>
+              
+              {/* قسم الطالبات في الانتظار */}
+              <div className="lg:col-span-12 mt-6">
+                <TeacherStudentApproval roomId={roomId} teacherId={1} />
+              </div>
             </div>
           ) : (
             <div className="text-center py-12 text-slate-400">
               لا تتوفر بيانات عن المسابقة حالياً. قم ببدء مسابقة جديدة لعرض البيانات.
+              
+              {/* قسم الطالبات في الانتظار حتى لو لم تكن هناك مسابقة نشطة */}
+              <TeacherStudentApproval roomId={roomId} teacherId={1} />
             </div>
           )}
         </div>
