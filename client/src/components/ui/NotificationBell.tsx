@@ -105,7 +105,15 @@ export function NotificationBell() {
           className="fixed z-50 left-1/2 transform -translate-x-1/2 mt-2 bg-slate-950 rounded-lg shadow-lg p-1 border border-purple-800 max-h-80 overflow-y-auto" 
           style={{ maxWidth: 'calc(100vw - 40px)', fontSize: '0.9rem', top: '80px', width: '300px' }}
         >
-          <div className="p-1 border-b border-slate-800">
+          <div className="p-1 border-b border-slate-800 flex justify-between items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 hover:bg-red-700 rounded-full"
+              onClick={() => setShowNotifications(false)}
+            >
+              <X className="h-3 w-3" />
+            </Button>
             <h3 className="text-sm font-semibold text-white text-right">الإشعارات</h3>
           </div>
           

@@ -504,7 +504,15 @@ export default function TeacherDashboard() {
               
               {showNotifications && (
                 <div className="fixed z-50 left-1/2 transform -translate-x-1/2 mt-2 w-64 bg-slate-950 rounded-lg shadow-lg p-1 border border-purple-800 max-h-60 overflow-y-auto" style={{ maxWidth: 'calc(100vw - 40px)', fontSize: '0.9rem', top: '80px' }}>
-                  <div className="p-1 border-b border-slate-800">
+                  <div className="p-1 border-b border-slate-800 flex justify-between items-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 hover:bg-red-700 rounded-full"
+                      onClick={() => setShowNotifications(false)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                    </Button>
                     <h3 className="text-sm font-semibold text-white text-right">الإشعارات</h3>
                   </div>
                   
