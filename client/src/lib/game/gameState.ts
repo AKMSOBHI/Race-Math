@@ -134,12 +134,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     set({ isLoading: true });
     
-    console.log('Sending create_game message with payload:', {
+    console.log('إرسال رسالة إنشاء اللعبة:', {
       isMultiplayer,
       maxPlayers,
       playerId: currentUser.id
     });
     
+    // أولاً نرسل رسالة إنشاء اللعبة
     sendMessage({
       type: 'create_game',
       payload: {
@@ -149,11 +150,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     });
     
-    // Explicitly join the game after a short delay to ensure we're added as a player
+    // بعد مرور 500 مللي ثانية، نضيف اللاعب نفسه إلى اللعبة
     setTimeout(() => {
       const state = get();
       if (state.currentGame) {
-        console.log('Automatically joining newly created game:', state.currentGame.id);
+        console.log('الانضمام تلقائياً للعبة التي تم إنشاؤها:', state.currentGame.id);
         sendMessage({
           type: 'join_game',
           payload: {
@@ -161,8 +162,24 @@ export const useGameStore = create<GameState>((set, get) => ({
             playerId: currentUser.id
           }
         });
+        
+        // وبعد مرور 500 مللي ثانية أخرى، نبدأ اللعبة
+        setTimeout(() => {
+          const newState = get();
+          if (newState.currentGame && state.currentGame && newState.currentGame.id === state.currentGame.id) {
+            console.log('بدء اللعبة التي تم إنشاؤها تلقائياً:', newState.currentGame.id);
+            set({ isLoading: true });
+            sendMessage({
+              type: 'start_game',
+              payload: {
+                gameId: newState.currentGame.id,
+                difficulty: 'easy'
+              }
+            });
+          }
+        }, 500);
       }
-    }, 1000);
+    }, 500);
   },
   
   startGame: (gameId, difficulty = "easy") => {

@@ -163,7 +163,7 @@ export default function Game() {
         setTimeout(() => {
           console.log('إعادة محاولة الإرسال بعد الانضمام للعبة');
           submitAnswer(currentGame.id, answer);
-        }, 500);
+        }, 700);
       }
       return;
     }
