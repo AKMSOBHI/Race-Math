@@ -318,16 +318,74 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   nextQuestion: (gameId) => {
-    console.log('إرسال طلب الانتقال للسؤال التالي، gameId:', gameId);
+    console.log('❗ إرسال طلب الانتقال للسؤال التالي، gameId:', gameId);
     
-    // إظهار رسالة تحميل مؤقتة أثناء الانتقال
-    set({ isLoading: true });
+    // الحصول على الحالة الحالية
+    const state = get();
     
+    // التحقق من أن اللعبة موجودة
+    if (!state.currentGame) {
+      console.error('❌ لا يمكن الانتقال للسؤال التالي: اللعبة غير موجودة');
+      return;
+    }
+    
+    // إنشاء تأخير قصير قبل الانتقال للسؤال التالي
+    // بعد انتهاء الوقت
+    
+    // إخفاء جميع النوافذ المنبثقة أولاً
+    set({
+      showCorrectModal: false,
+      showIncorrectModal: false,
+      showStageCompleteModal: false,
+      showGameOverModal: false,
+      isLoading: true, // إظهار مؤشر التحميل
+      isTimeUp: false // إعادة تعيين حالة انتهاء الوقت
+    });
+
     // إرسال الطلب للخادم
+    console.log('✅ إرسال رسالة WebSocket للانتقال للسؤال التالي');
     sendMessage({
       type: 'next_question',
       payload: { gameId }
     });
+    
+    // مؤقت أمان للتعامل مع عدم استجابة الخادم
+    setTimeout(() => {
+      const currentState = get();
+      
+      // إذا كانت حالة التحميل ما زالت نشطة
+      if (currentState.isLoading) {
+        console.log('⚠️ لم يتم استلام رد من الخادم - محاولة الانتقال محلياً');
+        
+        // إلغاء حالة التحميل
+        set({ isLoading: false });
+        
+        // التحقق من وجود اللعبة والسؤال الحالي
+        if (currentState.currentGame && currentState.currentQuestion) {
+          const game = currentState.currentGame;
+          const currentIndex = game.currentQuestionIndex;
+          
+          // إذا لم نكن في آخر سؤال، نقوم بالانتقال المحلي
+          if (currentIndex < game.questions.length - 1) {
+            const newIndex = currentIndex + 1;
+            const newQuestion = game.questions[newIndex];
+            
+            console.log('✅ تنفيذ الانتقال المحلي للسؤال رقم', newIndex);
+            
+            // تحديث اللعبة والسؤال الحالي محلياً
+            const updatedGame = { ...game, currentQuestionIndex: newIndex };
+            set({
+              currentGame: updatedGame,
+              currentQuestion: newQuestion
+            });
+          } else {
+            // إذا كنا في آخر سؤال، نظهر مودال اكتمال المرحلة
+            console.log('✅ إظهار مودال اكتمال المرحلة');
+            set({ showStageCompleteModal: true });
+          }
+        }
+      }
+    }, 2000); // انتظار 2 ثانية قبل الانتقال المحلي
     
     // ننتظر فترة قصيرة ثم نعيد تعيين isLoading إلى false في حالة عدم استلام رد
     setTimeout(() => {

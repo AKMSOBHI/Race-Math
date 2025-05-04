@@ -151,6 +151,43 @@ export default function Game() {
   // متغير لتتبع محاولات الإجابة الفاشلة
   const [successfulAnswerSubmit, setSuccessfulAnswerSubmit] = useState(false);
   const [answerAttempts, setAnswerAttempts] = useState(0);
+  
+  // منطق الانتقال التلقائي عند انتهاء الوقت
+  useEffect(() => {
+    if (isTimeUp && currentGame) {
+      console.log('⏱️ تم اكتشاف انتهاء الوقت في صفحة اللعبة - جاري تنفيذ الانتقال التلقائي');
+      
+      // الحصول على دوال gameStore مباشرة
+      const gameStore = useGameStore.getState();
+      
+      // الانتقال للسؤال التالي تلقائياً بعد انتهاء الوقت
+      setTimeout(() => {
+        try {
+          console.log('⏱️ صفحة اللعبة: محاولة الانتقال للسؤال التالي...');
+          if (currentGame) {
+            // استخدام مكون gameStore للوصول إلى دالة nextQuestion
+            gameStore.nextQuestion(currentGame.id);
+            
+            // التحقق من نجاح العملية بعد فترة
+            setTimeout(() => {
+              // الحصول على أحدث حالة للمتجر
+              const updatedStore = useGameStore.getState();
+              
+              // إعادة تعيين علم انتهاء الوقت
+              updatedStore.setIsTimeUp(false);
+              
+              // إعادة تعيين حالة التحميل
+              updatedStore.setIsLoading(false);
+            }, 500);
+          }
+        } catch (err) {
+          console.error('⚠️ خطأ في الانتقال التلقائي:', err);
+          // إعادة تعيين حالة التحميل في حالة الخطأ
+          useGameStore.getState().setIsLoading(false);
+        }
+      }, 100);
+    }
+  }, [isTimeUp, currentGame]);
 
   // Handle bubble click / answer submission
   const handleAnswerSubmit = (answer: number) => {
