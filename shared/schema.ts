@@ -43,6 +43,20 @@ export const gameSessions = pgTable("game_sessions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// جدول لمتابعة المشاركين في الغرفة وحالة الموافقة
+export const roomParticipants = pgTable("room_participants", {
+  id: serial("id").primaryKey(),
+  roomId: integer("room_id").notNull().references(() => rooms.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  isApproved: boolean("is_approved").default(false), // هل تمت الموافقة على الطالب من قبل المعلم
+  joinedAt: timestamp("joined_at").defaultNow(), // وقت الانضمام للغرفة
+}, (table) => {
+  return {
+    // لا يمكن للطالب الواحد أن ينضم لنفس الغرفة مرتين
+    uniqueRoomParticipant: uniqueIndex("unique_room_participant").on(table.roomId, table.userId),
+  };
+});
+
 // جدول اللاعبين في كل جلسة
 export const playerSessions = pgTable("player_sessions", {
   id: serial("id").primaryKey(),
@@ -130,12 +144,20 @@ export interface Player {
   attemptsLeft: number;
 }
 
+export const insertRoomParticipantSchema = createInsertSchema(roomParticipants).pick({
+  roomId: true,
+  userId: true,
+  isApproved: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
 // تعريف أنواع جديدة لدعم الغرف والمسابقات
 export type Room = typeof rooms.$inferSelect;
 export type InsertRoom = z.infer<typeof insertRoomSchema>;
+export type RoomParticipant = typeof roomParticipants.$inferSelect;
+export type InsertRoomParticipant = z.infer<typeof insertRoomParticipantSchema>;
 export type GameSessionDB = typeof gameSessions.$inferSelect;
 export type InsertGameSession = z.infer<typeof insertGameSessionSchema>;
 export type PlayerSession = typeof playerSessions.$inferSelect;
@@ -166,6 +188,24 @@ export type ServerMessage =
       roomId: number; 
       activeStudents: { id: number; username: string; status: string; score: number; progress: number }[]; 
       gameStats: { questionsAnswered: number; correctAnswers: number; averageScore: number } 
+    } 
+  }
+  
+  // رسائل قائمة الطلاب في الانتظار
+  | { type: "waiting_students_list"; payload: { 
+      roomId: number; 
+      students: { 
+        id: number; 
+        username: string; 
+        isApproved: boolean; 
+        joinedAt: string 
+      }[] 
+    } 
+  }
+  | { type: "student_approval_updated"; payload: { 
+      roomId: number; 
+      studentId: number; 
+      isApproved: boolean 
     } 
   }
   
@@ -214,6 +254,8 @@ export type ClientMessage =
   | { type: "end_contest"; payload: { roomId: number; teacherId: number } }
   | { type: "get_dashboard_data"; payload: { roomId: number; teacherId: number } }
   | { type: "get_leaderboard"; payload: { roomId: number } }
+  | { type: "get_waiting_students"; payload: { roomId: number; teacherId: number } } // للحصول على قائمة الطلاب في انتظار الموافقة
+  | { type: "approve_student"; payload: { roomId: number; teacherId: number; studentId: number; approve: boolean } }
   
   // رسائل التواصل من المعلمة إلى الطلاب
   | { type: "send_message"; payload: { type: 'all' | 'room'; roomId?: number; teacherId: number; message: string } };

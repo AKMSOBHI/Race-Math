@@ -180,6 +180,29 @@ export class RoomManager {
         log(`Room is not active: ${roomId}`, 'room');
         return { success: false };
       }
+      
+      // إضافة الطالب إلى جدول المشاركين في الغرفة
+      // التحقق من عدم وجود الطالب بالفعل في الغرفة
+      const existingParticipant = await db.select().from(roomParticipants)
+        .where(and(
+          eq(roomParticipants.roomId, roomId),
+          eq(roomParticipants.userId, userId)
+        ));
+      
+      if (existingParticipant.length === 0) {
+        // إضافة الطالب كمشارك جديد في الغرفة
+        // الطلاب غير معتمدين بشكل افتراضي
+        await db.insert(roomParticipants).values({
+          roomId: roomId,
+          userId: userId,
+          isApproved: false, // الطالب بحاجة إلى موافقة المعلم
+        });
+        
+        log(`Added user ${userId} (${user.username}) to room ${roomId} participants`, 'room');
+      } else {
+        // الطالب موجود بالفعل في الغرفة
+        log(`User ${userId} (${user.username}) already in room ${roomId}`, 'room');
+      }
 
       // التحقق من عدد اللاعبين الحاليين في الغرفة
       const activeSessions = await db.select().from(gameSessions)
@@ -190,11 +213,16 @@ export class RoomManager {
 
       if (activeSessions.length > 0) {
         // إذا كانت هناك جلسة نشطة، نقوم بإضافة اللاعب إليها
-        const gameSession = activeSessions[0];
-        const result = await this.gameManager.joinGame(gameSession.id, userId);
+        // لكن فقط إذا كان معتمدًا من قبل المعلم
+        const isApproved = existingParticipant.length > 0 ? existingParticipant[0].isApproved : false;
         
-        if (result.joined) {
-          return { success: true, username: user.username };
+        if (isApproved) {
+          const gameSession = activeSessions[0];
+          const result = await this.gameManager.joinGame(gameSession.id, userId);
+          
+          if (result.joined) {
+            return { success: true, username: user.username };
+          }
         }
       }
 
