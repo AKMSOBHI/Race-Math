@@ -148,6 +148,10 @@ export default function Game() {
     }
   }, [currentQuestion?.id]); // تغيير التبعية إلى معرف السؤال بدلاً من كامل السؤال
   
+  // متغير لتتبع محاولات الإجابة الفاشلة
+  const [successfulAnswerSubmit, setSuccessfulAnswerSubmit] = useState(false);
+  const [answerAttempts, setAnswerAttempts] = useState(0);
+
   // Handle bubble click / answer submission
   const handleAnswerSubmit = (answer: number) => {
     console.log('\n---------- بداية معالجة الإجابة ----------');
@@ -158,9 +162,17 @@ export default function Game() {
     console.log('الإجابة الصحيحة:', currentQuestion?.answer);
     console.log('نص الإجابة المختارة:', convertToArabicNumerals(answer));
     
+    // زيادة عدد محاولات الإجابة
+    setAnswerAttempts(prev => prev + 1);
+    
     // التحقق من صحة اللعبة والوقت
     if (!currentGame || isTimeUp) {
       console.log('لا يمكن إرسال الإجابة: اللعبة غير نشطة أو انتهى الوقت');
+      toast({
+        title: 'لا يمكن إرسال الإجابة',
+        description: 'اللعبة غير نشطة أو انتهى الوقت',
+        variant: 'destructive'
+      });
       return;
     }
     
@@ -182,6 +194,19 @@ export default function Game() {
     // التحقق من معلومات اللاعب
     if (!currentUser) {
       console.error('لا يوجد مستخدم حالي');
+      
+      // رسالة للمستخدم
+      toast({
+        title: 'خطأ في الاتصال',
+        description: 'فقدنا الاتصال بالخادم. الرجاء إعادة تحميل اللعبة.',
+        variant: 'destructive'
+      });
+      
+      // إعادة توجيه بعد فترة
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000);
+      
       return;
     }
     
@@ -207,7 +232,7 @@ export default function Game() {
         // نضع رسالة للمستخدم
         toast({
           title: 'جاري الانضمام للعبة',
-          description: 'نحاول الانضمام للعبة، الرجاء المحاولة مرة أخرى بعد لحظات',
+          description: 'نحاول الانضمام للعبة. شكراً لصبرك!',
         });
         
         // إعادة المحاولة بعد فترة زمنية قصيرة
@@ -221,6 +246,7 @@ export default function Game() {
             // اللاعب أصبح مسجلاً الآن، نرسل الإجابة
             console.log('اللاعب أصبح مسجلاً الآن، نرسل الإجابة:', answer);
             submitAnswer(updatedGame.id, answer);
+            setSuccessfulAnswerSubmit(true);
             
             // تطبيق محلي لتجربة أفضل
             if (currentQuestion) {
@@ -242,12 +268,26 @@ export default function Game() {
                 if (finalGame) {
                   console.log('محاولة أخيرة لإرسال الإجابة:', answer);
                   submitAnswer(finalGame.id, answer);
+                  setSuccessfulAnswerSubmit(true);
                   
                   // تطبيق محلي لتجربة أفضل
                   if (currentQuestion) {
                     const correct = answer === currentQuestion.answer;
                     setOctopusMood(correct ? 'happy' : 'sad');
+                    
+                    // إظهار النافذة المناسبة محليًا
+                    set({
+                      showCorrectModal: correct,
+                      showIncorrectModal: !correct
+                    });
                   }
+                } else {
+                  // اللعبة غير متوفرة بعد المحاولات
+                  toast({
+                    title: 'مشكلة في الاتصال',
+                    description: 'لم نتمكن من إرسال إجابتك. الرجاء المحاولة مرة أخرى.',
+                    variant: 'destructive'
+                  });
                 }
               }, 500);
             }, 1000);
@@ -260,15 +300,43 @@ export default function Game() {
     // إذا كان اللاعب مسجلاً بالفعل، نرسل الإجابة مباشرة
     console.log('إرسال الإجابة:', answer, 'للعبة:', currentGame.id);
     submitAnswer(currentGame.id, answer);
+    setSuccessfulAnswerSubmit(true);
     
     // تطبيق محلي لتجربة أفضل
     if (currentQuestion) {
       const correct = answer === currentQuestion.answer;
       setOctopusMood(correct ? 'happy' : 'sad');
+      
+      // إظهار النافذة المناسبة محليًا لإعطاء تجربة أسرع
+      set({
+        showCorrectModal: correct,
+        showIncorrectModal: !correct
+      });
     }
     
     console.log('---------- نهاية معالجة الإجابة ----------\n');
   };
+  
+  // مراقبة عدد محاولات الإجابة وإظهار رسالة مساعدة للمستخدم إذا لزم الأمر
+  useEffect(() => {
+    // إذا وصل عدد محاولات الإجابة إلى حد معين ولم يتم استلام الرد
+    if (answerAttempts >= 3 && !successfulAnswerSubmit) {
+      toast({
+        title: 'مشكلة في الاتصال',
+        description: 'يبدو أن هناك مشكلة في إرسال إجابتك. حاول تحديث الصفحة والمحاولة مرة أخرى.',
+        variant: 'destructive',
+      });
+      
+      // إعادة ضبط عدد المحاولات
+      setAnswerAttempts(0);
+    }
+    
+    // إذا تم إرسال إجابة ناجحة، نعيد ضبط المتغيرات
+    if (successfulAnswerSubmit) {
+      setAnswerAttempts(0);
+      setSuccessfulAnswerSubmit(false);
+    }
+  }, [answerAttempts, successfulAnswerSubmit]);
   
   // Get current player from game state
   const currentPlayer = currentGame?.players.find(
@@ -489,33 +557,69 @@ export default function Game() {
           
           {/* Answer Options Section */}
           <div className="grid grid-cols-2 gap-3 w-full">
-            {answers.slice(0, 4).map((answer, index) => (
-              <button
-                key={index}
-                className="answer-bubble p-4 rounded-xl font-bold text-lg md:text-xl transition-all transform hover:scale-105 relative"
-                style={{
-                  background: 'linear-gradient(45deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
-                  border: '2px solid var(--space-bright)',
-                  boxShadow: '0 0 10px var(--space-bright)',
-                  fontFamily: 'Orbitron, sans-serif',
-                  minHeight: '55px'
-                }}
-                onClick={() => handleAnswerSubmit(answer)}
-              >
-                {/* Circle with answer number */}
-                <div 
-                  className="absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-sm"
+            {answers.slice(0, 4).map((answer, index) => {
+              // استخدام معرف فريد للإجابة لتسهيل التتبع
+              const answerId = `answer-${index}-${answer}`;
+              
+              return (
+                <button
+                  key={answerId}
+                  id={answerId}
+                  className="answer-bubble p-4 rounded-xl font-bold text-lg md:text-xl transition-all transform hover:scale-105 active:scale-95 relative"
                   style={{
-                    background: 'var(--space-pink)',
-                    border: '1px solid var(--space-bright)',
-                    boxShadow: '0 0 8px var(--space-bright)'
+                    background: 'linear-gradient(45deg, rgba(123, 44, 191, 0.9), rgba(36, 0, 70, 0.9))',
+                    border: '2px solid var(--space-bright)',
+                    boxShadow: '0 0 10px var(--space-bright)',
+                    fontFamily: 'Orbitron, sans-serif',
+                    minHeight: '55px',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    WebkitTapHighlightColor: 'transparent'
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault(); // منع السلوك الافتراضي
+                    e.stopPropagation(); // منع انتشار الحدث
+                    
+                    // تأثير بصري وصوتي فوري للمستخدم (استجابة سريعة)
+                    const btn = e.currentTarget;
+                    btn.style.transform = 'scale(0.95)';
+                    btn.style.opacity = '0.8';
+                    
+                    // إعادة الزر إلى حالته الطبيعية بعد فترة قصيرة
+                    setTimeout(() => {
+                      btn.style.transform = '';
+                      btn.style.opacity = '';
+                    }, 150);
+                    
+                    // استدعاء معالج الإجابة
+                    handleAnswerSubmit(answer);
+                  }}
+                  onTouchStart={() => {
+                    // تحسين تجربة اللمس على الأجهزة المحمولة
+                    if (isSoundEnabled) {
+                      try {
+                        soundService.play('click');
+                      } catch (e) {
+                        console.error('خطأ في تشغيل صوت النقر باللمس:', e);
+                      }
+                    }
                   }}
                 >
-                  {convertToArabicNumerals(index + 1)}
-                </div>
-                {convertToArabicNumerals(answer)}
-              </button>
-            ))}
+                  {/* Circle with answer number */}
+                  <div 
+                    className="absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-sm"
+                    style={{
+                      background: 'var(--space-pink)',
+                      border: '1px solid var(--space-bright)',
+                      boxShadow: '0 0 8px var(--space-bright)'
+                    }}
+                  >
+                    {convertToArabicNumerals(index + 1)}
+                  </div>
+                  {convertToArabicNumerals(answer)}
+                </button>
+              );
+            })}
           </div>
         </div>
         
