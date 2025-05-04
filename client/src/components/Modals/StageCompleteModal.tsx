@@ -68,26 +68,62 @@ const StageCompleteModal: FC = () => {
     
     console.log('تم النقر على زر "المرحلة التالية"...');
     
+    // صورة الحالة قبل أي تغييرات
+    const gameId = currentGame.id;
+    const gameState = useGameStore.getState();
+    
+    // إظهار مؤشر التحميل لمنع الشاشة السوداء
+    gameState.setIsLoading(true);
+    
     // إخفاء هذه النافذة أولاً بغض النظر عن الحالة
     setShowStageCompleteModal(false);
     
-    // إذا كانت هذه هي المرحلة الأخيرة، قم بعرض شاشة اكتمال اللعبة بدلاً من الانتقال إلى مرحلة جديدة
-    if (isGameCompleted) {
-      console.log('اللعبة اكتملت! عرض شاشة انتهاء اللعبة...');
-      
-      // إظهار نافذة انتهاء اللعبة بعد فترة قصيرة
-      setTimeout(() => {
-        // استخدام معلمات دالة setShowGameOverModal المحدثة
-        const score = currentPlayer?.score || 0;
-        console.log('إظهار شاشة انتهاء اللعبة مع النتيجة النهائية:', score);
-        setShowGameOverModal(true, 'completed', score);
-      }, 200);
-    } else {
-      // إرسال طلب المرحلة التالية بعد فترة قصيرة
-      setTimeout(() => {
-        console.log('بدء المرحلة التالية، رقم اللعبة:', currentGame.id);
-        nextStage(currentGame.id);
-      }, 200);
+    try {
+      // إذا كانت هذه هي المرحلة الأخيرة، قم بعرض شاشة اكتمال اللعبة بدلاً من الانتقال إلى مرحلة جديدة
+      if (isGameCompleted) {
+        console.log('اللعبة اكتملت! عرض شاشة انتهاء اللعبة...');
+        
+        // إظهار نافذة انتهاء اللعبة بعد فترة قصيرة
+        setTimeout(() => {
+          // إخفاء مؤشر التحميل
+          const updatedState = useGameStore.getState();
+          updatedState.setIsLoading(false);
+          
+          // استخدام معلمات دالة setShowGameOverModal المحدثة
+          const score = currentPlayer?.score || 0;
+          console.log('إظهار شاشة انتهاء اللعبة مع النتيجة النهائية:', score);
+          updatedState.setShowGameOverModal(true, 'completed', score);
+        }, 500);
+      } else {
+        // إرسال طلب المرحلة التالية بعد فترة قصيرة
+        setTimeout(() => {
+          console.log('بدء المرحلة التالية، رقم اللعبة:', gameId);
+          
+          // الحصول على الحالة المحدثة
+          try {
+            const { nextStage: nextStageFunc } = useGameStore.getState();
+            nextStageFunc(gameId);
+            
+            // إلغاء حالة التحميل بعد مزيد من الوقت
+            setTimeout(() => {
+              const finalState = useGameStore.getState();
+              if (finalState.isLoading) {
+                finalState.setIsLoading(false);
+              }
+            }, 2000);
+          } catch (error) {
+            console.error('خطأ في الانتقال للمرحلة التالية:', error);
+            // إلغاء حالة التحميل في حالة الخطأ
+            const errorState = useGameStore.getState();
+            errorState.setIsLoading(false);
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error('خطأ في معالجة المرحلة التالية:', error);
+      // إلغاء حالة التحميل عند حدوث خطأ
+      const errorState = useGameStore.getState();
+      errorState.setIsLoading(false);
     }
   };
   

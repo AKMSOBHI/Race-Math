@@ -653,14 +653,45 @@ export default function Game() {
                   }
                   
                   // عرض مؤشر التحميل
-                  const gameState = useGameStore.getState();
-                  gameState.setIsLoading(true);
-                  
-                  // الانتقال للسؤال التالي
-                  setTimeout(() => {
-                    const { nextQuestion } = useGameStore.getState();
-                    nextQuestion(currentGame.id);
-                  }, 200);
+                  try {
+                    const gameState = useGameStore.getState();
+                    
+                    // إيقاف جميع المؤقتات وإخفاء جميع النوافذ أولاً
+                    gameState.setIsLoading(true);
+                    gameState.setShowCorrectModal(false);
+                    gameState.setShowIncorrectModal(false);
+                    gameState.setIsTimeUp(false);
+                    
+                    // إمساك معرف اللعبة قبل أي تغييرات
+                    const gameId = currentGame.id;
+                    
+                    // الانتقال للسؤال التالي
+                    setTimeout(() => {
+                      try {
+                        const { nextQuestion } = useGameStore.getState();
+                        nextQuestion(gameId);
+                        
+                        // مؤقت أمان لإلغاء حالة التحميل في حالة عدم استجابة الخادم
+                        setTimeout(() => {
+                          const finalState = useGameStore.getState();
+                          if (finalState.isLoading) {
+                            console.log('مؤقت الأمان - إلغاء حالة التحميل');
+                            finalState.setIsLoading(false);
+                          }
+                        }, 3000);
+                      } catch (innerError) {
+                        console.error('خطأ أثناء محاولة إرسال طلب السؤال التالي:', innerError);
+                        // إلغاء حالة التحميل في حالة الخطأ
+                        const errorState = useGameStore.getState();
+                        errorState.setIsLoading(false);
+                      }
+                    }, 200);
+                  } catch (error) {
+                    console.error('خطأ في زر التالي:', error);
+                    // التأكد من إلغاء حالة التحميل في حالة حدوث خطأ
+                    const errorState = useGameStore.getState();
+                    errorState.setIsLoading(false);
+                  }
                 }
               }}
             >

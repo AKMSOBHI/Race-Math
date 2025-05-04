@@ -341,6 +341,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   nextStage: (gameId) => {
     console.log('استدعاء دالة nextStage مع معرف اللعبة:', gameId);
     
+    // إظهار مؤشر التحميل أولاً لمنع الشاشة السوداء
+    set({ isLoading: true });
+    
     // إعادة ضبط حالة التطبيق عند الانتقال للمرحلة التالية
     set({
       currentQuestion: null,    // إعادة ضبط السؤال الحالي
@@ -358,8 +361,18 @@ export const useGameStore = create<GameState>((set, get) => ({
         payload: { gameId }
       });
       console.log('تم إرسال رسالة next_stage بنجاح');
+      
+      // إضافة مؤقت للتأكد من عدم استمرار مؤشر التحميل لفترة طويلة
+      setTimeout(() => {
+        const state = get();
+        if (state.isLoading) {
+          console.log('مؤقت السلامة - إعادة تعيين isLoading إلى false');
+          set({ isLoading: false });
+        }
+      }, 5000);
     } catch (error) {
       console.error('خطأ عند إرسال رسالة next_stage:', error);
+      set({ isLoading: false }); // إلغاء حالة التحميل في حالة الخطأ
     }
   },
   
@@ -594,10 +607,15 @@ export const useGameStore = create<GameState>((set, get) => ({
         break;
         
       case 'stage_completed':
-        // إظهار نافذة إكمال المرحلة وإعادة ضبط حالة الوقت
+        console.log('تم استلام رسالة استكمال المرحلة:', message.payload);
+        
+        // إعادة ضبط حالة اللعبة لمنع ظهور الشاشة السوداء
         set({ 
           showStageCompleteModal: true,
-          isTimeUp: false  // إعادة ضبط مؤقت الوقت
+          isTimeUp: false,  // إعادة ضبط مؤقت الوقت
+          isLoading: false, // التأكد من إخفاء مؤشر التحميل
+          showCorrectModal: false,
+          showIncorrectModal: false
         });
         
         // إضافة صوت إكمال المرحلة
@@ -607,6 +625,20 @@ export const useGameStore = create<GameState>((set, get) => ({
             module.default.play('levelComplete');
           }
         });
+        
+        // إعادة ضبط الدولة بعد فترة للتأكد من عدم ظهور الشاشة السوداء
+        setTimeout(() => {
+          const state = get();
+          // التحقق من أن المرحلة ما زالت مكتملة (لم يتم تغييرها من مكان آخر)
+          if (state.showStageCompleteModal) {
+            // إذا كانت هناك مرحلة تالية، نقوم بالتحضير لها
+            const nextStage = message.payload.nextStage;
+            if (nextStage) {
+              console.log('التحضير للمرحلة التالية:', nextStage);
+              // لا نقوم بأي إجراء هنا، فقط نتأكد من أن الواجهة تستجيب
+            }
+          }
+        }, 1000);
         break;
         
       case 'error':
