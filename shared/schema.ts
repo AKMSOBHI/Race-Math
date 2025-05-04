@@ -185,6 +185,7 @@ export type ServerMessage =
   | { type: "contest_started"; payload: { roomId: number; gameSession: GameSession } }
   | { type: "contest_ended"; payload: { roomId: number; leaderboard: Player[] } }
   | { type: "leaderboard_update"; payload: { roomId: number; leaderboard: Player[] } }
+  | { type: "room_cancelled"; payload: { roomId: number } }
   
   // رسائل لوحة تحكم المعلم
   | { type: "teacher_dashboard_data"; payload: { 
@@ -259,6 +260,7 @@ export type ClientMessage =
   | { type: "get_leaderboard"; payload: { roomId: number } }
   | { type: "get_waiting_students"; payload: { roomId: number; teacherId: number } } // للحصول على قائمة الطلاب في انتظار الموافقة
   | { type: "approve_student"; payload: { roomId: number; teacherId: number; studentId: number; approve: boolean } }
+  | { type: "cancel_room"; payload: { roomId: number; teacherId: number } } // لإلغاء الغرفة وجعلها غير نشطة
   
   // رسائل التواصل من المعلمة إلى الطلاب
   | { type: "send_message"; payload: { type: 'all' | 'room'; roomId?: number; teacherId: number; message: string } };

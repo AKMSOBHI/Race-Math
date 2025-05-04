@@ -24,6 +24,56 @@ export class RoomManager {
   constructor(gameManager: GameManager) {
     this.gameManager = gameManager;
   }
+  
+  /**
+   * إلغاء غرفة موجودة من خلال تعيين حالتها إلى غير نشطة
+   */
+  async cancelRoom(roomId: number, teacherId: number): Promise<boolean> {
+    try {
+      // التحقق من وجود الغرفة وأن المعلم هو المالك
+      const roomResult = await db.select().from(rooms).where(and(
+        eq(rooms.id, roomId),
+        eq(rooms.teacherId, teacherId)
+      ));
+      
+      if (roomResult.length === 0) {
+        log(`Room not found or teacher is not the owner: ${roomId}, ${teacherId}`, 'room');
+        return false;
+      }
+      
+      // تحديث حالة الغرفة لتصبح غير نشطة
+      await db.update(rooms)
+        .set({ isActive: false })
+        .where(eq(rooms.id, roomId));
+      
+      // إنهاء أي جلسات لعب نشطة في الغرفة
+      const activeSessions = await db.select().from(gameSessions)
+        .where(and(
+          eq(gameSessions.roomId, roomId),
+          eq(gameSessions.status, 'active')
+        ));
+      
+      if (activeSessions.length > 0) {
+        log(`Found ${activeSessions.length} active game sessions to cancel in room ${roomId}`, 'room');
+        
+        // تحديث حالة جميع الجلسات النشطة إلى 'completed'
+        for (const session of activeSessions) {
+          await db.update(gameSessions)
+            .set({ status: 'completed' })
+            .where(eq(gameSessions.id, session.id));
+          
+          log(`Game session ${session.id} marked as completed due to room cancellation`, 'room');
+        }
+      }
+      
+      log(`Room ${roomId} cancelled successfully by teacher ${teacherId}`, 'room');
+      return true;
+      
+    } catch (error) {
+      log(`Error cancelling room: ${error instanceof Error ? error.message : String(error)}`, 'room');
+      return false;
+    }
+  }
 
   /**
    * توليد رمز غرفة عشوائي من 6 أحرف/أرقام
