@@ -33,7 +33,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userNotifications = pendingNotifications.get(userId) || [];
     userNotifications.push(notification);
     pendingNotifications.set(userId, userNotifications);
-    log(`Stored notification for user ${userId} for later delivery`, 'notifications');
+    log(`Stored notification for user ${userId} for later delivery: ${JSON.stringify(notification)}`, 'notifications');
+    log(`Current pending notifications count for user ${userId}: ${userNotifications.length}`, 'notifications');
   };
   
   // Function to send pending notifications to user when they connect
@@ -41,11 +42,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const notifications = pendingNotifications.get(userId);
     if (notifications && notifications.length > 0) {
       log(`Sending ${notifications.length} pending notifications to user ${userId}`, 'notifications');
+      
       notifications.forEach(notification => {
+        log(`Sending pending notification: ${JSON.stringify(notification)}`, 'notifications');
         sendToClient(ws, notification);
       });
+      
       // Clear the pending notifications after sending
+      log(`Clearing pending notifications for user ${userId}`, 'notifications');
       pendingNotifications.delete(userId);
+    } else {
+      log(`No pending notifications for user ${userId}`, 'notifications');
     }
   };
   
@@ -471,11 +478,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 };
                 
                 if (teacherConnection && teacherConnection.readyState === WebSocket.OPEN) {
-                  log(`Notifying teacher ${room.teacherId} about new student ${data.payload.userId} joining room ${room.id}`, 'room');
+                  log(`Notifying teacher ${room.teacherId} about new student ${data.payload.userId} (${displayName}) joining room ${room.id}`, 'room');
+                  log(`Sending notification: ${JSON.stringify(notification)}`, 'room');
                   sendToClient(teacherConnection, notification);
                 } else {
-                  log(`Teacher ${room.teacherId} is not connected to receive notification about student joining`, 'room');
+                  log(`Teacher ${room.teacherId} is not connected to receive notification about student ${displayName} joining`, 'room');
                   // تخزين الإشعار لإرساله لاحقًا عندما تتصل المعلمة
+                  log(`Storing notification for teacher ${room.teacherId}: ${JSON.stringify(notification)}`, 'room');
                   storeNotificationForUser(room.teacherId, notification);
                 }
               } else {

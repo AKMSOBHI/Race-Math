@@ -155,6 +155,8 @@ export default function TeacherDashboard() {
   // الاستماع لتحديثات الغرف من الخادم
   useEffect(() => {
     const handleMessage = (message: any) => {
+      console.log('TeacherDashboard received message:', message);
+      
       if (message.type === "room_created") {
         setRooms(prevRooms => [message.payload, ...prevRooms]);
         toast({
@@ -164,6 +166,9 @@ export default function TeacherDashboard() {
       } else if (message.type === "room_list") {
         setRooms(message.payload);
       } else if (message.type === "student_joined_room") {
+        // معالجة إشعار انضمام طالبة
+        console.log('✓ معالجة إشعار انضمام طالبة:', message.payload);
+        
         // إضافة إشعار جديد
         const newNotification = {
           id: Date.now().toString(),
@@ -174,7 +179,12 @@ export default function TeacherDashboard() {
           read: false
         };
         
-        setNotifications(prev => [newNotification, ...prev]);
+        console.log('إضافة إشعار جديد للقائمة:', newNotification);
+        setNotifications(prev => {
+          const updatedList = [newNotification, ...prev];
+          console.log('قائمة الإشعارات الحالية:', updatedList);
+          return updatedList;
+        });
         
         // عرض إشعار توست
         toast({
