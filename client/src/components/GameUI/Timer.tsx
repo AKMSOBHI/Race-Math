@@ -83,8 +83,38 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
                 console.log('➕ المرحلة 1: إرسال طلب nextQuestion للخادم - معرف اللعبة:', gameId);
                 const { nextQuestion: nextQ } = useGameStore.getState();
                 
-                // الانتقال الفعلي للسؤال التالي
+                // الانتقال الفعلي للسؤال التالي - استخدام تكنيك جديد للانتقال
+                console.log('❗ محاولة الانتقال للسؤال التالي...');
                 nextQ(gameId);
+                
+                // إضافة إجراء بديل في حال لم ينجح الاستدعاء الأول
+                setTimeout(() => {
+                  try {
+                    // التحقق من الحالة الحالية
+                    const currentState = useGameStore.getState();
+                    const game = currentState.currentGame;
+                    
+                    if (game && game.id === gameId) {
+                      // محاولة تحديث مؤشر السؤال مباشرة بدلاً من استدعاء الخادم
+                      const currentIndex = game.currentQuestionIndex;
+                      const newIndex = Math.min(currentIndex + 1, game.questions.length - 1);
+                      
+                      if (newIndex > currentIndex) {
+                        console.log('❗ محاولة تحديث مؤشر السؤال مباشرة:', currentIndex, '→', newIndex);
+                        
+                        // تحديث السؤال الحالي واللعبة بشكل مباشر
+                        const question = game.questions[newIndex];
+                        game.currentQuestionIndex = newIndex;
+                        
+                        currentState.setCurrentGame({ ...game });
+                        currentState.setCurrentQuestion(question);
+                        currentState.setIsLoading(false);
+                      }
+                    }
+                  } catch (updateError) {
+                    console.error('❌ خطأ في التحديث المباشر لمؤشر السؤال:', updateError);
+                  }
+                }, 200);
                 
                 // المرحلة 2: التحقق من حالة الاستجابة (800 مللي ثانية)
                 setTimeout(() => {
