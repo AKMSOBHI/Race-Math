@@ -26,22 +26,25 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   // استيراد المزيد من الوظائف من gameState
   const { nextQuestion, setIsTimeUp, isTimeUp } = useGameStore();
 
-  // Timer countdown
+  // مؤقت العد التنازلي مع الانتقال التلقائي
   useEffect(() => {
+    // إذا كان الوقت المتبقي صفر أو أقل
     if (timeLeft <= 0) {
-      console.log('Timer reached zero, hasNotified:', hasNotified);
+      console.log('⛔ انتهى وقت السؤال الحالي ⛔ hasNotified:', hasNotified, 'currentGame:', !!currentGame);
       
+      // التأكد من أننا لم نقم بذلك من قبل وأن اللعبة موجودة
       if (!hasNotified && currentGame) {
-        console.log('Notifying time end and taking action');
-        setHasNotified(true); // تعيين التنبيه أولاً لمنع التكرار
+        console.log('♞ بدء الإجراءات اللازمة للانتقال التلقائي بعد انتهاء الوقت');
+        // تعيين التنبيه أولاً لمنع التكرار
+        setHasNotified(true);
         
         try {
-          console.log('انتهى وقت السؤال - بدء منطق الانتقال للسؤال التالي');
+          console.log('➕ التحضير للانتقال التلقائي للسؤال التالي');
 
           // التأكد من استجابة الواجهة
           document.body.style.background = 'rgba(25, 25, 60, 1)';
           
-          // وضع علم انتهاء الوقت وعرض مؤشر التحميل
+          // وضع علم انتهاء الوقت وإعداد حالة التحميل
           setIsTimeUp(true);
           
           // الحصول على الحالة الحالية وتعيين حالة التحميل
@@ -55,79 +58,108 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
           
           // تشغيل صوت انتهاء الوقت
           if (isSoundEnabled) {
-            console.log('تشغيل صوت انتهاء الوقت');
-            soundService.play('countdown');
-            // استخدام صوت التنبيه بدلاً من صوت نهاية اللعبة
+            console.log('🔊 تشغيل صوت انتهاء الوقت');
+            soundService.play('wrong'); // استخدام صوت الإجابة الخاطئة للتنبيه
           }
           
           // إظهار رسالة انتهاء الوقت
           toast({
             title: "انتهى الوقت!",
-            description: "انتقال للسؤال التالي...",
+            description: "الانتقال للسؤال التالي تلقائياً...",
             variant: "destructive",
           });
           
-          // الانتقال للسؤال التالي فوراً لتجنب الشاشة السوداء
+          // نظام الانتقال التلقائي - شروط السلامة
           if (currentGame) {
-            console.log('الانتقال الفوري للسؤال التالي بعد انتهاء الوقت');
+            console.log('➕ جاري تجهيز الانتقال التلقائي للسؤال التالي (معرف اللعبة: ' + currentGame.id + ')');
             
-            // التأكد من استجابة الواجهة
+            // التأكد من وجود المعرف الصحيح
             const gameId = currentGame.id;
             
-            // بدلاً من استدعاء nextQuestion مباشرة، نستخدم تأخيرًا زمنيًا قصيرًا
+            // تصميم نظام متعدد المراحل للانتقال الموثوق
+            // المرحلة 1: إرسال الطلب بعد فترة قصيرة (100 مللي ثانية)
             setTimeout(() => {
               try {
-                // نحصل على الحالة المحدثة ونستدعي الدالة بشكل منفصل
+                console.log('➕ المرحلة 1: إرسال طلب nextQuestion للخادم - معرف اللعبة:', gameId);
                 const { nextQuestion: nextQ } = useGameStore.getState();
-                console.log('إرسال طلب الانتقال للسؤال التالي:', gameId);
+                
+                // الانتقال الفعلي للسؤال التالي
                 nextQ(gameId);
                 
-                // مجموعة من المؤقتات للتأكد من الاستجابة
+                // المرحلة 2: التحقق من حالة الاستجابة (800 مللي ثانية)
                 setTimeout(() => {
                   try {
-                    // إعادة تعيين حالة التحميل إلى false في حال لم يتم ذلك بالفعل
+                    console.log('➕ المرحلة 2: التحقق من حالة الاستجابة وإعادة الضبط');
+                    
+                    // الحصول على الحالة الحالية بعد الاستجابة
                     const currentState = useGameStore.getState();
+                    
+                    // إعادة ضبط حالة التحميل إذا لزم الأمر
                     if (currentState.isLoading) {
-                      console.log('إعادة تعيين حالة التحميل إلى false بعد الانتقال');
+                      console.log('⭕ تنفيذ إعادة ضبط حالة التحميل');
                       currentState.setIsLoading(false);
                     }
                     
-                    // إعادة تعيين حالة انتهاء الوقت بعد الانتقال للسؤال التالي
+                    // إعادة ضبط حالة انتهاء الوقت
                     currentState.setIsTimeUp(false);
                     
-                    // استدعاء دالة انتهاء الوقت إذا كانت موجودة
+                    // استدعاء دالة انتهاء الوقت المخصصة (إن وجدت)
                     if (onTimeEnd) {
-                      console.log('Calling onTimeEnd callback');
+                      console.log('✅ تنفيذ إجراءات onTimeEnd');
                       onTimeEnd();
                     }
                     
-                    // مؤقت أمان إضافي للتأكد من إعادة تعيين الحالة
+                    // المرحلة 3: مؤقت أمان إضافي (2000 مللي ثانية)
                     setTimeout(() => {
                       try {
+                        console.log('➕ المرحلة 3: مؤقت أمان نهائي للتأكد من الاستجابة');
+                        
+                        // الحصول على آخر حالة للتأكد
                         const finalState = useGameStore.getState();
+                        
+                        // إذا كانت حالة التحميل ما زالت نشطة، نعيد ضبطها
                         if (finalState.isLoading) {
-                          console.log('مؤقت الأمان النهائي - إعادة تعيين حالة التحميل');
+                          console.log('⚠️ تنبيه: ما زالت حالة التحميل نشطة بعد كل مراحل الأمان');
                           finalState.setIsLoading(false);
-                          window.location.reload(); // إعادة تحميل الصفحة كإجراء أخير
+                          
+                          // إذا استمرت المشكلة، نعيد تحميل الصفحة كملاذ أخير
+                          window.location.reload();
+                        } else {
+                          console.log('✅ نجاح الانتقال التلقائي للسؤال التالي بعد انتهاء الوقت!');
                         }
                       } catch (e) {
-                        console.error('خطأ في مؤقت الأمان النهائي:', e);
+                        console.error('❌ خطأ في مؤقت الأمان النهائي:', e);
+                        // إعادة تحميل الصفحة في حالة الخطأ
                       }
-                    }, 2000); // مؤقت إضافي بعد سنتين
+                    }, 2000);
                   } catch (timeoutError) {
-                    console.error('خطأ في مؤقت الاستجابة:', timeoutError);
+                    console.error('❌ خطأ في المرحلة 2 من الانتقال التلقائي:', timeoutError);
+                    // ضمان إعادة ضبط حالة التحميل في حالة الخطأ
+                    const errorState = useGameStore.getState();
+                    errorState.setIsLoading(false);
                   }
                 }, 800);
               } catch (error) {
-                console.error('خطأ في استدعاء nextQuestion:', error);
+                console.error('❌ خطأ في المرحلة 1 من الانتقال التلقائي:', error);
                 // إعادة تعيين حالة التحميل في حالة حدوث خطأ
                 const errorState = useGameStore.getState();
                 errorState.setIsLoading(false);
+                
+                // محاولة إعادة تنفيذ الاستدعاء بعد فترة
+                setTimeout(() => {
+                  try {
+                    console.log('⚙️ محاولة أخيرة للانتقال التلقائي...');
+                    const { nextQuestion: retryNextQ } = useGameStore.getState();
+                    retryNextQ(gameId);
+                  } catch (retryError) {
+                    console.error('❌ فشلت المحاولة الأخيرة للانتقال التلقائي:', retryError);
+                  }
+                }, 1500);
               }
             }, 100);
           }
         } catch (error) {
-          console.error('Error in timer end handling:', error);
+          console.error('❌ خطأ في منطق انتهاء الوقت الرئيسي:', error);
           
           // في حالة حدوث خطأ، نحاول إلغاء حالة التحميل بعد فترة
           setTimeout(() => {
