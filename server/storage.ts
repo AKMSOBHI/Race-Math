@@ -244,17 +244,29 @@ export class DatabaseStorage implements IStorage {
       
       // Crear una sesión con un ID único
       const sessionId = nanoid();
+      const initialStage = 'BASIC_ADDITION_SUBTRACTION';
+      
+      // Generamos preguntas desde el principio para evitar el problema de juegos sin preguntas
+      // Importamos directamente la función para evitar problemas de dependencias circulares
+      const { generateQuestionsForStage } = await import('./game/questionGenerator');
+      const initialQuestions = generateQuestionsForStage(initialStage, 'easy');
+      
+      if (!initialQuestions || initialQuestions.length === 0) {
+        console.error('Error generating initial questions for game session');
+      }
+      
       const session: GameSession = {
         id: sessionId,
-        stage: 'BASIC_ADDITION_SUBTRACTION', // Initial stage is BASIC_ADDITION_SUBTRACTION
+        stage: initialStage,
         hostId,
         players: [player],
         currentQuestionIndex: 0,
-        questions: [],
+        questions: initialQuestions || [], // Asignamos las preguntas generadas o array vacío si falló
         maxPlayers,
         isMultiplayer,
         status: 'waiting',
-        roomId
+        roomId,
+        difficulty: 'easy' // Valor predeterminado
       };
       
       // Guardar en la base de datos - necesitamos serializar manualmente las preguntas
@@ -272,7 +284,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date()
       });
       
-      console.log(`Game session ${sessionId} created and saved to database`);
+      console.log(`Game session ${sessionId} created with ${session.questions.length} questions and saved to database`);
       return session;
     } catch (error) {
       console.error('Error creating game session:', error);

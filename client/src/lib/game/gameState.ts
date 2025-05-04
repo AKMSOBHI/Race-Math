@@ -282,10 +282,25 @@ export const useGameStore = create<GameState>((set, get) => ({
           break;
         }
         
+        // Solo actualizamos el estado si el juego está en modo 'waiting'
+        // En este caso es normal que no tenga preguntas todavía
+        if (payload.status === 'waiting') {
+          console.log('Juego en modo espera, actualizando estado sin preguntas');
+          set({
+            currentGame: payload,
+            isLoading: false
+          });
+          break;
+        }
+        
         // Verificar que hay preguntas válidas
         if (!Array.isArray(payload.questions) || payload.questions.length === 0) {
-          console.error('Error: juego recibido sin preguntas válidas', payload);
-          set({ isLoading: false });
+          console.error('Error: juego activo recibido sin preguntas válidas', payload);
+          set({
+            currentGame: payload,
+            isLoading: false,
+            showStartModal: true  // Mostrar el modal para que el usuario pueda volver a intentar
+          });
           break;
         }
         
@@ -316,9 +331,32 @@ export const useGameStore = create<GameState>((set, get) => ({
         
         // Verificar que los datos son válidos
         const gameData = message.payload;
-        if (!gameData || !Array.isArray(gameData.questions) || gameData.questions.length === 0) {
-          console.error('Error: game_started recibido con datos inválidos', gameData);
+        if (!gameData) {
+          console.error('Error: game_started recibido con datos nulos');
           set({ isLoading: false });
+          break;
+        }
+        
+        // Si el juego no tiene preguntas o está vacío, mostrar error pero mantener el modal abierto
+        if (!Array.isArray(gameData.questions) || gameData.questions.length === 0) {
+          console.error('Error: game_started recibido sin preguntas válidas', gameData);
+          
+          // Mensaje para consola de depuración
+          console.log('Juego sin preguntas, probablemente un error en la generación');
+          
+          // Actualizamos el estado pero mantenemos el modal abierto
+          set({ 
+            currentGame: gameData,
+            isLoading: false,
+            showStartModal: true  // Mantenemos el modal abierto para reintentar
+          });
+          
+          import('../soundService').then(({ soundService }) => {
+            if (get().isSoundEnabled) {
+              soundService.play('error');
+            }
+          });
+          
           break;
         }
         
