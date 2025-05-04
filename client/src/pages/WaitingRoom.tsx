@@ -26,6 +26,8 @@ export default function WaitingRoom() {
   const [roomInfo, setRoomInfo] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [countdown, setCountdown] = useState<number | null>(null); // للعد التنازلي قبل بدء المسابقة
+  const [countdownAnimationActive, setCountdownAnimationActive] = useState(false); // لتأثيرات العد التنازلي
   
   // الحصول على معرف الغرفة من عنوان URL
   const roomId = match && params ? parseInt(params.id) : null;
@@ -91,6 +93,39 @@ export default function WaitingRoom() {
           });
           
           setPlayers(prev => [...prev, message.payload.player]);
+        }
+      }
+      else if (message.type === "contest_countdown") {
+        // تحديث العد التنازلي لبدء المسابقة
+        if (message.payload.roomId.toString() === roomId?.toString()) {
+          const seconds = message.payload.countdown;
+          console.log(`العد التنازلي: ${seconds} ثوانٍ`);
+          
+          // تشغيل صوت للعد التنازلي
+          if (seconds <= 5) { // صوت للعد التنازلي النهائي
+            soundService.play('correct');
+          } else if (seconds === 10 || seconds === 15 || seconds === 20) {
+            soundService.play('click'); // صوت للإشارات الرئيسية في العد
+          }
+          
+          // تحديث حالة العد التنازلي
+          setCountdown(seconds);
+          
+          // تفعيل تأثير الرسوم المتحركة للعد التنازلي
+          setCountdownAnimationActive(true);
+          
+          // إيقاف التأثير بعد فترة قصيرة
+          setTimeout(() => {
+            setCountdownAnimationActive(false);
+          }, 500);
+          
+          // إظهار رسالة بدء المسابقة قريباً
+          if (seconds === 20) {
+            toast({
+              title: 'ستبدأ المسابقة قريباً!',
+              description: 'المسابقة ستبدأ خلال 20 ثانية. كوني مستعدة!',
+            });
+          }
         }
       }
       else if (message.type === "game_started") {
@@ -167,12 +202,63 @@ export default function WaitingRoom() {
               </div>
             ) : (
               <>
-                <div className="p-4 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
-                  <h3 className="text-lg font-semibold mb-2 text-center">انتظري بدء المسابقة...</h3>
-                  <p className="text-sm text-center">
-                    ستبدأ المسابقة عندما تقوم المعلمة ببدء المسابقة. كوني مستعدة!
-                  </p>
-                </div>
+                {countdown !== null ? (
+                  <div 
+                    className={`p-6 rounded-lg text-center ${countdownAnimationActive ? 'animate-pulse' : ''}`} 
+                    style={{ 
+                      background: 'rgba(0,0,0,0.4)',
+                      boxShadow: '0 0 15px rgba(0, 245, 212, 0.5)'
+                    }}
+                  >
+                    <h3 className="text-xl font-bold mb-2">
+                      المسابقة ستبدأ قريباً!
+                    </h3>
+                    <div className="flex justify-center items-center my-6">
+                      <div 
+                        className="relative w-24 h-24 flex items-center justify-center"
+                      >
+                        {/* دائرة العد التنازلي */}
+                        <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100">
+                          <circle 
+                            cx="50" 
+                            cy="50" 
+                            r="45" 
+                            fill="none" 
+                            stroke="rgba(60, 247, 255, 0.2)" 
+                            strokeWidth="6"
+                          />
+                          <circle 
+                            cx="50" 
+                            cy="50" 
+                            r="45" 
+                            fill="none" 
+                            stroke={countdown <= 5 ? '#ff4050' : '#3cf7ff'}
+                            strokeWidth="6"
+                            strokeDasharray="283"
+                            strokeDashoffset={(283 * (1 - countdown / 20)).toString()}
+                            transform="rotate(-90 50 50)"
+                          />
+                        </svg>
+                        <div 
+                          className="text-5xl font-mono font-bold z-10"
+                          style={{ color: countdown <= 5 ? '#ff4050' : '#3cf7ff' }}
+                        >
+                          {convertToArabicNumerals(countdown)}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm">
+                      كوني مستعدة! ستبدأ المسابقة خلال {convertToArabicNumerals(countdown)} ثوانٍ
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-lg" style={{ background: 'rgba(0,0,0,0.2)' }}>
+                    <h3 className="text-lg font-semibold mb-2 text-center">انتظري بدء المسابقة...</h3>
+                    <p className="text-sm text-center">
+                      ستبدأ المسابقة عندما تقوم المعلمة ببدء المسابقة. كوني مستعدة!
+                    </p>
+                  </div>
+                )}
                 
                 <div>
                   <h3 className="text-lg font-semibold mb-3">الطالبات المنضمات ({convertToArabicNumerals(players.length)}):</h3>
@@ -225,7 +311,7 @@ export default function WaitingRoom() {
       {/* شريط سفلي زخرفي */}
       <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-purple-900 via-space-bright to-purple-900 z-20"></div>
       
-      {/* أنماط CSS للفقاعات */}
+      {/* أنماط CSS للفقاعات والتأثيرات */}
       <style dangerouslySetInnerHTML={{ __html: `
         .bubble {
           position: absolute;
@@ -260,6 +346,15 @@ export default function WaitingRoom() {
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-pulse {
+          animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.05); }
         }
       `}} />
     </div>

@@ -500,7 +500,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
               
               if (result.success && result.gameSession) {
-                // نرسل إشعار لجميع اللاعبين بالغرفة
+                // نبدأ العد التنازلي قبل بدء المسابقة
+                log(`Starting countdown for room ${data.payload.roomId}...`, 'contest');
+                
+                // الحصول على جميع الطلاب في الغرفة
+                const students = result.gameSession.players.map(player => player.id);
+                log(`Found ${students.length} students in room`, 'contest');
+                
+                // نرسل إشعار للمعلمة بأن المسابقة ستبدأ بعد عد تنازلي
                 sendToClient(ws, {
                   type: 'contest_started',
                   payload: {
@@ -508,6 +515,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     gameSession: result.gameSession
                   }
                 });
+                
+                // بدء العد التنازلي لمدة 20 ثانية
+                const countdownSeconds = 20;
+                let secondsRemaining = countdownSeconds;
+                
+                const countdownInterval = setInterval(() => {
+                  // إرسال تحديث العد التنازلي لجميع اللاعبين
+                  students.forEach(studentId => {
+                    const studentConnection = connections.get(studentId);
+                    if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
+                      sendToClient(studentConnection, {
+                        type: 'contest_countdown',
+                        payload: {
+                          roomId: data.payload.roomId,
+                          countdown: secondsRemaining
+                        }
+                      });
+                    }
+                  });
+                  
+                  // إرسال تحديث للمعلمة أيضاً
+                  sendToClient(ws, {
+                    type: 'contest_countdown',
+                    payload: {
+                      roomId: data.payload.roomId,
+                      countdown: secondsRemaining
+                    }
+                  });
+                  
+                  secondsRemaining--;
+                  
+                  // إذا انتهى العد التنازلي، نوقف المؤقت ونرسل رسالة بدء اللعبة
+                  if (secondsRemaining < 0) {
+                    clearInterval(countdownInterval);
+                    log(`Countdown complete, starting game for room ${data.payload.roomId}`, 'contest');
+                    
+                    // إرسال رسالة بدء اللعبة لجميع الطلاب
+                    students.forEach(studentId => {
+                      const studentConnection = connections.get(studentId);
+                      if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
+                        if (result.gameSession) {
+                          sendToClient(studentConnection, {
+                            type: 'game_started',
+                            payload: result.gameSession
+                          });
+                        }
+                      }
+                    });
+                  }
+                }, 1000); // تحديث كل ثانية
               } else {
                 sendToClient(ws, {
                   type: 'error',
