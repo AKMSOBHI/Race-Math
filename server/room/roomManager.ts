@@ -26,6 +26,23 @@ export class RoomManager {
   }
   
   /**
+   * الحصول على جميع مشاركات المستخدم في الغرف
+   * تُستخدم للحصول على الاسم الكامل من آخر مشاركة
+   */
+  async getRoomParticipantsByUserId(userId: number): Promise<RoomParticipant[]> {
+    try {
+      const participants = await db.select()
+        .from(roomParticipants)
+        .where(eq(roomParticipants.userId, userId));
+      
+      return participants;
+    } catch (error) {
+      log(`Error getting room participants for user ${userId}: ${error instanceof Error ? error.message : String(error)}`, 'room-error');
+      return [];
+    }
+  }
+  
+  /**
    * إلغاء غرفة موجودة من خلال تعيين حالتها إلى غير نشطة
    */
   async cancelRoom(roomId: number, teacherId: number): Promise<boolean> {

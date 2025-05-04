@@ -118,28 +118,23 @@ export const useGameStore = create<GameState>((set, get) => ({
     // التحقق من وجود اسم كامل محفوظ من صفحة الانضمام
     const savedFullName = localStorage.getItem('playerFullName');
     
-    // إذا كان هناك اسم كامل محفوظ، نستخدمه مع الانضمام للعبة
-    if (savedFullName) {
+    // تحديث اسم المستخدم في النظام قبل الانضمام للعبة
+    if (savedFullName && currentUser) {
       console.log(`استخدام الاسم الكامل المحفوظ: ${savedFullName}`);
       
-      sendMessage({
-        type: 'join_game_with_name',
-        payload: {
-          gameId,
-          playerId: currentUser.id,
-          displayName: savedFullName
-        }
-      });
-    } else {
-      // في حالة عدم وجود اسم كامل محفوظ، نستخدم الطريقة الافتراضية
-      sendMessage({
-        type: 'join_game',
-        payload: {
-          gameId,
-          playerId: currentUser.id
-        }
-      });
+      // تحديث اسم المستخدم محليًا
+      const updatedUser = { ...currentUser, username: savedFullName };
+      set({ currentUser: updatedUser });
     }
+    
+    // استخدام طريقة الانضمام المعيارية
+    sendMessage({
+      type: 'join_game',
+      payload: {
+        gameId,
+        playerId: currentUser.id
+      }
+    });
   },
   
   createGame: (isMultiplayer, maxPlayers) => {
@@ -148,6 +143,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!currentUser) {
       console.error("لا يوجد مستخدم حالي");
       return;
+    }
+    
+    // التحقق من وجود اسم كامل محفوظ لتحديث المستخدم الحالي
+    const savedFullName = localStorage.getItem('playerFullName');
+    if (savedFullName) {
+      // تحديث اسم المستخدم محليًا
+      const updatedUser = { ...currentUser, username: savedFullName };
+      set({ currentUser: updatedUser });
+      console.log(`تم تحديث اسم المستخدم الحالي إلى: ${savedFullName}`);
     }
     
     set({ isLoading: true });
@@ -407,6 +411,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   handleServerMessage: (message) => {
     const { currentUser } = get();
     
+    // التحقق من وجود اسم كامل محفوظ للاستخدام في لوحة النتائج
+    const savedFullName = localStorage.getItem('playerFullName');
+    
     switch (message.type) {
       case 'game_state_update':
         // تحديث حالة اللعبة وإعادة ضبط حالة المؤقت عند الحاجة
@@ -456,8 +463,21 @@ export const useGameStore = create<GameState>((set, get) => ({
         
         console.log('Actualizando estado con pregunta:', updateQuestionData);
         
+        // تحديث أسماء اللاعبين في اللعبة إذا كان لدينا اسم كامل محفوظ
+        let updatedPayload = { ...payload };
+        if (savedFullName && currentUser) {
+          // تحديث لاعب باستخدام الاسم الكامل
+          updatedPayload.players = updatedPayload.players.map(player => {
+            if (player.id === currentUser.id) {
+              console.log(`تحديث اسم اللاعب في واجهة المستخدم من "${player.username}" إلى "${savedFullName}"`);
+              return { ...player, username: savedFullName };
+            }
+            return player;
+          });
+        }
+        
         set({ 
-          currentGame: payload,
+          currentGame: updatedPayload,
           currentQuestion: updateQuestionData,
           isLoading: false,
           // إعادة ضبط مؤقت الوقت عند الانتقال إلى مرحلة أو سؤال جديد
@@ -504,8 +524,21 @@ export const useGameStore = create<GameState>((set, get) => ({
         
         console.log('Juego iniciado con pregunta:', gameQuestionData);
         
+        // تحديث أسماء اللاعبين في اللعبة إذا كان لدينا اسم كامل محفوظ
+        let updatedGameData = { ...gameData };
+        if (savedFullName && currentUser) {
+          // تحديث لاعب باستخدام الاسم الكامل
+          updatedGameData.players = updatedGameData.players.map(player => {
+            if (player.id === currentUser.id) {
+              console.log(`تحديث اسم اللاعب في game_started من "${player.username}" إلى "${savedFullName}"`);
+              return { ...player, username: savedFullName };
+            }
+            return player;
+          });
+        }
+        
         set({ 
-          currentGame: gameData,
+          currentGame: updatedGameData,
           currentQuestion: gameQuestionData,
           isLoading: false,
           showStartModal: false

@@ -238,10 +238,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId = data.payload.playerId;
               connections.set(userId, ws);
               
-              const result = await gameManager.joinGame(
-                data.payload.gameId,
-                data.payload.playerId
-              );
+              // التحقق من وجود اسم مخصص محفوظ في قاعدة البيانات
+              const participants = await roomManager.getRoomParticipantsByUserId(data.payload.playerId);
+              let customName;
+              
+              if (participants && participants.length > 0) {
+                // الحصول على آخر مشاركة للمستخدم لاستخدام الاسم الكامل
+                const latestParticipation = participants.reduce((latest, current) => {
+                  return !latest || (current.joinedAt > latest.joinedAt) ? current : latest;
+                }, null);
+                
+                if (latestParticipation && latestParticipation.full_name) {
+                  customName = latestParticipation.full_name;
+                  log(`استخدام الاسم الكامل من صفحة الانضمام: ${customName}`, 'ws-info');
+                }
+              }
+              
+              let result;
+              
+              if (customName) {
+                // استخدام الاسم الكامل للانضمام للعبة
+                result = await gameManager.joinGameWithCustomName(
+                  data.payload.gameId,
+                  data.payload.playerId,
+                  customName
+                );
+              } else {
+                // استخدام الانضمام العادي
+                result = await gameManager.joinGame(
+                  data.payload.gameId,
+                  data.payload.playerId
+                );
+              }
               
               // Notify all players in the game
               if (result.game) {
