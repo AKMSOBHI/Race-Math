@@ -353,7 +353,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           
           import('../soundService').then(({ soundService }) => {
             if (get().isSoundEnabled) {
-              soundService.play('error');
+              soundService.play('wrong'); // cambiado de 'error' a 'wrong'
             }
           });
           
