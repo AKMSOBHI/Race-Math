@@ -632,6 +632,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             break;
           }
+          
+          case 'get_waiting_students': {
+            try {
+              userId = data.payload.teacherId;
+              connections.set(userId, ws);
+              
+              // إرسال أي إشعارات معلقة للمعلمة
+              sendPendingNotifications(userId, ws);
+              
+              const result = await roomManager.getWaitingStudents(
+                data.payload.roomId,
+                data.payload.teacherId
+              );
+              
+              if (result.success) {
+                sendToClient(ws, {
+                  type: 'waiting_students_list',
+                  payload: {
+                    roomId: data.payload.roomId,
+                    students: result.students || []
+                  }
+                });
+              } else {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Could not get waiting students list' }
+                });
+              }
+            } catch (error) {
+              log(`Error getting waiting students: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to get waiting students'
+                }
+              });
+            }
+            break;
+          }
+          
+          case 'approve_student': {
+            try {
+              userId = data.payload.teacherId;
+              connections.set(userId, ws);
+              
+              // إرسال أي إشعارات معلقة للمعلمة
+              sendPendingNotifications(userId, ws);
+              
+              const result = await roomManager.approveStudent(
+                data.payload.roomId,
+                data.payload.teacherId,
+                data.payload.studentId,
+                data.payload.approve
+              );
+              
+              if (result.success) {
+                // إرسال تحديث للمعلم بأن الطالب تمت الموافقة عليه
+                sendToClient(ws, {
+                  type: 'student_approval_updated',
+                  payload: {
+                    roomId: data.payload.roomId,
+                    studentId: data.payload.studentId,
+                    isApproved: data.payload.approve
+                  }
+                });
+                
+                // إرسال إشعار للطالب المعني بالموافقة أو الرفض
+                const studentConnection = connections.get(data.payload.studentId);
+                if (studentConnection && studentConnection.readyState === WebSocket.OPEN) {
+                  sendToClient(studentConnection, {
+                    type: 'student_approval_updated',
+                    payload: {
+                      roomId: data.payload.roomId,
+                      studentId: data.payload.studentId,
+                      isApproved: data.payload.approve
+                    }
+                  });
+                }
+                
+                // إذا تمت الموافقة، سنعيد إرسال قائمة الطلاب المنتظرين لتحديثها
+                const waitingStudents = await roomManager.getWaitingStudents(
+                  data.payload.roomId,
+                  data.payload.teacherId
+                );
+                
+                if (waitingStudents.success) {
+                  sendToClient(ws, {
+                    type: 'waiting_students_list',
+                    payload: {
+                      roomId: data.payload.roomId,
+                      students: waitingStudents.students || []
+                    }
+                  });
+                }
+              } else {
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Could not update student approval status' }
+                });
+              }
+            } catch (error) {
+              log(`Error approving student: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to approve student'
+                }
+              });
+            }
+            break;
+          }
 
           case 'send_message': {
             try {

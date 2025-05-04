@@ -1,8 +1,18 @@
 import { db } from '../db';
 import { log } from '../vite';
 import { nanoid } from 'nanoid';
-import { eq, and } from 'drizzle-orm';
-import { rooms, playerSessions, gameSessions, users, Room, Player, GameSession } from '@shared/schema';
+import { eq, and, inArray } from 'drizzle-orm';
+import { 
+  rooms, 
+  playerSessions, 
+  gameSessions, 
+  users, 
+  roomParticipants,
+  Room, 
+  Player, 
+  GameSession,
+  RoomParticipant
+} from '@shared/schema';
 import { GameManager } from '../game/gameManager';
 
 /**
@@ -281,6 +291,119 @@ export class RoomManager {
       return { success: true, gameSession: updatedSession };
     } catch (error) {
       log(`Error starting contest: ${error instanceof Error ? error.message : String(error)}`, 'room');
+      return { success: false };
+    }
+  }
+
+  /**
+   * الحصول على قائمة الطلاب المنتظرين الموافقة
+   */
+  async getWaitingStudents(roomId: number, teacherId: number): Promise<{
+    success: boolean;
+    students?: {
+      id: number;
+      username: string;
+      isApproved: boolean;
+      joinedAt: string;
+    }[];
+  }> {
+    try {
+      // التحقق من وجود الغرفة وأن المعلم هو المالك لها
+      const roomResult = await db.select().from(rooms).where(and(
+        eq(rooms.id, roomId),
+        eq(rooms.teacherId, teacherId)
+      ));
+
+      if (roomResult.length === 0) {
+        log(`Room not found or teacher is not the owner: ${roomId}, ${teacherId}`, 'room');
+        return { success: false };
+      }
+
+      // الحصول على جميع المشاركين في الغرفة
+      const participants = await db.select()
+        .from(roomParticipants)
+        .where(eq(roomParticipants.roomId, roomId));
+      
+      // الحصول على معلومات المستخدمين
+      const userIds = participants.map(p => p.userId);
+      const usersData = userIds.length > 0 ? 
+        await db.select().from(users).where(inArray(users.id, userIds)) : 
+        [];
+      
+      // تجميع البيانات
+      const students = participants.map(participant => {
+        const user = usersData.find(u => u.id === participant.userId);
+        return {
+          id: participant.userId,
+          username: user ? user.username : 'Unknown',
+          isApproved: participant.isApproved,
+          joinedAt: participant.joinedAt ? participant.joinedAt.toISOString() : new Date().toISOString()
+        };
+      });
+
+      return { success: true, students };
+    } catch (error) {
+      log(`Error getting waiting students: ${error instanceof Error ? error.message : String(error)}`, 'room');
+      return { success: false };
+    }
+  }
+
+  /**
+   * موافقة أو رفض الطالب
+   */
+  async approveStudent(roomId: number, teacherId: number, studentId: number, approve: boolean): Promise<{
+    success: boolean;
+    studentUpdated?: boolean;
+  }> {
+    try {
+      // التحقق من وجود الغرفة وأن المعلم هو المالك لها
+      const roomResult = await db.select().from(rooms).where(and(
+        eq(rooms.id, roomId),
+        eq(rooms.teacherId, teacherId)
+      ));
+
+      if (roomResult.length === 0) {
+        log(`Room not found or teacher is not the owner: ${roomId}, ${teacherId}`, 'room');
+        return { success: false };
+      }
+
+      // البحث عن الطالب في الغرفة
+      const participantResult = await db.select()
+        .from(roomParticipants)
+        .where(and(
+          eq(roomParticipants.roomId, roomId),
+          eq(roomParticipants.userId, studentId)
+        ));
+
+      if (participantResult.length === 0) {
+        log(`Student ${studentId} not found in room ${roomId}`, 'room');
+        return { success: false };
+      }
+
+      // تحديث حالة الموافقة
+      await db.update(roomParticipants)
+        .set({ isApproved: approve })
+        .where(and(
+          eq(roomParticipants.roomId, roomId),
+          eq(roomParticipants.userId, studentId)
+        ));
+
+      log(`Student ${studentId} ${approve ? 'approved' : 'rejected'} for room ${roomId}`, 'room');
+
+      // إذا كانت في حالة الرفض، نقوم بإزالة الطالب من الغرفة
+      if (!approve) {
+        await db.delete(roomParticipants)
+          .where(and(
+            eq(roomParticipants.roomId, roomId),
+            eq(roomParticipants.userId, studentId)
+          ));
+        
+        log(`Student ${studentId} removed from room ${roomId}`, 'room');
+      }
+
+      return { success: true, studentUpdated: true };
+    } catch (error) {
+      log(`Error approving student: ${error instanceof Error ? error.message : String(error)}`, 'room');
       return { success: false };
     }
   }
