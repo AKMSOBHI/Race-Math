@@ -12,8 +12,8 @@ ws.on('open', function open() {
     type: "join_room",
     payload: {
       roomCode: "TBJ42M",
-      userId: 62, // رقم الطالبة الجديدة
-      fullName: "سارة عبدالله القحطاني" // اسم مختلف للاختبار
+      userId: 199, // رقم الطالب الجديد من سجلات الخادم
+      fullName: "محمد سالم العتيبي" // اسم كامل للاختبار
     }
   };
   
