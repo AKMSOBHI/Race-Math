@@ -57,7 +57,7 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
     switch (reason) {
       case 'time':
         return {
-          title: 'انتهى الوقت!',
+          title: 'انتهى الوقت !',
           message: 'لقد انتهى الوقت المخصص للإجابة على السؤال.',
           icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -69,7 +69,7 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
       case 'completed':
         return {
           title: 'أحسنت! 🎉',
-          message: 'لقد أكملت جميع المراحل بنجاح!',
+          message: 'لقد أكملت جميع المراحل بنجاح !',
           icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -79,7 +79,7 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
         };
       case 'failed':
         return {
-          title: 'انتهت اللعبة!',
+          title: 'انتهت اللعبة !',
           message: 'لقد استنفذت جميع المحاولات الخاصة بك.',
           icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -102,7 +102,7 @@ const GameOverModal: FC<GameOverModalProps> = ({ reason, finalScore = 0 }) => {
       default:
         return {
           title: 'انتهت اللعبة',
-          message: 'شكراً للعب معنا!',
+          message: 'شكراً للعب معنا !',
           icon: (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
