@@ -71,6 +71,16 @@ export async function runMigrations() {
         completed_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      
+      -- إنشاء جدول المشاركين في الغرفة
+      CREATE TABLE IF NOT EXISTS room_participants (
+        id SERIAL PRIMARY KEY,
+        room_id INTEGER REFERENCES rooms(id),
+        user_id INTEGER REFERENCES users(id),
+        is_approved BOOLEAN DEFAULT FALSE,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(room_id, user_id)
+      );
     `;
     
     // إنشاء الجداول
