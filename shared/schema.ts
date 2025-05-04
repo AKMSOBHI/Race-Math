@@ -48,6 +48,7 @@ export const roomParticipants = pgTable("room_participants", {
   id: serial("id").primaryKey(),
   roomId: integer("room_id").notNull().references(() => rooms.id),
   userId: integer("user_id").notNull().references(() => users.id),
+  fullName: text("full_name"), // الاسم الكامل للطالبة
   isApproved: boolean("is_approved").default(false), // هل تمت الموافقة على الطالب من قبل المعلم
   joinedAt: timestamp("joined_at").defaultNow(), // وقت الانضمام للغرفة
 }, (table) => {
@@ -147,6 +148,7 @@ export interface Player {
 export const insertRoomParticipantSchema = createInsertSchema(roomParticipants).pick({
   roomId: true,
   userId: true,
+  fullName: true,
   isApproved: true,
 });
 

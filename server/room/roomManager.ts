@@ -169,16 +169,19 @@ export class RoomManager {
       const room = roomResult[0];
       const user = userResult[0];
       
+      // إعداد fullNameValue لاستخدامه سواء للتحديث أو للإضافة
+      const fullNameValue = fullName && fullName.trim() !== '' ? fullName.trim() : undefined;
+      
       // إذا تم توفير اسم كامل، فسنقوم بتحديث اسم المستخدم
-      if (fullName && fullName.trim() !== '') {
+      if (fullNameValue) {
         try {
           // تحديث اسم المستخدم بالاسم الكامل المقدم
           await db.update(users)
-            .set({ username: fullName.trim() })
+            .set({ username: fullNameValue })
             .where(eq(users.id, userId));
           
-          log(`Updated username for user ${userId} to "${fullName.trim()}"`, 'room');
-          user.username = fullName.trim(); // تحديث الاسم في الكائن المحلي أيضاً
+          log(`Updated username for user ${userId} to "${fullNameValue}"`, 'room');
+          user.username = fullNameValue; // تحديث الاسم في الكائن المحلي أيضاً
         } catch (error) {
           log(`Error updating username: ${error instanceof Error ? error.message : String(error)}`, 'room');
           // نستمر في السير حتى لو فشل تحديث الاسم
@@ -205,6 +208,7 @@ export class RoomManager {
         await db.insert(roomParticipants).values({
           roomId: roomId,
           userId: userId,
+          fullName: fullNameValue, // تخزين الاسم الكامل في قاعدة البيانات
           isApproved: false, // الطالب بحاجة إلى موافقة المعلم
         });
         
@@ -333,10 +337,12 @@ export class RoomManager {
       // تجميع البيانات
       const students = participants.map(participant => {
         const user = usersData.find(u => u.id === participant.userId);
+        // استخدام الاسم من قاعدة البيانات (يكون قد تم تحديثه للاسم الكامل)
+        const displayName = user ? user.username : 'Unknown';
+        
         return {
           id: participant.userId,
-          // إظهار اسم المستخدم (يكون قد تم تحديثه بالاسم الكامل من joinRoom)
-          username: user ? user.username : 'Unknown',
+          username: displayName,
           isApproved: participant.isApproved === null ? false : participant.isApproved, // Convert null to false
           joinedAt: participant.joinedAt ? participant.joinedAt.toISOString() : new Date().toISOString()
         };
