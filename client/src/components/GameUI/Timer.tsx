@@ -24,20 +24,21 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   }, [currentGame?.currentQuestionIndex, currentGame?.stage, duration]);
   
   // استيراد المزيد من الوظائف من gameState
-  const { nextQuestion, setIsTimeUp, isTimeUp } = useGameStore();
+  const { nextQuestion, setIsTimeUp, isTimeUp, setIsLoading } = useGameStore();
 
   // Timer countdown
   useEffect(() => {
     if (timeLeft <= 0) {
       console.log('Timer reached zero, hasNotified:', hasNotified);
       
-      if (!hasNotified && currentGame && currentGame.status === 'active') {
+      if (!hasNotified && currentGame) {
         console.log('Notifying time end and taking action');
         setHasNotified(true); // تعيين التنبيه أولاً لمنع التكرار
         
         try {
-          // وضع علم انتهاء الوقت
+          // وضع علم انتهاء الوقت وعرض مؤشر التحميل
           setIsTimeUp(true);
+          setIsLoading(true); // لمنع ظهور الشاشة السوداء
           
           // تشغيل صوت انتهاء الوقت
           if (isSoundEnabled) {
@@ -53,23 +54,37 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
             variant: "destructive",
           });
           
-          // إعطاء وقت للتوست للظهور
-          setTimeout(() => {
-            // الانتقال للسؤال التالي تلقائياً
-            console.log('الانتقال للسؤال التالي بعد انتهاء الوقت');
-            if (currentGame) {
-              nextQuestion(currentGame.id);
-            }
+          // الانتقال للسؤال التالي فوراً لتجنب الشاشة السوداء
+          if (currentGame) {
+            console.log('الانتقال الفوري للسؤال التالي بعد انتهاء الوقت');
+            nextQuestion(currentGame.id);
             
-            // استدعاء دالة انتهاء الوقت إذا كانت موجودة
-            if (onTimeEnd) {
-              console.log('Calling onTimeEnd callback');
-              onTimeEnd();
-            }
-          }, 1500);
-          
+            // تأخير بسيط للسماح بعملية الانتقال
+            setTimeout(() => {
+              // إعادة تعيين حالة التحميل إلى false في حال لم يتم ذلك بالفعل
+              const currentState = useGameStore.getState();
+              if (currentState.isLoading) {
+                currentState.setIsLoading(false);
+              }
+              
+              // إعادة تعيين حالة انتهاء الوقت بعد الانتقال للسؤال التالي
+              currentState.setIsTimeUp(false);
+              
+              // استدعاء دالة انتهاء الوقت إذا كانت موجودة
+              if (onTimeEnd) {
+                console.log('Calling onTimeEnd callback');
+                onTimeEnd();
+              }
+            }, 800);
+          }
         } catch (error) {
           console.error('Error in timer end handling:', error);
+          
+          // في حالة حدوث خطأ، نحاول إلغاء حالة التحميل بعد فترة
+          setTimeout(() => {
+            setIsLoading(false);
+            setIsTimeUp(false);
+          }, 2000);
         }
       }
       return;

@@ -11,10 +11,6 @@ interface GameState {
   currentGame: GameSession | null;
   setCurrentGame: (game: GameSession | null) => void;
   
-  // Game state
-  isLoading: boolean;
-  setLoading: (loading: boolean) => void;
-  
   // Current question
   currentQuestion: Question | null;
   
@@ -54,6 +50,10 @@ interface GameState {
   // Last answer result
   lastAnswerResult: { correct: boolean; points: number } | null;
   setLastAnswerResult: (result: { correct: boolean; points: number } | null) => void;
+  
+  // Loading state
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -72,7 +72,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   
   // Game state
   isLoading: false,
-  setLoading: (loading) => set({ isLoading: loading }),
+  setIsLoading: (loading) => set({ isLoading: loading }),
   
   // Current question
   currentQuestion: null,
