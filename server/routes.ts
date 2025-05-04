@@ -586,6 +586,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
           }
           
+          case 'join_room_by_id': {
+            try {
+              userId = data.payload.userId;
+              connections.set(userId, ws);
+              
+              log(`Join room by ID request received for room ID: ${data.payload.roomId} by user: ${data.payload.userId}`, 'room');
+              
+              // التحقق من وجود الغرفة بواسطة المعرّف
+              const room = await roomManager.getRoomById(data.payload.roomId);
+              
+              if (!room) {
+                log(`Room not found with ID: ${data.payload.roomId}`, 'room');
+                sendToClient(ws, {
+                  type: 'error',
+                  payload: { message: 'Room not found with the provided ID' }
+                });
+                break;
+              }
+              
+              // Check if this student is part of an active contest
+              log(`Checking if student ${userId} is part of an active contest`, 'room');
+              checkActiveContests(userId);
+              
+              let isAlreadyInActiveContest = false;
+              if (userId) {
+                activeContests.forEach((contestState, roomId) => {
+                  if (contestState.approvedStudents.includes(userId as number) && roomId === data.payload.roomId) {
+                    isAlreadyInActiveContest = true;
+                    log(`Student ${userId} is already part of active contest in room ${roomId}`, 'room');
+                  }
+                });
+              }
+              
+              // إذا لم يكن الطالب جزءًا من مسابقة نشطة، نقوم بعملية الانضمام العادية
+              if (!isAlreadyInActiveContest) {
+                log(`Student ${userId} is not part of an active contest, joining room normally`, 'room');
+                
+                // نتحقق إذا كان الطالب منضماً بالفعل للغرفة
+                const result = await roomManager.joinRoom(room.id, data.payload.userId);
+                
+                if (result.success) {
+                  let displayName = result.username || 'Unknown';
+                  
+                  // إرسال إشعار للطالب المنضم
+                  sendToClient(ws, {
+                    type: 'room_joined',
+                    payload: {
+                      roomId: room.id,
+                      userId: data.payload.userId,
+                      username: displayName
+                    }
+                  });
+                  
+                  log(`Student ${userId} successfully joined room ${room.id} by ID`, 'room');
+                } else {
+                  sendToClient(ws, {
+                    type: 'error',
+                    payload: { message: 'Could not join the room' }
+                  });
+                }
+              }
+            } catch (error) {
+              log(`Error joining room by ID: ${error instanceof Error ? error.message : String(error)}`, 'ws-error');
+              sendToClient(ws, {
+                type: 'error',
+                payload: {
+                  message: error instanceof Error ? error.message : 'Failed to join room by ID'
+                }
+              });
+            }
+            break;
+          }
+          
           case 'start_contest': {
             try {
               userId = data.payload.teacherId;
