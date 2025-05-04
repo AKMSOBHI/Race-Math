@@ -171,10 +171,10 @@ const StageCompleteModal: FC = () => {
         </h2>
         <div className="text-xl mb-6" style={{ fontFamily: 'Orbitron, sans-serif' }}>
           <p className="mb-2">
-            مجموع النقاط الكلي : <span className="font-bold text-yellow-300">{convertToArabicNumerals(score)}</span>
+            مجموع النقاط الكلي :<span className="font-bold text-yellow-300">{convertToArabicNumerals(score)}</span>
           </p>
           <p className="mb-2">
-            نقاط هذه المرحلة : <span className="font-bold text-yellow-300">{convertToArabicNumerals(currentStageScore)}</span> / {convertToArabicNumerals(pointsPerStage)}
+            نقاط هذه المرحلة :<span className="font-bold text-yellow-300">{convertToArabicNumerals(currentStageScore)}</span> / {convertToArabicNumerals(pointsPerStage)}
           </p>
           <div className="w-full bg-gray-700 rounded-full h-2.5 mb-2">
             <div className="bg-yellow-300 h-2.5 rounded-full" style={{ width: `${stageCompletionPercent}%` }}></div>

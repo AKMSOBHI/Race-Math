@@ -100,7 +100,7 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
         </div>
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
           <p className="text-white text-xs md:text-sm font-bold" style={{ textShadow: '0 0 3px rgba(0,0,0,0.8)' }}>
-            {convertToArabicNumerals(timeLeft)} ثانية 
+            {convertToArabicNumerals(timeLeft)} ثانية
           </p>
         </div>
       </div>

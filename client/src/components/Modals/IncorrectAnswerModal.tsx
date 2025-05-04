@@ -59,7 +59,7 @@ const IncorrectAnswerModal: FC = () => {
           إجابة خاطئة!
         </h2>
         <p className="text-lg mb-4">
-          محاولات متبقية : <span className="font-bold text-red-300">{attemptsLeft}</span>
+          محاولات متبقية :<span className="font-bold text-red-300">{attemptsLeft}</span>
         </p>
         <button 
           className="font-bold py-3 px-6 rounded-lg transition w-full"
