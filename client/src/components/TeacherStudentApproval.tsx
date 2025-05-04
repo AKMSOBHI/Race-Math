@@ -69,8 +69,8 @@ export function TeacherStudentApproval({ roomId, teacherId }: StudentApprovalPro
     addMessageListener(handleMessage);
     fetchWaitingStudents();
 
-    // إعداد تحديث دوري للقائمة كل 10 ثوانٍ
-    const interval = setInterval(fetchWaitingStudents, 10000);
+    // إعداد تحديث دوري للقائمة كل 30 ثانية
+    const interval = setInterval(fetchWaitingStudents, 30000);
     
     return () => {
       clearInterval(interval);
@@ -133,7 +133,7 @@ export function TeacherStudentApproval({ roomId, teacherId }: StudentApprovalPro
   return (
     <Card className="mt-6">
       <CardHeader 
-        className="cursor-pointer" 
+        className="cursor-pointer text-center" 
         onClick={() => setExpandedSection(!expandedSection)}
         style={{
           background: pendingCount > 0 ? 'rgba(255, 170, 0, 0.1)' : undefined,
@@ -141,6 +141,7 @@ export function TeacherStudentApproval({ roomId, teacherId }: StudentApprovalPro
         }}
       >
         <div className="flex justify-between items-center">
+          <div></div>
           <CardTitle className="text-lg flex items-center">
             <div className="flex items-center">
               {pendingCount > 0 && (
@@ -155,7 +156,7 @@ export function TeacherStudentApproval({ roomId, teacherId }: StudentApprovalPro
             {expandedSection ? '▲' : '▼'}
           </div>
         </div>
-        <CardDescription>
+        <CardDescription className="text-center">
           {pendingCount > 0 ? 'يوجد طالبات في انتظار الموافقة' : 'لا يوجد طلبات انضمام جديدة'}
         </CardDescription>
       </CardHeader>

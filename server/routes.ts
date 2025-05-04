@@ -5,8 +5,10 @@ import { storage } from "./storage";
 import { GameManager } from "./game/gameManager";
 import { RoomManager } from "./room/roomManager";
 import { z } from "zod";
-import { insertUserSchema, type ServerMessage, type ClientMessage } from "@shared/schema";
+import { insertUserSchema, type ServerMessage, type ClientMessage, roomParticipants, users } from "@shared/schema";
 import { log } from "./vite";
+import { db } from "./db";
+import { and, eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
