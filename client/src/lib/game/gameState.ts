@@ -115,13 +115,31 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
     
-    sendMessage({
-      type: 'join_game',
-      payload: {
-        gameId,
-        playerId: currentUser.id
-      }
-    });
+    // التحقق من وجود اسم كامل محفوظ من صفحة الانضمام
+    const savedFullName = localStorage.getItem('playerFullName');
+    
+    // إذا كان هناك اسم كامل محفوظ، نستخدمه مع الانضمام للعبة
+    if (savedFullName) {
+      console.log(`استخدام الاسم الكامل المحفوظ: ${savedFullName}`);
+      
+      sendMessage({
+        type: 'join_game_with_name',
+        payload: {
+          gameId,
+          playerId: currentUser.id,
+          displayName: savedFullName
+        }
+      });
+    } else {
+      // في حالة عدم وجود اسم كامل محفوظ، نستخدم الطريقة الافتراضية
+      sendMessage({
+        type: 'join_game',
+        payload: {
+          gameId,
+          playerId: currentUser.id
+        }
+      });
+    }
   },
   
   createGame: (isMultiplayer, maxPlayers) => {

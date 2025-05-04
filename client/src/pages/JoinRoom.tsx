@@ -82,6 +82,10 @@ export default function JoinRoom() {
     // التحقق من معرف المستخدم الصحيح
     console.log("معرف المستخدم الحالي:", currentUser.id, currentUser);
     
+    // حفظ الاسم الكامل في التخزين المحلي لاستخدامه لاحقًا عند الانضمام للعبة
+    localStorage.setItem('playerFullName', fullName.trim());
+    console.log('تم حفظ الاسم الكامل في التخزين المحلي:', fullName.trim());
+    
     setError('');
     setIsLoading(true);
     soundService.play('click');
