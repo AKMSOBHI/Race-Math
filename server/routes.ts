@@ -544,8 +544,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     eq(roomParticipants.isApproved, true)
                   ));
                 
+                log(`Room participants query result: ${JSON.stringify(roomParticipantsResult)}`, 'contest');
+                
                 const students = roomParticipantsResult.map(participant => participant.userId);
-                log(`Found ${students.length} approved students in room`, 'contest');
+                log(`Found ${students.length} approved students in room: ${JSON.stringify(students)}`, 'contest');
+                
+                // Verificamos si hay conexiones WebSocket activas para estos estudiantes
+                students.forEach(studentId => {
+                  const connection = connections.get(studentId);
+                  log(`Student ${studentId} connection exists: ${!!connection}, status: ${connection ? connection.readyState : 'N/A'}`, 'contest');
+                });
+                
+                // Verificamos de forma adicional cuántos estudiantes tienen una conexión activa
+                let activeStudents = 0;
+                students.forEach(studentId => {
+                  const conn = connections.get(studentId);
+                  if (conn && conn.readyState === WebSocket.OPEN) {
+                    activeStudents++;
+                  }
+                });
+                
+                log(`Found ${students.length} approved students, of which ${activeStudents} have active connections`, 'contest');
                 
                 // نرسل إشعار للمعلمة بأن المسابقة ستبدأ بعد عد تنازلي
                 sendToClient(ws, {
@@ -732,6 +751,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               log(`Approval result: ${JSON.stringify(result)}`, 'approval');
               
               if (result.success) {
+                // Verificamos el estado actual de aprobación en la base de datos
+                if (data.payload.approve) {
+                  const participantCheck = await db.select().from(roomParticipants).where(and(
+                    eq(roomParticipants.roomId, data.payload.roomId),
+                    eq(roomParticipants.userId, data.payload.studentId)
+                  ));
+                  
+                  log(`Verification check after approval - participant data: ${JSON.stringify(participantCheck)}`, 'approval');
+                  
+                  if (participantCheck.length > 0) {
+                    log(`Participant found in database, isApproved = ${participantCheck[0].isApproved}`, 'approval');
+                  } else {
+                    log(`WARNING: Participant not found in database after approval!`, 'approval');
+                  }
+                }
+                
                 // إرسال تحديث للمعلم بأن الطالب تمت الموافقة عليه
                 sendToClient(ws, {
                   type: 'student_approval_updated',

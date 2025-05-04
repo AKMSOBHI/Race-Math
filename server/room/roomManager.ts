@@ -383,14 +383,63 @@ export class RoomManager {
       }
 
       // تحديث حالة الموافقة
-      await db.update(roomParticipants)
-        .set({ isApproved: approve })
-        .where(and(
-          eq(roomParticipants.roomId, roomId),
-          eq(roomParticipants.userId, studentId)
-        ));
-
-      log(`Student ${studentId} ${approve ? 'approved' : 'rejected'} for room ${roomId}`, 'room');
+      try {
+        log(`Updating approval status for student ${studentId} in room ${roomId} to ${approve}`, 'room');
+        const updateResult = await db.update(roomParticipants)
+          .set({ isApproved: approve })
+          .where(and(
+            eq(roomParticipants.roomId, roomId),
+            eq(roomParticipants.userId, studentId)
+          ));
+          
+        // Verificar que la actualización se haya completado correctamente
+        log(`Update result: ${JSON.stringify(updateResult)}`, 'room');
+        
+        // Verificar el estado actual después de la actualización
+        const verificationCheck = await db.select()
+          .from(roomParticipants)
+          .where(and(
+            eq(roomParticipants.roomId, roomId),
+            eq(roomParticipants.userId, studentId)
+          ));
+          
+        if (verificationCheck.length > 0) {
+          const currentStatus = verificationCheck[0].isApproved;
+          log(`Verification check - student ${studentId} current approval status: ${currentStatus}`, 'room');
+          
+          // Si el estado no coincide con lo que esperamos, intentamos actualizar una vez más
+          if (currentStatus !== approve) {
+            log(`WARNING: Approval status mismatch, expected ${approve} but found ${currentStatus}. Trying update again...`, 'room');
+            
+            // Intento adicional de actualización
+            await db.update(roomParticipants)
+              .set({ isApproved: approve })
+              .where(and(
+                eq(roomParticipants.roomId, roomId),
+                eq(roomParticipants.userId, studentId)
+              ));
+              
+            // Verificar nuevamente
+            const secondCheck = await db.select()
+              .from(roomParticipants)
+              .where(and(
+                eq(roomParticipants.roomId, roomId),
+                eq(roomParticipants.userId, studentId)
+              ));
+              
+            if (secondCheck.length > 0) {
+              log(`Second verification check - student ${studentId} current approval status: ${secondCheck[0].isApproved}`, 'room');
+            }
+          }
+        } else {
+          log(`WARNING: Student ${studentId} not found in room ${roomId} after update attempt`, 'room');
+        }
+        
+        log(`Student ${studentId} ${approve ? 'approved' : 'rejected'} for room ${roomId}`, 'room');
+      } catch (updateError) {
+        log(`ERROR updating approval status: ${updateError instanceof Error ? updateError.message : String(updateError)}`, 'room');
+        throw updateError;
+      }
 
       // إذا كانت في حالة الرفض، نقوم بإزالة الطالب من الغرفة
       if (!approve) {
