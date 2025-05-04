@@ -257,11 +257,11 @@ export class DatabaseStorage implements IStorage {
         roomId
       };
       
-      // Guardar en la base de datos
+      // Guardar en la base de datos - necesitamos serializar manualmente las preguntas
       await db.insert(gameSessions).values({
         id: sessionId,
         hostId: session.hostId,
-        roomId: session.roomId,
+        roomId: session.roomId || null,
         maxPlayers: session.maxPlayers,
         isMultiplayer: session.isMultiplayer, 
         status: session.status,
@@ -290,18 +290,33 @@ export class DatabaseStorage implements IStorage {
       
       const dbSession = result[0];
       // Convertir a un objeto GameSession
+      let questions = [];
+      try {
+        // Intenta parsear las preguntas si vienen como string
+        if (typeof dbSession.questions === 'string') {
+          questions = JSON.parse(dbSession.questions);
+        } else {
+          // Si no es string, asumimos que ya es un array
+          questions = dbSession.questions || [];
+        }
+      } catch (error) {
+        console.error('Error parsing questions:', error);
+        // Si hay error, usamos un array vacío
+        questions = [];
+      }
+
       const session: GameSession = {
         id: dbSession.id,
         stage: dbSession.stage as GameStage,
         hostId: dbSession.hostId,
         players: [], // Cargar jugadores si es necesario
-        currentQuestionIndex: dbSession.currentQuestionIndex,
-        questions: dbSession.questions ? JSON.parse(dbSession.questions as string) : [],
-        maxPlayers: dbSession.maxPlayers,
-        isMultiplayer: dbSession.isMultiplayer,
+        currentQuestionIndex: dbSession.currentQuestionIndex ?? 0,
+        questions: questions,
+        maxPlayers: dbSession.maxPlayers ?? 100,
+        isMultiplayer: dbSession.isMultiplayer ?? true,
         status: dbSession.status as "waiting" | "active" | "completed",
-        roomId: dbSession.roomId,
-        difficulty: dbSession.difficulty
+        roomId: dbSession.roomId ?? undefined,
+        difficulty: dbSession.difficulty ?? undefined
       };
       
       return session;
@@ -325,7 +340,7 @@ export class DatabaseStorage implements IStorage {
       if (updates.status !== undefined) updateData.status = updates.status;
       if (updates.stage !== undefined) updateData.stage = updates.stage;
       if (updates.currentQuestionIndex !== undefined) updateData.currentQuestionIndex = updates.currentQuestionIndex;
-      if (updates.questions !== undefined) updateData.questions = JSON.stringify(updates.questions);
+      if (updates.questions !== undefined) updateData.questions = updates.questions;
       if (updates.difficulty !== undefined) updateData.difficulty = updates.difficulty;
       
       // Actualizamos la sesión en la base de datos
@@ -399,19 +414,36 @@ export class DatabaseStorage implements IStorage {
       console.log(`Found ${result.length} active game sessions in database`);
       
       // Convertir los resultados a objetos GameSession
-      const sessions = result.map(dbSession => ({
-        id: dbSession.id,
-        stage: dbSession.stage as GameStage,
-        hostId: dbSession.hostId,
-        players: [], // Cargar jugadores si es necesario
-        currentQuestionIndex: dbSession.currentQuestionIndex,
-        questions: dbSession.questions ? JSON.parse(dbSession.questions as string) : [],
-        maxPlayers: dbSession.maxPlayers,
-        isMultiplayer: dbSession.isMultiplayer,
-        status: dbSession.status as "waiting" | "active" | "completed",
-        roomId: dbSession.roomId,
-        difficulty: dbSession.difficulty
-      }));
+      const sessions = result.map(dbSession => {
+        let questions = [];
+        try {
+          // Intenta parsear las preguntas si vienen como string
+          if (typeof dbSession.questions === 'string') {
+            questions = JSON.parse(dbSession.questions);
+          } else {
+            // Si no es string, asumimos que ya es un array
+            questions = dbSession.questions || [];
+          }
+        } catch (error) {
+          console.error(`Error parsing questions for session ${dbSession.id}:`, error);
+          // Si hay error, usamos un array vacío
+          questions = [];
+        }
+
+        return {
+          id: dbSession.id,
+          stage: dbSession.stage as GameStage,
+          hostId: dbSession.hostId,
+          players: [], // Cargar jugadores si es necesario
+          currentQuestionIndex: dbSession.currentQuestionIndex ?? 0,
+          questions: questions,
+          maxPlayers: dbSession.maxPlayers ?? 100,
+          isMultiplayer: dbSession.isMultiplayer ?? true,
+          status: dbSession.status as "waiting" | "active" | "completed",
+          roomId: dbSession.roomId ?? undefined,
+          difficulty: dbSession.difficulty ?? undefined
+        };
+      });
       
       return sessions;
     } catch (error) {
