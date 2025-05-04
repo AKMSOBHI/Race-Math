@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, type GameSession, type Player, type Question } from "@shared/schema";
+import { users, gameSessions, type User, type InsertUser, type GameSession, type Player, type Question, type GameStage } from "@shared/schema";
 import { nanoid } from "nanoid";
 
 export interface IStorage {
@@ -182,7 +182,7 @@ export class MemStorage implements IStorage {
 }
 
 import { db } from './db';
-import { eq } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
@@ -226,83 +226,198 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0 ? result[0] : undefined;
   }
   
-  // Game session methods are still in memory for now - will implement in database later
-  private gameSessions: Map<string, GameSession> = new Map();
-  
+  // Ahora implementamos sesiones de juego en la base de datos
   async createGameSession(hostId: number, isMultiplayer: boolean, maxPlayers: number, roomId?: number): Promise<GameSession> {
-    const player: Player = {
-      id: hostId,
-      username: (await this.getUser(hostId))?.username || 'Unknown',
-      score: 0,
-      progress: 0,
-      attemptsLeft: 3
-    };
-    
-    const session: GameSession = {
-      id: nanoid(),
-      stage: 'BASIC_ADDITION_SUBTRACTION', // Initial stage is BASIC_ADDITION_SUBTRACTION
-      hostId,
-      players: [player],
-      currentQuestionIndex: 0,
-      questions: [],
-      maxPlayers,
-      isMultiplayer,
-      status: 'waiting',
-      roomId
-    };
-    
-    this.gameSessions.set(session.id, session);
-    return session;
+    try {
+      const user = await this.getUser(hostId);
+      if (!user) {
+        throw new Error(`User with ID ${hostId} not found`);
+      }
+      
+      const player: Player = {
+        id: hostId,
+        username: user.username,
+        score: 0,
+        progress: 0,
+        attemptsLeft: 3
+      };
+      
+      // Crear una sesión con un ID único
+      const sessionId = nanoid();
+      const session: GameSession = {
+        id: sessionId,
+        stage: 'BASIC_ADDITION_SUBTRACTION', // Initial stage is BASIC_ADDITION_SUBTRACTION
+        hostId,
+        players: [player],
+        currentQuestionIndex: 0,
+        questions: [],
+        maxPlayers,
+        isMultiplayer,
+        status: 'waiting',
+        roomId
+      };
+      
+      // Guardar en la base de datos
+      await db.insert(gameSessions).values({
+        id: sessionId,
+        hostId: session.hostId,
+        roomId: session.roomId,
+        maxPlayers: session.maxPlayers,
+        isMultiplayer: session.isMultiplayer, 
+        status: session.status,
+        stage: session.stage,
+        currentQuestionIndex: session.currentQuestionIndex,
+        questions: JSON.stringify(session.questions),
+        difficulty: 'easy',
+        createdAt: new Date()
+      });
+      
+      console.log(`Game session ${sessionId} created and saved to database`);
+      return session;
+    } catch (error) {
+      console.error('Error creating game session:', error);
+      throw error;
+    }
   }
   
   async getGameSession(id: string): Promise<GameSession | undefined> {
-    return this.gameSessions.get(id);
+    try {
+      const result = await db.select().from(gameSessions).where(eq(gameSessions.id, id));
+      
+      if (result.length === 0) {
+        return undefined;
+      }
+      
+      const dbSession = result[0];
+      // Convertir a un objeto GameSession
+      const session: GameSession = {
+        id: dbSession.id,
+        stage: dbSession.stage as GameStage,
+        hostId: dbSession.hostId,
+        players: [], // Cargar jugadores si es necesario
+        currentQuestionIndex: dbSession.currentQuestionIndex,
+        questions: dbSession.questions ? JSON.parse(dbSession.questions as string) : [],
+        maxPlayers: dbSession.maxPlayers,
+        isMultiplayer: dbSession.isMultiplayer,
+        status: dbSession.status as "waiting" | "active" | "completed",
+        roomId: dbSession.roomId,
+        difficulty: dbSession.difficulty
+      };
+      
+      return session;
+    } catch (error) {
+      console.error('Error getting game session:', error);
+      return undefined;
+    }
   }
   
   async updateGameSession(id: string, updates: Partial<GameSession>): Promise<GameSession | undefined> {
-    const session = this.gameSessions.get(id);
-    if (!session) return undefined;
-    
-    const updatedSession = { ...session, ...updates };
-    this.gameSessions.set(id, updatedSession);
-    return updatedSession;
+    try {
+      // Primero verificamos que la sesión exista
+      const existingSession = await this.getGameSession(id);
+      if (!existingSession) {
+        return undefined;
+      }
+      
+      // Preparamos los datos para actualizar en la base de datos
+      const updateData: any = {};
+      
+      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.stage !== undefined) updateData.stage = updates.stage;
+      if (updates.currentQuestionIndex !== undefined) updateData.currentQuestionIndex = updates.currentQuestionIndex;
+      if (updates.questions !== undefined) updateData.questions = JSON.stringify(updates.questions);
+      if (updates.difficulty !== undefined) updateData.difficulty = updates.difficulty;
+      
+      // Actualizamos la sesión en la base de datos
+      const result = await db.update(gameSessions)
+                            .set(updateData)
+                            .where(eq(gameSessions.id, id))
+                            .returning();
+      
+      if (result.length === 0) {
+        return undefined;
+      }
+      
+      // Obtenemos la sesión actualizada
+      const updatedSession = await this.getGameSession(id);
+      return updatedSession;
+    } catch (error) {
+      console.error('Error updating game session:', error);
+      return undefined;
+    }
   }
   
   async addPlayerToGame(gameId: string, player: Player): Promise<GameSession | undefined> {
-    const session = this.gameSessions.get(gameId);
-    if (!session) return undefined;
-    
-    // Check if player already exists in the session
-    if (session.players.some(p => p.id === player.id)) {
+    try {
+      // Como no tenemos tabla para jugadores todavía, obtenemos la sesión
+      // actualizamos en memoria y luego guardamos de nuevo
+      const session = await this.getGameSession(gameId);
+      if (!session) return undefined;
+      
+      // Check if player already exists in the session
+      if (session.players.some(p => p.id === player.id)) {
+        return session;
+      }
+      
+      // Check if game is full
+      if (session.players.length >= session.maxPlayers) {
+        return undefined;
+      }
+      
+      // Add player to session in memory
+      session.players.push(player);
       return session;
+    } catch (error) {
+      console.error('Error adding player to game:', error);
+      return undefined;
     }
-    
-    // Add player to session
-    const updatedSession = { 
-      ...session, 
-      players: [...session.players, player] 
-    };
-    
-    this.gameSessions.set(gameId, updatedSession);
-    return updatedSession;
   }
   
   async removePlayerFromGame(gameId: string, playerId: number): Promise<GameSession | undefined> {
-    const session = this.gameSessions.get(gameId);
-    if (!session) return undefined;
-    
-    const updatedSession = { 
-      ...session, 
-      players: session.players.filter(p => p.id !== playerId) 
-    };
-    
-    this.gameSessions.set(gameId, updatedSession);
-    return updatedSession;
+    try {
+      const session = await this.getGameSession(gameId);
+      if (!session) return undefined;
+      
+      // Remove player from memory
+      session.players = session.players.filter(p => p.id !== playerId);
+      return session;
+    } catch (error) {
+      console.error('Error removing player from game:', error);
+      return undefined;
+    }
   }
   
   async getAllActiveSessions(): Promise<GameSession[]> {
-    return Array.from(this.gameSessions.values())
-      .filter(session => session.status !== 'completed');
+    try {
+      console.log('Getting all active game sessions from database...');
+      const result = await db.select().from(gameSessions)
+        .where(or(
+          eq(gameSessions.status, 'active'),
+          eq(gameSessions.status, 'waiting')
+        ));
+      
+      console.log(`Found ${result.length} active game sessions in database`);
+      
+      // Convertir los resultados a objetos GameSession
+      const sessions = result.map(dbSession => ({
+        id: dbSession.id,
+        stage: dbSession.stage as GameStage,
+        hostId: dbSession.hostId,
+        players: [], // Cargar jugadores si es necesario
+        currentQuestionIndex: dbSession.currentQuestionIndex,
+        questions: dbSession.questions ? JSON.parse(dbSession.questions as string) : [],
+        maxPlayers: dbSession.maxPlayers,
+        isMultiplayer: dbSession.isMultiplayer,
+        status: dbSession.status as "waiting" | "active" | "completed",
+        roomId: dbSession.roomId,
+        difficulty: dbSession.difficulty
+      }));
+      
+      return sessions;
+    } catch (error) {
+      console.error('Error getting active game sessions:', error);
+      return [];
+    }
   }
 }
 
