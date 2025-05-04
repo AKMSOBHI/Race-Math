@@ -119,28 +119,23 @@ export default function JoinRoom() {
           localStorage.setItem('currentGameId', message.payload.currentGameId);
         }
         
-        // الانتقال مباشرة إلى اللعبة (تم إلغاء الانتظار)
+        // توجيه الطالبة إلى صفحة الانتظار بدلاً من الانتقال مباشرة إلى اللعبة
         setTimeout(() => {
-          // التحقق أولاً من المعرف الذي تم استلامه في الرسالة
-          if (message.payload.currentGameId) {
-            console.log(`الانتقال إلى اللعبة مباشرة باستخدام المعرف المستلم: ${message.payload.currentGameId}`);
-            navigate(`/game?id=${message.payload.currentGameId}`);
+          // ننتقل إلى صفحة الانتظار مع تمرير معرف الغرفة ومعرف اللعبة (إن وجد)
+          const roomId = message.payload.roomId;
+          const gameId = message.payload.currentGameId || localStorage.getItem('currentGameId') || '';
+          
+          if (roomId) {
+            console.log(`توجيه الطالبة إلى صفحة الانتظار للغرفة ${roomId}${gameId ? ` مع معرف اللعبة ${gameId}` : ''}`);
+            navigate(`/waiting?room=${roomId}${gameId ? `&game=${gameId}` : ''}`);
           } else {
-            // إذا لم يكن هناك معرف لعبة نشطة في الرسالة، نتحقق من التخزين المحلي
-            const currentActiveGame = localStorage.getItem('currentGameId');
-            if (currentActiveGame) {
-              console.log(`الانتقال إلى اللعبة باستخدام المعرف المخزن محلياً: ${currentActiveGame}`);
-              navigate(`/game?id=${currentActiveGame}`);
-            } else {
-              console.log('لا توجد مسابقة نشطة حالياً، يتم التوجيه للصفحة الرئيسية');
-              // إذا لم يكن هناك لعبة نشطة، نوجه المستخدم إلى الصفحة الرئيسية مع رسالة توضيحية
-              navigate('/');
-              toast({
-                title: 'لم يتم العثور على مسابقة نشطة',
-                description: 'يرجى الانتظار حتى تبدأ المعلمة المسابقة.',
-                variant: 'destructive'
-              });
-            }
+            console.log('لم يتم العثور على معرف الغرفة، يتم التوجيه للصفحة الرئيسية');
+            navigate('/');
+            toast({
+              title: 'حدث خطأ في الانضمام للغرفة',
+              description: 'لم يتم العثور على معرف الغرفة. يرجى المحاولة مرة أخرى.',
+              variant: 'destructive'
+            });
           }
         }, 1000); // زيادة التأخير قليلاً لضمان معالجة جميع الرسائل
       }
