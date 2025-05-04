@@ -51,6 +51,7 @@ export default function JoinRoom() {
   
   // حالة الصفحة
   const [roomCode, setRoomCode] = useState('');
+  const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -58,6 +59,18 @@ export default function JoinRoom() {
   const handleJoinRoom = () => {
     if (!roomCode.trim()) {
       setError('الرجاء إدخال رمز الغرفة');
+      return;
+    }
+    
+    if (!fullName.trim()) {
+      setError('الرجاء إدخال اسمك الثنائي أو الثلاثي');
+      return;
+    }
+    
+    // التحقق من صحة الاسم (يجب أن يكون على الأقل جزءين)
+    const nameParts = fullName.trim().split(/\s+/);
+    if (nameParts.length < 2) {
+      setError('يجب أن يتكون الاسم من جزئين على الأقل (الاسم الأول والعائلة)');
       return;
     }
     
@@ -144,7 +157,8 @@ export default function JoinRoom() {
       type: "join_room",
       payload: {
         roomCode: roomCode.trim().toUpperCase(),
-        userId: currentUser.id
+        userId: currentUser.id,
+        fullName: fullName.trim() // إرسال الاسم الكامل للمستخدم
       }
     };
     
@@ -197,7 +211,25 @@ export default function JoinRoom() {
                 }}
                 maxLength={8}
               />
-              {error && <p className="text-red-500 text-sm">{error}</p>}
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="fullName">الاسم الثنائي أو الثلاثي</Label>
+              <Input
+                id="fullName"
+                placeholder="أدخل اسمك الثنائي أو الثلاثي بالكامل"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="text-right"
+                style={{
+                  background: 'rgba(20, 20, 40, 0.8)',
+                  border: '2px solid var(--space-bright)',
+                  color: 'white'
+                }}
+              />
+              <p className="text-xs text-gray-300">يجب إدخال الاسم الأول والعائلة على الأقل</p>
+              
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
