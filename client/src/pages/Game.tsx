@@ -480,17 +480,26 @@ export default function Game() {
     console.log('لم يتم العثور على إجابات مخزنة للسؤال:', currentQuestion.id);
   }
   
-  if (!currentGame || !currentQuestion || !currentPlayer) {
+  // عرض شاشة تحميل محسنة وواضحة
+  if (!currentGame || !currentQuestion || !currentPlayer || isLoading) {
     return (
       <div className="min-h-screen w-full text-white flex items-center justify-center">
         <div className="space-bg">
           <div className="stars"></div>
+          <div className="stars2"></div>
+          <div className="stars3"></div>
           <div className="planet planet-1"></div>
           <div className="planet planet-2"></div>
         </div>
-        <div className="text-center z-10">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
-          <p className="text-xl space-title" style={{ fontFamily: 'Orbitron, sans-serif' }}>جاري تحضير مهمتك...</p>
+        <div className="text-center z-10 p-8 bg-indigo-900 bg-opacity-70 rounded-2xl border-2 border-indigo-500">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-t-4 border-purple-400 mx-auto mb-4"></div>
+          <p className="text-2xl space-title font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>جاري تحضير المهمة...</p>
+          <p className="text-indigo-200">الرجاء الانتظار لحظات</p>
+          {isTimeUp && (
+            <div className="mt-4 p-2 bg-pink-900 bg-opacity-50 rounded-lg border border-pink-700">
+              <p>جاري الانتقال إلى السؤال التالي تلقائياً...</p>
+            </div>
+          )}
         </div>
       </div>
     );

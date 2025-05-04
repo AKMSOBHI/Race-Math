@@ -5,26 +5,48 @@ import { soundService } from '@/lib/soundService';
 import { convertToArabicNumerals } from '@/lib/utils';
 
 interface TimerProps {
-  duration?: number; // Duration in seconds
-  onTimeEnd?: () => void; // Callback when time ends
+  duration?: number; // مدة العد التنازلي بالثواني
+  onTimeEnd?: () => void; // دالة تنفذ عند انتهاء الوقت
 }
 
+/**
+ * مكون مؤقت العد التنازلي للعبة مع منطق الانتقال التلقائي
+ * تم تحسينه للتعامل مع مشكلة الشاشة السوداء وضمان الانتقال الموثوق
+ */
 const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
+  // حالة الوقت المتبقي
   const [timeLeft, setTimeLeft] = useState(duration);
-  const { currentGame, currentUser, submitAnswer, isSoundEnabled } = useGameStore();
+  
+  // استخراج ما نحتاجه من حالة اللعبة
+  const { 
+    currentGame, 
+    currentUser, 
+    submitAnswer, 
+    nextQuestion,
+    setIsTimeUp, 
+    isTimeUp,
+    setIsLoading,
+    isSoundEnabled,
+    setShowCorrectModal,
+    setShowIncorrectModal,
+    setShowStageCompleteModal,
+    setShowGameOverModal
+  } = useGameStore();
+  
+  // نظام التنبيهات
   const { toast } = useToast();
+  
+  // مؤشرات لمنع تكرار الإجراءات
   const [hasNotified, setHasNotified] = useState(false);
   const [lastPlayedTime, setLastPlayedTime] = useState(duration);
   
-  // Reset timer when question or stage changes
+  // إعادة ضبط المؤقت عندما يتغير السؤال أو المرحلة
   useEffect(() => {
+    console.log('⏱️ إعادة ضبط المؤقت - سؤال/مرحلة جديدة');
     setTimeLeft(duration);
     setHasNotified(false);
     setLastPlayedTime(duration);
   }, [currentGame?.currentQuestionIndex, currentGame?.stage, duration]);
-  
-  // استيراد المزيد من الوظائف من gameState
-  const { nextQuestion, setIsTimeUp, isTimeUp } = useGameStore();
 
   // مؤقت العد التنازلي مع الانتقال التلقائي
   useEffect(() => {
