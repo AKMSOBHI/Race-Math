@@ -355,11 +355,24 @@ export class DatabaseStorage implements IStorage {
         questions = [];
       }
 
+      // استرجاع اللاعبين من قاعدة البيانات
+      let players: Player[] = [];
+      try {
+        if (typeof dbSession.players === 'string') {
+          players = JSON.parse(dbSession.players);
+        } else if (Array.isArray(dbSession.players)) {
+          players = dbSession.players;
+        }
+      } catch (error) {
+        console.error('Error parsing players:', error);
+        players = [];
+      }
+
       const session: GameSession = {
         id: dbSession.id,
         stage: dbSession.stage as GameStage,
         hostId: dbSession.hostId,
-        players: [], // Cargar jugadores si es necesario
+        players: players, // استخدام اللاعبين المسترجعين من قاعدة البيانات
         currentQuestionIndex: dbSession.currentQuestionIndex ?? 0,
         questions: questions,
         maxPlayers: dbSession.maxPlayers ?? 100,
@@ -368,6 +381,8 @@ export class DatabaseStorage implements IStorage {
         roomId: dbSession.roomId ?? undefined,
         difficulty: dbSession.difficulty ?? undefined
       };
+      
+      console.log(`Retrieved game session ${session.id} with ${session.players.length} players and ${session.questions.length} questions`);
       
       return session;
     } catch (error) {
@@ -378,9 +393,11 @@ export class DatabaseStorage implements IStorage {
   
   async updateGameSession(id: string, updates: Partial<GameSession>): Promise<GameSession | undefined> {
     try {
+      console.log(`Updating game session ${id} with:`, JSON.stringify(updates));
       // Primero verificamos que la sesión exista
       const existingSession = await this.getGameSession(id);
       if (!existingSession) {
+        console.error(`Game session ${id} not found during update`);
         return undefined;
       }
       
@@ -393,18 +410,43 @@ export class DatabaseStorage implements IStorage {
       if (updates.questions !== undefined) updateData.questions = updates.questions;
       if (updates.difficulty !== undefined) updateData.difficulty = updates.difficulty;
       
-      // Actualizamos la sesión en la base de datos
-      const result = await db.update(gameSessions)
-                            .set(updateData)
-                            .where(eq(gameSessions.id, id))
-                            .returning();
+      // تحديث اللاعبين إذا تم توفيرهم
+      if (updates.players !== undefined) {
+        console.log(`Updating players for game ${id} with ${updates.players.length} players`);
+        
+        // للتعامل مع تحديثات اللاعبين بشكل مباشر
+        const updateQuery = `
+          UPDATE game_sessions 
+          SET players = $1::jsonb 
+          WHERE id = $2
+        `;
+        
+        try {
+          await pool.query(updateQuery, [JSON.stringify(updates.players), id]);
+          console.log(`Updated players for game ${id} in database`);
+        } catch (playerDbError) {
+          console.error('Error updating players in game session:', playerDbError);
+          // مع ذلك، نستمر في التحديثات الأخرى
+        }
+      }
       
-      if (result.length === 0) {
-        return undefined;
+      // تحديث الحقول الأخرى أيضًا باستخدام Drizzle
+      if (Object.keys(updateData).length > 0) {
+        // Actualizamos la sesión en la base de datos
+        const result = await db.update(gameSessions)
+                              .set(updateData)
+                              .where(eq(gameSessions.id, id))
+                              .returning();
+        
+        if (result.length === 0) {
+          console.error(`No rows updated for game session ${id}`);
+          return undefined;
+        }
       }
       
       // Obtenemos la sesión actualizada
       const updatedSession = await this.getGameSession(id);
+      console.log(`Successfully updated game session ${id}, has ${updatedSession?.players.length ?? 0} players`);
       return updatedSession;
     } catch (error) {
       console.error('Error updating game session:', error);
@@ -464,10 +506,38 @@ export class DatabaseStorage implements IStorage {
   async removePlayerFromGame(gameId: string, playerId: number): Promise<GameSession | undefined> {
     try {
       const session = await this.getGameSession(gameId);
-      if (!session) return undefined;
+      if (!session) {
+        console.error(`Game session ${gameId} not found when trying to remove player ${playerId}`);
+        return undefined;
+      }
       
-      // Remove player from memory
+      // التحقق مما إذا كان اللاعب موجوداً في الجلسة
+      const playerExists = session.players.some(p => p.id === playerId);
+      if (!playerExists) {
+        console.log(`Player ${playerId} not found in game ${gameId}, nothing to remove`);
+        return session; // إرجاع الجلسة كما هي إذا لم يكن اللاعب موجوداً
+      }
+      
+      // إزالة اللاعب من الذاكرة
       session.players = session.players.filter(p => p.id !== playerId);
+      console.log(`Removed player ${playerId} from game ${gameId}, now has ${session.players.length} players`);
+      
+      // تحديث قاعدة البيانات باللاعبين الجدد
+      const updateQuery = `
+        UPDATE game_sessions 
+        SET players = $1::jsonb 
+        WHERE id = $2
+      `;
+      
+      try {
+        // تحويل مصفوفة اللاعبين إلى JSON
+        await pool.query(updateQuery, [JSON.stringify(session.players), gameId]);
+        console.log(`Updated game session ${gameId} in database after removing player ${playerId}`);
+      } catch (dbError) {
+        console.error('Error updating game session after removing player:', dbError);
+        // هذا خطأ غير مؤثر في الذاكرة
+      }
+      
       return session;
     } catch (error) {
       console.error('Error removing player from game:', error);
@@ -503,11 +573,24 @@ export class DatabaseStorage implements IStorage {
           questions = [];
         }
 
+        // استرجاع اللاعبين من قاعدة البيانات
+        let players: Player[] = [];
+        try {
+          if (typeof dbSession.players === 'string') {
+            players = JSON.parse(dbSession.players);
+          } else if (Array.isArray(dbSession.players)) {
+            players = dbSession.players;
+          }
+        } catch (error) {
+          console.error(`Error parsing players for session ${dbSession.id}:`, error);
+          players = [];
+        }
+        
         return {
           id: dbSession.id,
           stage: dbSession.stage as GameStage,
           hostId: dbSession.hostId,
-          players: [], // Cargar jugadores si es necesario
+          players: players, // استخدام اللاعبين المسترجعين من قاعدة البيانات
           currentQuestionIndex: dbSession.currentQuestionIndex ?? 0,
           questions: questions,
           maxPlayers: dbSession.maxPlayers ?? 100,
