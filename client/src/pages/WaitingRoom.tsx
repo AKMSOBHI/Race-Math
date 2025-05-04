@@ -74,6 +74,36 @@ export default function WaitingRoom() {
       return;
     }
     
+    // التحقق من حالة الغرفة عند التحميل وإعادة الاتصال
+    const checkRoomStateOnLoad = () => {
+      console.log('Checking room state on load for room ID:', roomId);
+      
+      // أرسل رسالة للحصول على معلومات الغرفة
+      sendMessage({
+        type: "get_room_list",
+        payload: {}
+      });
+      
+      // إذا كان المستخدم متصلاً وله معرّف غرفة، يمكننا التحقق من حالة المسابقة النشطة
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const userId = currentUser?.id;
+      
+      if (userId && roomId) {
+        console.log(`Checking if room ${roomId} has an active contest for user ${userId}`);
+        // هذه الرسالة ستؤدي إلى تحقق الخادم من وجود مسابقة نشطة لهذا المستخدم
+        sendMessage({
+          type: "join_room_by_id",
+          payload: {
+            roomId: roomId,
+            userId: userId
+          }
+        });
+      }
+    };
+    
+    // استدعاء دالة التحقق فور تحميل المكون
+    checkRoomStateOnLoad();
+    
     const handleMessage = (message: any) => {
       if (message.type === "room_list") {
         // تحديث معلومات الغرفة
