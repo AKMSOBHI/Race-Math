@@ -282,16 +282,18 @@ export const useGameStore = create<GameState>((set, get) => ({
           break;
         }
         
-        // Solo actualizamos el estado si el juego está en modo 'waiting'
-        // En este caso es normal que no tenga preguntas todavía
-        if (payload.status === 'waiting') {
-          console.log('Juego en modo espera, actualizando estado sin preguntas');
+        // En lugar de ignorar las preguntas en modo 'waiting',
+        // verificamos si realmente hay preguntas y las usamos si existen
+        if (payload.status === 'waiting' && (!Array.isArray(payload.questions) || payload.questions.length === 0)) {
+          console.log('Juego en modo espera sin preguntas');
           set({
             currentGame: payload,
             isLoading: false
           });
           break;
         }
+        
+        // Si estamos en modo 'waiting' pero tenemos preguntas, continuamos con el proceso normal
         
         // Verificar que hay preguntas válidas
         if (!Array.isArray(payload.questions) || payload.questions.length === 0) {

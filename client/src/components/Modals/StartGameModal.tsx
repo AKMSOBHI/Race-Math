@@ -46,8 +46,13 @@ const StartGameModal: FC = () => {
   useEffect(() => {
     // If we're in the processing state and have a game, start it
     if (isProcessing && currentGame && currentGame.status === 'waiting') {
-      console.log('Game was created, starting game with ID:', currentGame.id);
-      startGame(currentGame.id, difficulty);
+      // Solo si el juego tiene preguntas, iniciamos el juego inmediatamente
+      if (Array.isArray(currentGame.questions) && currentGame.questions.length > 0) {
+        console.log('Game was created with questions, starting game with ID:', currentGame.id);
+        startGame(currentGame.id, difficulty);
+      } else {
+        console.log('Game was created but has no questions, waiting...', currentGame);
+      }
     }
     
     // Set a timeout to cancel the processing state if game creation takes too long
