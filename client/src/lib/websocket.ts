@@ -6,8 +6,11 @@ import { ClientMessage, ServerMessage } from '@shared/schema';
 let socket: WebSocket | null = null;
 const listeners: ((message: ServerMessage) => void)[] = [];
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 20; // زيادة المحاولات لضمان الاتصال حتى بعد فترات طويلة
-const RECONNECT_DELAY = 1500; // تقليل وقت الانتظار بين المحاولات
+const MAX_RECONNECT_ATTEMPTS = 300; // زيادة المحاولات بشكل كبير لضمان الاتصال طوال الجلسة
+const RECONNECT_DELAY = 1000; // تقليل وقت الانتظار بين المحاولات
+
+// قائمة انتظار للرسائل التي لم يتم إرسالها أثناء قطع الاتصال
+const messageQueue: ClientMessage[] = [];
 
 // Estado global de conexión
 let isConnected = false;
@@ -54,6 +57,33 @@ export function connectWebSocket() {
         }
       }
       
+      // إرسال الرسائل المؤجلة التي لم يتم إرسالها أثناء قطع الاتصال
+      if (messageQueue.length > 0) {
+        console.log(`Sending ${messageQueue.length} queued messages after reconnection`);
+        
+        // نسخة من الصف لتجنب مشاكل التزامن
+        const queueCopy = [...messageQueue];
+        // تفريغ الصف الأصلي
+        messageQueue.length = 0;
+        
+        // إرسال الرسائل المؤجلة
+        queueCopy.forEach(msg => {
+          try {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+              socket.send(JSON.stringify(msg));
+              console.log('تم إرسال رسالة مؤجلة بعد إعادة الاتصال');
+            } else {
+              // إعادة الرسالة للصف إذا لم يتم إرسالها
+              messageQueue.push(msg);
+            }
+          } catch (error) {
+            console.error('خطأ عند إرسال رسالة مؤجلة بعد إعادة الاتصال:', error);
+            // إعادة الرسالة للصف في حالة الخطأ
+            messageQueue.push(msg);
+          }
+        });
+      }
+      
       // Notify all listeners about connection
       document.dispatchEvent(new CustomEvent('websocket-connected'));
     };
@@ -70,6 +100,7 @@ export function connectWebSocket() {
     
     socket.onclose = (event) => {
       console.log(`WebSocket connection closed: ${event.code} - ${event.reason}`);
+      isConnected = false;
       document.dispatchEvent(new CustomEvent('websocket-disconnected'));
       
       // Only attempt to reconnect if we haven't reached the maximum number of attempts
@@ -77,12 +108,47 @@ export function connectWebSocket() {
         reconnectAttempts++;
         console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
         
+        // الاستراتيجية المتدرجة لإعادة الاتصال مع تأخير متزايد
+        const baseDelay = RECONNECT_DELAY;
+        const jitter = Math.random() * 300; // إضافة بعض العشوائية لتجنب التزامن في المحاولات
+        const delay = baseDelay + jitter;
+        
         setTimeout(() => {
           socket = null;
           connectWebSocket();
-        }, RECONNECT_DELAY);
+        }, delay);
+        
+        // إعادة تحميل الصفحة بعد عدد معين من محاولات الاتصال الفاشلة
+        const REFRESH_THRESHOLD = 50; // إعادة تحميل بعد 50 محاولة فاشلة
+        if (reconnectAttempts === REFRESH_THRESHOLD) {
+          console.warn(`Failed ${REFRESH_THRESHOLD} reconnect attempts. Refreshing page in 5 seconds...`);
+          // إظهار رسالة للمستخدم بأن الصفحة سيتم إعادة تحميلها
+          const refreshMessage = document.createElement('div');
+          refreshMessage.style.position = 'fixed';
+          refreshMessage.style.top = '50%';
+          refreshMessage.style.left = '50%';
+          refreshMessage.style.transform = 'translate(-50%, -50%)';
+          refreshMessage.style.background = 'rgba(0, 0, 0, 0.8)';
+          refreshMessage.style.color = 'white';
+          refreshMessage.style.padding = '20px';
+          refreshMessage.style.borderRadius = '10px';
+          refreshMessage.style.zIndex = '9999';
+          refreshMessage.style.textAlign = 'center';
+          refreshMessage.style.fontFamily = 'Arial, sans-serif';
+          refreshMessage.innerHTML = `
+            <h3>فقدنا الاتصال بالخادم</h3>
+            <p>سيتم إعادة تحميل الصفحة تلقائياً خلال خمس ثوانٍ...</p>
+          `;
+          document.body.appendChild(refreshMessage);
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 5000);
+        }
       } else {
-        console.error(`Maximum reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached.`);
+        console.error(`Maximum reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Refreshing page...`);
+        // إعادة تحميل الصفحة إذا وصلنا إلى الحد الأقصى من المحاولات
+        window.location.reload();
       }
     };
     
@@ -101,37 +167,17 @@ export function sendMessage(message: ClientMessage) {
   console.log('إرسال رسالة:', message);
   
   if (!socket || socket.readyState !== WebSocket.OPEN) {
-    console.log('Socket not open, attempting to connect before sending...');
+    console.log('Socket not open, queueing message and connecting...');
+    
+    // إضافة الرسالة إلى قائمة الانتظار
+    messageQueue.push(message);
+    console.log(`Message queued. Queue now has ${messageQueue.length} messages.`);
+    
+    // محاولة الاتصال فوراً
     socket = connectWebSocket();
     
-    // Wait for connection to establish before sending
-    setTimeout(() => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log('Socket now open, sending delayed message');
-        try {
-          socket.send(JSON.stringify(message));
-          console.log('تم إرسال الرسالة المؤجلة بنجاح');
-        } catch (error) {
-          console.error('خطأ عند إرسال الرسالة المؤجلة عبر WebSocket:', error);
-        }
-      } else {
-        console.error('WebSocket still not connected, message not sent. State:', socket?.readyState);
-        
-        // محاولة إعادة المحاولة مرة أخرى بعد مدة أطول
-        setTimeout(() => {
-          socket = connectWebSocket();
-          if (socket && socket.readyState === WebSocket.OPEN) {
-            console.log('محاولة أخيرة لإرسال الرسالة');
-            try {
-              socket.send(JSON.stringify(message));
-              console.log('تم إرسال الرسالة في المحاولة الأخيرة');
-            } catch (err) {
-              console.error('فشل في إرسال الرسالة حتى في المحاولة الأخيرة:', err);
-            }
-          }
-        }, 2000);
-      }
-    }, 1000);
+    // لا نقوم ببذل محاولات إضافية هنا لإرسال الرسائل
+    // سيتم إرسال الرسائل المنتظرة تلقائياً عند نجاح الاتصال من خلال الدالة onopen
   } else {
     // Socket is already open, send immediately
     console.log('Socket open, sending message immediately');
@@ -140,6 +186,16 @@ export function sendMessage(message: ClientMessage) {
       console.log('تم إرسال الرسالة فوراً بنجاح');
     } catch (error) {
       console.error('خطأ عند إرسال الرسالة الفورية عبر WebSocket:', error);
+      
+      // إضافة الرسالة إلى قائمة الانتظار في حالة الفشل
+      messageQueue.push(message);
+      console.log(`Message added to queue after send failure. Queue now has ${messageQueue.length} messages.`);
+      
+      // إعادة تشغيل الاتصال في حالة الخطأ
+      if (socket.readyState !== WebSocket.OPEN) {
+        socket = null;
+        connectWebSocket();
+      }
     }
   }
 }
@@ -153,6 +209,40 @@ export function useWebSocket() {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       connectWebSocket();
     }
+    
+    // معالجة الشاشة السوداء - إعادة تحميل الصفحة إذا كانت جلسة لعبة نشطة
+    const handlePageVisibility = () => {
+      // إذا كانت الصفحة مرئية ولكن الاتصال مقطوع
+      if (!document.hidden && !isConnected && window.location.pathname.includes('/game/')) {
+        // التحقق من أن المستخدم في صفحة لعبة
+        console.log('تم اكتشاف صفحة لعبة نشطة مع انقطاع الاتصال');
+        
+        // محاولة فورية لإعادة الاتصال
+        connectWebSocket();
+        
+        // إذا كان لا يزال منقطعاً بعد 3 ثوانِ نقوم بإعادة تحميل الصفحة
+        setTimeout(() => {
+          if (!isConnected && window.location.pathname.includes('/game/')) {
+            console.log('لا يزال الاتصال مقطوعاً... محاولة إعادة تحميل الصفحة');
+            
+            // إظهار رسالة للمستخدم
+            toast({
+              title: "انقطاع الاتصال بالخادم",
+              description: "جاري إعادة تحميل الصفحة",
+              variant: "destructive"
+            });
+            
+            // إعادة تحميل الصفحة بعد قليل
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          }
+        }, 3000);
+      }
+    };
+    
+    // إضافة مراقب لتغيير رؤية الصفحة
+    document.addEventListener('visibilitychange', handlePageVisibility);
     
     // Handle connection and disconnection events
     const handleConnect = () => {
@@ -172,6 +262,11 @@ export function useWebSocket() {
         description: "جاري محاولة إعادة الاتصال...",
         variant: "destructive"
       });
+      
+      // إذا كان المستخدم في صفحة لعبة، نقوم بتفعيل معالج رؤية الصفحة فوراً
+      if (window.location.pathname.includes('/game/')) {
+        handlePageVisibility();
+      }
     };
     
     // Check initial connection status
@@ -187,8 +282,9 @@ export function useWebSocket() {
       // Clean up event listeners
       document.removeEventListener('websocket-connected', handleConnect);
       document.removeEventListener('websocket-disconnected', handleDisconnect);
+      document.removeEventListener('visibilitychange', handlePageVisibility);
     };
-  }, [toast]);
+  }, [toast, isConnected]);
   
   const addMessageListener = useCallback((listener: (message: ServerMessage) => void) => {
     listeners.push(listener);
