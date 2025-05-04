@@ -516,11 +516,22 @@ export default function Game() {
           <Timer 
             duration={30} 
             onTimeEnd={() => {
-              console.log('Timer ended, showing game over modal');
-              // إذا لم تكن نافذة انتهاء اللعبة معروضة بالفعل، نعرضها
-              if (!showGameOverModal) {
+              console.log('Timer ended, moving to next question instead of showing game over');
+              // بدلاً من إظهار نافذة انتهاء اللعبة، ننتقل إلى السؤال التالي
+              if (currentGame && currentGame.id) {
+                // إرسال إشارة للانتقال إلى السؤال التالي
+                const { nextQuestion } = useGameStore.getState();
+                nextQuestion(currentGame.id);
+                
+                // تعيين التايمر كمنتهي مؤقتاً لتجنب الإجابة
                 setIsTimeUp(true);
-                setShowGameOverModal(true, 'time');
+                
+                // إعادة تعيين التايمر بعد فترة قصيرة للسماح بالإجابة على السؤال التالي
+                setTimeout(() => {
+                  setIsTimeUp(false);
+                }, 1000);
+              } else {
+                console.error('لا توجد لعبة حالية للانتقال إلى السؤال التالي');
               }
             }} 
           />
