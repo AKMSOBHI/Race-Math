@@ -137,37 +137,68 @@ export default function Game() {
       return;
     }
     
-    // نتجاهل التحقق من حالة اللعبة لتجنب المشكلة الحالية
-    // حتى وإن كانت بحالة 'waiting' نسمح بإرسال الإجابة
-    // في المستقبل يمكن إعادة تفعيل هذا التحقق بعد إصلاح المشكلة في الخادم
-    /*
-    if (currentGame.status !== 'active') {
-      console.log('لا يمكن إرسال الإجابة: اللعبة ليست في حالة نشطة', currentGame.status);
-      return;
-    }
-    */
-    
-    // تشغيل صوت النقر
+    // تشغيل صوت النقر عند الضغط على أي إجابة
     if (isSoundEnabled) {
       soundService.play('click');
     }
     
+    // نفحص إذا كانت اللعبة في حالة الانتظار ولكن نسمح بالإجابة في أي حالة
+    if (currentGame.status === 'waiting') {
+      console.log('اللعبة في حالة انتظار ولكن سنقوم بمعالجة الإجابة');
+    }
+    
     // أولاً تحقق من أن اللاعب موجود في اللعبة
-    if (!currentUser || !currentGame.players.some(p => p.id === currentUser.id)) {
+    const isPlayerInGame = currentUser && currentGame.players.some(p => p.id === currentUser.id);
+    if (!isPlayerInGame) {
       console.log('اللاعب غير موجود في اللعبة - محاولة الانضمام التلقائي');
       
       // محاولة الانضمام للعبة تلقائياً
       if (currentUser) {
+        // نجرب الانضمام للعبة أولاً
         joinGame(currentGame.id);
+        
+        // نضع رسالة للمستخدم
+        toast({
+          title: 'جاري الانضمام للعبة',
+          description: 'نحاول الانضمام للعبة، الرجاء المحاولة مرة أخرى بعد لحظات',
+        });
+        
         // إعادة المحاولة بعد فترة زمنية قصيرة
         setTimeout(() => {
           console.log('إعادة محاولة الإرسال بعد الانضمام للعبة');
-          submitAnswer(currentGame.id, answer);
-        }, 700);
+          
+          // نتحقق مرة أخرى إذا كان اللاعب قد أصبح مسجلاً في اللعبة
+          const updatedGame = get().currentGame;
+          const updatedUser = get().currentUser;
+          
+          if (updatedGame && updatedUser && updatedGame.players.some(p => p.id === updatedUser.id)) {
+            // اللاعب أصبح مسجلاً الآن، نرسل الإجابة
+            console.log('اللاعب أصبح مسجلاً الآن، نرسل الإجابة:', answer);
+            submitAnswer(updatedGame.id, answer);
+          } else {
+            // لا يزال اللاعب غير مسجل
+            console.log('لا يزال اللاعب غير مسجل في اللعبة بعد المحاولة الأولى');
+            
+            // محاولة أخيرة بعد فترة أطول
+            setTimeout(() => {
+              console.log('محاولة أخيرة للانضمام وإرسال الإجابة');
+              joinGame(currentGame.id);
+              
+              // بعد الانضمام الثاني، نحاول إرسال الإجابة مرة أخرى
+              setTimeout(() => {
+                const finalGame = get().currentGame;
+                if (finalGame) {
+                  submitAnswer(finalGame.id, answer);
+                }
+              }, 500);
+            }, 1000);
+          }
+        }, 800);
       }
       return;
     }
     
+    // إذا كان اللاعب مسجلاً بالفعل، نرسل الإجابة مباشرة
     console.log('إرسال الإجابة:', answer);
     submitAnswer(currentGame.id, answer);
   };

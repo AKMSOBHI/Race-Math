@@ -128,7 +128,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { currentUser } = get();
     
     if (!currentUser) {
-      console.error("No current user");
+      console.error("لا يوجد مستخدم حالي");
       return;
     }
     
@@ -150,36 +150,72 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     });
     
-    // بعد مرور 500 مللي ثانية، نضيف اللاعب نفسه إلى اللعبة
+    // زيادة وقت الانتظار للتأكد من استلام رد من الخادم
     setTimeout(() => {
       const state = get();
       if (state.currentGame) {
         console.log('الانضمام تلقائياً للعبة التي تم إنشاؤها:', state.currentGame.id);
-        sendMessage({
-          type: 'join_game',
-          payload: {
-            gameId: state.currentGame.id,
-            playerId: currentUser.id
-          }
-        });
         
-        // وبعد مرور 500 مللي ثانية أخرى، نبدأ اللعبة
-        setTimeout(() => {
-          const newState = get();
-          if (newState.currentGame && state.currentGame && newState.currentGame.id === state.currentGame.id) {
-            console.log('بدء اللعبة التي تم إنشاؤها تلقائياً:', newState.currentGame.id);
-            set({ isLoading: true });
-            sendMessage({
-              type: 'start_game',
-              payload: {
-                gameId: newState.currentGame.id,
-                difficulty: 'easy'
+        // التأكد من أن اللاعب الحالي هو نفسه
+        if (currentUser && currentUser.id) {
+          sendMessage({
+            type: 'join_game',
+            payload: {
+              gameId: state.currentGame.id,
+              playerId: currentUser.id
+            }
+          });
+          
+          // بعد الانضمام للعبة، نتأكد من أن اللاعب أصبح مسجلاً قبل بدء اللعبة
+          setTimeout(() => {
+            const newState = get();
+            if (newState.currentGame && state.currentGame && newState.currentGame.id === state.currentGame.id) {
+              // نتحقق من أن اللاعب مسجل في اللعبة قبل بدئها
+              const isPlayerRegistered = newState.currentGame.players.some(p => p.id === currentUser.id);
+              
+              if (!isPlayerRegistered) {
+                console.log('اللاعب غير مسجل في اللعبة، محاولة إعادة الانضمام...');
+                // محاولة إعادة الانضمام مرة أخرى
+                sendMessage({
+                  type: 'join_game',
+                  payload: {
+                    gameId: newState.currentGame.id,
+                    playerId: currentUser.id
+                  }
+                });
+                
+                // ننتظر فترة أطول قبل بدء اللعبة للتأكد من تسجيل اللاعب
+                setTimeout(() => {
+                  const finalState = get();
+                  if (finalState.currentGame && finalState.currentGame.id === newState.currentGame?.id) {
+                    console.log('بدء اللعبة التي تم إنشاؤها تلقائياً:', finalState.currentGame.id);
+                    set({ isLoading: true });
+                    sendMessage({
+                      type: 'start_game',
+                      payload: {
+                        gameId: finalState.currentGame.id,
+                        difficulty: 'easy'
+                      }
+                    });
+                  }
+                }, 800);
+              } else {
+                // اللاعب مسجل بالفعل، يمكننا بدء اللعبة
+                console.log('اللاعب مسجل بنجاح، بدء اللعبة:', newState.currentGame.id);
+                set({ isLoading: true });
+                sendMessage({
+                  type: 'start_game',
+                  payload: {
+                    gameId: newState.currentGame.id,
+                    difficulty: 'easy'
+                  }
+                });
               }
-            });
-          }
-        }, 500);
+            }
+          }, 800);
+        }
       }
-    }, 500);
+    }, 800);
   },
   
   startGame: (gameId, difficulty = "easy") => {
