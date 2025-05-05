@@ -110,6 +110,52 @@ function generateQuestion(type: QuestionType, difficulty: Difficulty): Question 
   };
 }
 
+// Function to check if a question is a duplicate
+function isDuplicateQuestion(questions: Question[], newQuestion: Question): boolean {
+  return questions.some(q => q.text === newQuestion.text);
+}
+
+// Generate a unique question (no duplicates)
+function generateUniqueQuestion(type: QuestionType, difficulty: Difficulty, existingQuestions: Question[]): Question {
+  // Set a maximum number of attempts to prevent infinite loops
+  let attempts = 0;
+  const maxAttempts = 20;
+  
+  while (attempts < maxAttempts) {
+    const question = generateQuestion(type, difficulty);
+    
+    // If the question is not a duplicate, return it
+    if (!isDuplicateQuestion(existingQuestions, question)) {
+      return question;
+    }
+    
+    attempts++;
+  }
+  
+  // If we've exceeded the max attempts, modify the last question slightly to make it unique
+  const baseQuestion = generateQuestion(type, difficulty);
+  
+  // Modify the numbers slightly based on the question type
+  if (type === "ADDITION" || type === "MULTIPLICATION") {
+    // For addition and multiplication, add a small offset
+    const num1 = parseInt(baseQuestion.text.split(/[+×]/)[0].trim()) + Math.floor(Math.random() * 5) + 1;
+    const num2 = parseInt(baseQuestion.text.split(/[+×]/)[1].trim()) + Math.floor(Math.random() * 5) + 1;
+    
+    const text = formatQuestion(num1, num2, type);
+    const answer = calculateAnswer(num1, num2, type);
+    
+    return {
+      id: nanoid(),
+      text,
+      answer,
+      type
+    };
+  } else {
+    // For subtraction and division, just return the base question with hopes it's different enough
+    return baseQuestion;
+  }
+}
+
 // Generate a set of questions for a specific stage
 export function generateQuestionsForStage(stage: GameStage, difficulty: Difficulty): Question[] {
   try {
@@ -120,36 +166,36 @@ export function generateQuestionsForStage(stage: GameStage, difficulty: Difficul
       case "BASIC_ADDITION_SUBTRACTION":
         // 3 addition, 2 subtraction
         for (let i = 0; i < 3; i++) {
-          questions.push(generateQuestion("ADDITION", difficulty));
+          questions.push(generateUniqueQuestion("ADDITION", difficulty, questions));
         }
         for (let i = 0; i < 2; i++) {
-          questions.push(generateQuestion("SUBTRACTION", difficulty));
+          questions.push(generateUniqueQuestion("SUBTRACTION", difficulty, questions));
         }
         break;
       
       case "COMPLEX_ADDITION_SUBTRACTION":
         // 2 addition, 3 subtraction with higher difficulty
         for (let i = 0; i < 2; i++) {
-          questions.push(generateQuestion("ADDITION", 
-            difficulty === "easy" ? "medium" : "hard"));
+          questions.push(generateUniqueQuestion("ADDITION", 
+            difficulty === "easy" ? "medium" : "hard", questions));
         }
         for (let i = 0; i < 3; i++) {
-          questions.push(generateQuestion("SUBTRACTION", 
-            difficulty === "easy" ? "medium" : "hard"));
+          questions.push(generateUniqueQuestion("SUBTRACTION", 
+            difficulty === "easy" ? "medium" : "hard", questions));
         }
         break;
       
       case "MULTIPLICATION":
         // 5 multiplication questions
         for (let i = 0; i < 5; i++) {
-          questions.push(generateQuestion("MULTIPLICATION", difficulty));
+          questions.push(generateUniqueQuestion("MULTIPLICATION", difficulty, questions));
         }
         break;
       
       case "DIVISION":
         // 5 division questions
         for (let i = 0; i < 5; i++) {
-          questions.push(generateQuestion("DIVISION", difficulty));
+          questions.push(generateUniqueQuestion("DIVISION", difficulty, questions));
         }
         break;
       
@@ -157,7 +203,7 @@ export function generateQuestionsForStage(stage: GameStage, difficulty: Difficul
         // If we somehow get an invalid stage, default to basic addition
         console.error(`Unknown stage: ${stage}, defaulting to basic addition`);
         for (let i = 0; i < 5; i++) {
-          questions.push(generateQuestion("ADDITION", "easy"));
+          questions.push(generateUniqueQuestion("ADDITION", "easy", questions));
         }
         break;
     }
@@ -167,7 +213,7 @@ export function generateQuestionsForStage(stage: GameStage, difficulty: Difficul
       console.warn(`Generated only ${questions.length} questions for stage ${stage}, adding more basic questions`);
       // Add some basic addition questions to fill the gap
       for (let i = questions.length; i < 5; i++) {
-        questions.push(generateQuestion("ADDITION", "easy"));
+        questions.push(generateUniqueQuestion("ADDITION", "easy", questions));
       }
     }
     
