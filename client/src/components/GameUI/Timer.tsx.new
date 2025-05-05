@@ -33,7 +33,7 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   
   // التحقق مما إذا كانت هناك نوافذ منبثقة مفتوحة
   const isModalOpen = showStageCompleteModal || showGameOverModal;
-  
+
   // إعادة ضبط المؤقت عندما يتغير السؤال أو المرحلة
   useEffect(() => {
     console.log('⏱️ إعادة ضبط المؤقت - سؤال/مرحلة جديدة');
@@ -43,12 +43,12 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
   
   // مؤقت للعد التنازلي
   useEffect(() => {
-    // إذا كانت هناك نافذة منبثقة مفتوحة، لا نقوم بأي عملية عد تنازلي
+    // لا نقوم بأي عملية مؤقت إذا كانت هناك نافذة منبثقة مفتوحة
     if (isModalOpen) {
       console.log('⏳ تم إيقاف المؤقت مؤقتًا بسبب وجود نافذة منبثقة مفتوحة');
       return;
     }
-    
+
     // إذا كان الوقت لم ينتهي، نستمر في العد التنازلي
     if (timeLeft > 0) {
       // تشغيل صوت العد التنازلي عند الثواني الخمسة الأخيرة
@@ -109,11 +109,11 @@ const Timer: FC<TimerProps> = ({ duration = 15, onTimeEnd }) => {
               boxShadow: '0 0 8px rgba(236, 72, 153, 0.6)'
             }}
           />
-        </div>
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-          <p className="text-white text-xs md:text-sm font-bold" style={{ textShadow: '0 0 3px rgba(0,0,0,0.8)' }}>
-            {convertToArabicNumerals(timeLeft)} ثانية
-          </p>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-xs font-mono font-bold bg-black/40 px-2 py-0.5 rounded">
+              {convertToArabicNumerals(timeLeft)}
+            </div>
+          </div>
         </div>
       </div>
     </div>
