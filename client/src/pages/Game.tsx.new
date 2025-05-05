@@ -1,0 +1,107 @@
+import { FC, useEffect, useState, useRef } from 'react';
+import { useGameStore } from '@/lib/game/gameState';
+import { soundService } from '@/lib/soundService';
+import { useToast } from '@/hooks/use-toast';
+import GameUI from '@/components/GameUI/GameUI';
+import Loading from '@/components/LoadingScreen';
+import StageCompleteModal from '@/components/Modals/StageCompleteModal';
+import GameOverModal from '@/components/Modals/GameOverModal';
+import { useLocation } from 'wouter';
+
+const Game: FC = () => {
+  const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  
+  // الحصول على حالة اللعبة من متجر الحالة
+  const {
+    currentGame,
+    currentUser,
+    isLoading,
+    gameError,
+    isTimeUp,
+    setIsTimeUp,
+    showStageCompleteModal,
+    showGameOverModal,
+    gameOverReason,
+    resetGameState,
+  } = useGameStore();
+  
+  // مرجع لتتبع ما إذا كانت شاشة إكمال المرحلة أو اللعبة معروضة
+  // سنستخدم هذا لمنع تشغيل مؤقت الأسئلة عندما تكون هذه الشاشات مفتوحة
+  const isModalOpenRef = useRef(false);
+  
+  // تحديث المرجع عندما تتغير حالة النوافذ المنبثقة
+  useEffect(() => {
+    isModalOpenRef.current = showStageCompleteModal || showGameOverModal;
+  }, [showStageCompleteModal, showGameOverModal]);
+  
+  // عرض رسالة الخطأ إذا حدث خطأ في اللعبة
+  useEffect(() => {
+    if (gameError) {
+      toast({
+        title: "حدث خطأ",
+        description: gameError,
+        variant: "destructive",
+      });
+    }
+  }, [gameError, toast]);
+  
+  // الإجراء الذي يتم اتخاذه عندما ينتهي الوقت
+  const handleTimeEnd = () => {
+    // التحقق مما إذا كانت أي من النوافذ المنبثقة معروضة - لن نقوم بتنفيذ انتقال تلقائي في هذه الحالة
+    if (isModalOpenRef.current) {
+      console.log('⏱️ المؤقت انتهى ولكن هناك نافذة منبثقة مفتوحة - تجاهل الانتقال التلقائي');
+      return;
+    }
+    
+    try {
+      if (!currentGame) return;
+      console.log('استخدام الإجابات المخزنة للسؤال:', currentGame.questions[currentGame.currentQuestionIndex].id, currentGame.questions[currentGame.currentQuestionIndex].text);
+
+      console.log('⏱️ تم اكتشاف انتهاء الوقت في صفحة اللعبة - جاري تنفيذ الانتقال التلقائي');
+      console.log('➕ أحداث انتهاء الوقت: الانتقال للسؤال التالي');
+      
+      // فقط عندما تكون اللعبة نشطة
+      if (currentGame.status === "active") {
+        console.log('⏱️ صفحة اللعبة: محاولة الانتقال للسؤال التالي...');
+        console.log('❗ إرسال طلب الانتقال للسؤال التالي، gameId:', currentGame.id);
+        
+        // الحصول على دالة nextQuestion من متجر الحالة
+        const { nextQuestion } = useGameStore.getState();
+        
+        // محاولة الانتقال إلى السؤال التالي
+        nextQuestion(currentGame.id);
+      } else {
+        console.log('⏱️ اللعبة غير نشطة، لا يمكن الانتقال للسؤال التالي');
+      }
+    } catch (error) {
+      console.error('❌ خطأ أثناء معالجة انتهاء الوقت:', error);
+      toast({
+        title: "حدث خطأ",
+        description: "حدث خطأ أثناء محاولة الانتقال للسؤال التالي.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTimeUp(false);
+    }
+  };
+
+  return (
+    <div className="game-page-container min-h-screen">
+      {isLoading ? (
+        <Loading />
+      ) : (
+        <>
+          <GameUI 
+            onTimeEnd={handleTimeEnd} 
+          />
+
+          {showStageCompleteModal && <StageCompleteModal />}
+          {showGameOverModal && <GameOverModal reason={gameOverReason} />}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Game;
