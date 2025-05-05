@@ -103,8 +103,11 @@ const StageCompleteModal: FC = () => {
   // نسبة الإكمال للمرحلة الحالية من 5 أسئلة
   const stageCompletionPercent = Math.min(100, Math.round((stageProgress / 5) * 100));
   
-  // هنا نعرض نقاط المرحلة الحالية فقط، وليس إجمالي النقاط
-  const currentStageScore = Math.min(pointsPerStage, score - (getStageIndex(currentGame?.stage) * pointsPerStage));
+  // نقوم بحساب عدد الأسئلة التي تمت الإجابة عليها بشكل صحيح في المرحلة الحالية
+  // stageProgress يمثل عدد الأسئلة التي تمت الإجابة عليها بنجاح في المرحلة الحالية
+  // وكل سؤال يمكن أن يحصل على 3 نقاط كحد أقصى حسب عدد المحاولات المتبقية
+  // لذلك نستخدم stageProgress بدلاً من طرح نقاط المراحل السابقة
+  const currentStageScore = Math.min(stageProgress * 3, pointsPerStage);
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
