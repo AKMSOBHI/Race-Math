@@ -12,113 +12,84 @@ const StageCompleteModal: FC = () => {
     nextStage,
     resetGameState,
     setShowGameOverModal,
-    isSoundEnabled
+    isSoundEnabled,
+    setIsLoading
   } = useGameStore();
   
   // تشغيل صوت إكمال المرحلة عند ظهور النافذة
   useEffect(() => {
     if (isSoundEnabled) {
-      soundService.play('levelComplete');
+      soundService.play('success');
     }
   }, [isSoundEnabled]);
   
-  // Find current player to get score
-  const currentPlayer = currentGame?.players.find(
-    p => currentUser && p.id === currentUser.id
-  );
+  const currentPlayer = currentGame?.players.find(p => p.id === currentUser?.id);
+  const isGameCompleted = currentGame?.stage === 'DIVISION';
   
-  // ترجمة اسم المرحلة التالية
-  const stageTranslation: Record<string, string> = {
-    'ADDITION': 'الجمع',
-    'SUBTRACTION': 'الطرح',
-    'MULTIPLICATION': 'الضرب',
-    'DIVISION': 'القسمة',
-    'BASIC_ADDITION_SUBTRACTION': 'الجمع والطرح الأساسي',
-    'COMPLEX_ADDITION_SUBTRACTION': 'الجمع والطرح المتقدم'
-  };
-  
-  // الحصول على اسم المرحلة التالية وما إذا كانت اللعبة انتهت
-  let nextStageName = '';
-  let isGameCompleted = false;
-  
-  if (currentGame) {
-    switch (currentGame.stage) {
-      case 'BASIC_ADDITION_SUBTRACTION':
-        nextStageName = stageTranslation['COMPLEX_ADDITION_SUBTRACTION'];
-        break;
-      case 'COMPLEX_ADDITION_SUBTRACTION':
-        nextStageName = stageTranslation['MULTIPLICATION'];
-        break;
-      case 'MULTIPLICATION':
-        nextStageName = stageTranslation['DIVISION'];
-        break;
-      case 'DIVISION':
-        nextStageName = 'اكتملت اللعبة!';
-        isGameCompleted = true;
-        break;
+  // الوظيفة المساعدة للحصول على ترتيب المرحلة (0 للمرحلة الأولى، 1 للثانية، إلخ)
+  function getStageIndex(stage?: string): number {
+    switch (stage) {
+      case 'BASIC_ADDITION_SUBTRACTION': return 0;
+      case 'COMPLEX_ADDITION_SUBTRACTION': return 1;
+      case 'MULTIPLICATION': return 2;
+      case 'DIVISION': return 3;
+      default: return 0;
     }
   }
   
+  // دالة مساعدة للحصول على اسم المرحلة التالية
+  function getNextStageName(currentStage?: string): string {
+    switch (currentStage) {
+      case 'BASIC_ADDITION_SUBTRACTION':
+        return 'العمليات المتقدمة ➕➖';
+      case 'COMPLEX_ADDITION_SUBTRACTION':
+        return 'عمليات الضرب ✖️';
+      case 'MULTIPLICATION':
+        return 'عمليات القسمة ➗';
+      default:
+        return 'المرحلة التالية';
+    }
+  }
+  
+  const nextStageName = getNextStageName(currentGame?.stage);
   const handleNextStage = () => {
     if (!currentGame) return;
     
+    // تشغيل صوت النقر
     if (isSoundEnabled) {
       soundService.play('click');
     }
     
-    console.log('تم النقر على زر "المرحلة التالية"...');
-    
-    // صورة الحالة قبل أي تغييرات
-    const gameId = currentGame.id;
-    const gameState = useGameStore.getState();
-    
-    // إظهار مؤشر التحميل لمنع الشاشة السوداء
-    gameState.setIsLoading(true);
-    
-    // إخفاء هذه النافذة أولاً بغض النظر عن الحالة
+    // إخفاء نافذة إكمال المرحلة
     setShowStageCompleteModal(false);
     
-    try {
-      // إذا كانت هذه هي المرحلة الأخيرة، قم بعرض شاشة اكتمال اللعبة بدلاً من الانتقال إلى مرحلة جديدة
-      if (isGameCompleted) {
-        console.log('اللعبة اكتملت! عرض شاشة انتهاء اللعبة عند النقر على زر عرض النتائج النهائية');
-        
-        // إخفاء مؤشر التحميل مباشرة
-        const updatedState = useGameStore.getState();
-        updatedState.setIsLoading(false);
-        
-        // لن نقوم بأي عمل تلقائي هنا - لكن سيتم عرض شاشة النتائج فقط عند النقر على الزر
-        // سنضيف المنطق اللازم في handleNextStage للتعامل مع النقر على الزر
-      } else {
-        // إرسال طلب المرحلة التالية بعد فترة قصيرة
-        setTimeout(() => {
-          console.log('بدء المرحلة التالية، رقم اللعبة:', gameId);
+    // إذا كانت هذه المرحلة الأخيرة (اللعبة اكتملت)
+    if (isGameCompleted) {
+      console.log('تم النقر على زر "عرض النتائج النهائية"...');
+      const score = currentPlayer?.score || 0;
+      console.log('إظهار شاشة انتهاء اللعبة مع النتيجة النهائية:', score);
+      setShowGameOverModal(true, 'completed', score);
+    } else {
+      // الانتقال للمرحلة التالية
+      console.log('تم النقر على زر "المرحلة التالية"...');
+      setIsLoading(true);
+      
+      // إضافة تأخير قصير قبل الانتقال للمرحلة التالية
+      setTimeout(() => {
+        try {
+          if (!currentGame) return;
+          console.log('بدء المرحلة التالية، رقم اللعبة:', currentGame.id);
+          nextStage(currentGame.id);
           
-          // الحصول على الحالة المحدثة
-          try {
-            const { nextStage: nextStageFunc } = useGameStore.getState();
-            nextStageFunc(gameId);
-            
-            // إلغاء حالة التحميل بعد مزيد من الوقت
-            setTimeout(() => {
-              const finalState = useGameStore.getState();
-              if (finalState.isLoading) {
-                finalState.setIsLoading(false);
-              }
-            }, 2000);
-          } catch (error) {
-            console.error('خطأ في الانتقال للمرحلة التالية:', error);
-            // إلغاء حالة التحميل في حالة الخطأ
-            const errorState = useGameStore.getState();
-            errorState.setIsLoading(false);
-          }
-        }, 500);
-      }
-    } catch (error) {
-      console.error('خطأ في معالجة المرحلة التالية:', error);
-      // إلغاء حالة التحميل عند حدوث خطأ
-      const errorState = useGameStore.getState();
-      errorState.setIsLoading(false);
+          // إلغاء حالة التحميل بعد فترة
+          setTimeout(() => {
+            setIsLoading(false);
+          }, 2000);
+        } catch (error) {
+          console.error('خطأ في الانتقال للمرحلة التالية:', error);
+          setIsLoading(false);
+        }
+      }, 500);
     }
   };
   
@@ -134,17 +105,6 @@ const StageCompleteModal: FC = () => {
   
   // هنا نعرض نقاط المرحلة الحالية فقط، وليس إجمالي النقاط
   const currentStageScore = Math.min(pointsPerStage, score - (getStageIndex(currentGame?.stage) * pointsPerStage));
-  
-  // الوظيفة المساعدة للحصول على ترتيب المرحلة (0 للمرحلة الأولى، 1 للثانية، إلخ)
-  function getStageIndex(stage?: string): number {
-    switch (stage) {
-      case 'BASIC_ADDITION_SUBTRACTION': return 0;
-      case 'COMPLEX_ADDITION_SUBTRACTION': return 1;
-      case 'MULTIPLICATION': return 2;
-      case 'DIVISION': return 3;
-      default: return 0;
-    }
-  }
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
