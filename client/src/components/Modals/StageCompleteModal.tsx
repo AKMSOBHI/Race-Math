@@ -81,19 +81,14 @@ const StageCompleteModal: FC = () => {
     try {
       // إذا كانت هذه هي المرحلة الأخيرة، قم بعرض شاشة اكتمال اللعبة بدلاً من الانتقال إلى مرحلة جديدة
       if (isGameCompleted) {
-        console.log('اللعبة اكتملت! عرض شاشة انتهاء اللعبة...');
+        console.log('اللعبة اكتملت! عرض شاشة انتهاء اللعبة عند النقر على زر عرض النتائج النهائية');
         
-        // إظهار نافذة انتهاء اللعبة بعد فترة قصيرة
-        setTimeout(() => {
-          // إخفاء مؤشر التحميل
-          const updatedState = useGameStore.getState();
-          updatedState.setIsLoading(false);
-          
-          // استخدام معلمات دالة setShowGameOverModal المحدثة
-          const score = currentPlayer?.score || 0;
-          console.log('إظهار شاشة انتهاء اللعبة مع النتيجة النهائية:', score);
-          updatedState.setShowGameOverModal(true, 'completed', score);
-        }, 500);
+        // إخفاء مؤشر التحميل مباشرة
+        const updatedState = useGameStore.getState();
+        updatedState.setIsLoading(false);
+        
+        // لن نقوم بأي عمل تلقائي هنا - لكن سيتم عرض شاشة النتائج فقط عند النقر على الزر
+        // سنضيف المنطق اللازم في handleNextStage للتعامل مع النقر على الزر
       } else {
         // إرسال طلب المرحلة التالية بعد فترة قصيرة
         setTimeout(() => {
