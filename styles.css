@@ -1,0 +1,151 @@
+/* تعريف متغيرات الألوان والخطوط */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --bg-color: #f0f3f7;
+    --text-color: #333;
+    --header-bg: linear-gradient(135deg, #2980b9, #3498db);
+    --button-gradient: linear-gradient(135deg, #3498db, #2ecc71);
+}
+
+/* إعدادات عامة */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    direction: rtl;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* الهيدر والشعار */
+.header {
+    text-align: center;
+    padding: 20px 0;
+    margin-bottom: 40px;
+}
+
+.logo {
+    max-width: 350px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin: 10px 0;
+    color: var(--primary-color);
+}
+
+/* قسم الرسالة */
+.message {
+    background-color: white;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 40px;
+}
+
+h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.message p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.main-button {
+    display: inline-block;
+    padding: 12px 30px;
+    background: var(--button-gradient);
+    color: white;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+}
+
+.main-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(46, 204, 113, 0.4);
+}
+
+/* الميزات */
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.feature {
+    background-color: white;
+    border-radius: 10px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.feature:hover {
+    transform: translateY(-5px);
+}
+
+.feature h3 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.feature p {
+    font-size: 1.1rem;
+}
+
+/* الفوتر */
+footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px 0;
+    color: #666;
+    border-top: 1px solid #eee;
+}
+
+/* تحسينات للأجهزة المحمولة */
+@media (max-width: 768px) {
+    .logo {
+        max-width: 250px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    .features {
+        grid-template-columns: 1fr;
+    }
+    
+    .message, .feature {
+        padding: 20px;
+    }
+}
